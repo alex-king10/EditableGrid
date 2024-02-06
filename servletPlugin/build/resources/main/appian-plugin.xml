@@ -1,0 +1,16 @@
+<appian-plugin name="Editable Grid Query Helper" key="editableGridQueryHelper">
+    <plugin-info>
+        <description>Editable Grid Query Helper</description>
+        <vendor name="Appian Corporation" url="https://www.appian.com/"/>
+        <version>1.0.0</version>
+        <application-version min="23.2.0"/>
+    </plugin-info>
+<!-- SERVLET -->
+    <servlet name="Get Logged In User" key="getLoggedInUser" class="com.appiancorp.cto.editablegrid.servlet.GetLoggedInUserServlet">
+        <description>
+            Servlet to get the logged in user.
+        </description>
+        <url-pattern>/getloggedinuser</url-pattern>
+    </servlet>
+
+</appian-plugin>

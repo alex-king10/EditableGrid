@@ -1,0 +1,28 @@
+html, body, #container {
+  height: 750px;
+  margin: 0;
+  padding: 0;
+} 
+#myGrid {
+    height: 100%;
+    width: 100%;
+}
+
+/* cell classes - styling */
+.cellStyle-red {
+  background-color: #cc222244;
+}
+.cellStyle-green {
+  background-color: #33cc3344;
+}
+.cellStyle-blue {
+  background-color: #2244cc44;
+}
+
+.cellStyle-background {
+  background-color: #46708c;
+}
+
+
+
+
