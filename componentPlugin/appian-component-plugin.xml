@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<appian-component-plugin name="Editable Grid Component Field" key="com.appian.cto.editableGridComponentField">
+  <plugin-info>
+    <description>Editable grid component field</description>
+    <vendor name="Appian" url="www.appian.com"/>
+    <version>1.0.0</version>
+    <support supported="true" email="support@example.com" url="https://community.appian.com"/>
+  </plugin-info>
+
+  <component rule-name="editableGridComponentField" version="1.0.0">
+    <sdk-version>2.0.0</sdk-version>
+    
+    <parameter>
+      <name>headerCells</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
+
+    <parameter>
+      <name>columnConfigs</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
+
+    <parameter>
+      <name>rows</name>
+      <category>input-output</category>
+      <type>Variant</type>
+    </parameter>
+    
+    <parameter>
+      <name>gridOptions</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
+    
+    <parameter>
+      <name>darkMode</name>
+      <category>input-only</category>
+      <type>Boolean</type>
+    </parameter>
+
+    <parameter>
+      <name>changeData</name>
+      <category>input-output</category>
+      <type>Variant</type>
+    </parameter>
+
+    <html-entry-point>index.html</html-entry-point>
+    <supported-user-agents>chrome firefox ie11 edge safari mobile</supported-user-agents>
+  </component>
+</appian-component-plugin>
