@@ -1,287 +1,386 @@
-import {LICENSE_KEY, THEME_MAP, CELL_CLASS_RULES_MAP, LOGGED_IN_USER_SERVLET_REQUEST_URL  } from './constants.js';
+// import { data } from "./constants.js";
+import { 
+  safeHtmlRenderer, 
+  coverRenderer,
+  progressBarRenderer, 
+  userRenderer, 
+  dropdownRenderer, 
+  timeAndDateRenderer,
+  customDateRenderer,
+  longTextRenderer,
+  fileRenderer
+} from "./customRenderers.js";
 
-agGrid.LicenseManager.setLicenseKey(LICENSE_KEY);
+
+// GLOBAL VAR
+let data = [];
+let columnHeaderData = [];
+let changeObj = {};
+
+// REGISTER CUSTOM RENDERERS
+
+Handsontable.renderers.registerRenderer('my.progressBarRenderer', progressBarRenderer);
+Handsontable.renderers.registerRenderer('my.coverRenderer', coverRenderer);
+Handsontable.renderers.registerRenderer('my.fileRenderer', fileRenderer);
+Handsontable.renderers.registerRenderer('apn.userRenderer', userRenderer);
+Handsontable.renderers.registerRenderer('apn.dropdownRenderer', dropdownRenderer);
+Handsontable.renderers.registerRenderer('apn.timeAndDateRenderer', timeAndDateRenderer);
+Handsontable.renderers.registerRenderer('apn.customDateRenderer', customDateRenderer);
+Handsontable.renderers.registerRenderer('apn.longTextRenderer', longTextRenderer);
+
+// CUSTOM CELL TYPES
+
+// Register Group/User Shared Cell Type - appianObject
+Handsontable.cellTypes.registerCellType('appianObject', {
+  renderer: 'apn.userRenderer',
+  editor: false,
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  myCustomProperty: 'foo'
+});
+
+// Register Long Text Cell Type
+Handsontable.cellTypes.registerCellType('longText', {
+  renderer: 'apn.longTextRenderer',
+  myCustomProperty: 'foo',
+});
+
+// Register Date and Time Cell Type
+Handsontable.cellTypes.registerCellType('appianDateAndTime', {
+  renderer: 'apn.timeAndDateRenderer',
+  // editor:  Handsontable.editors.NumericEditor,
+  className: 'cellStyle-appianObject',
+  // readOnly: true,
+});
+
+// Register Custom Date Cell Type
+Handsontable.cellTypes.registerCellType('appianDate', {
+  renderer: 'apn.customDateRenderer',
+  // editor:  Handsontable.editors.NumericEditor,
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+});
+
+// Register Appian Dropdown ? - will be an extension of their dropdown option
+// maybe to do later. Will just do renderer for now
+Handsontable.cellTypes.registerCellType('appianDropdown', {
+  renderer: 'apn.dropdownRenderer',
+  // editor:  Handsontable.editors.NumericEditor,
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  choiceLabels: 'choiceLabels',
+  choiceValues: 'choiceValues'
+});
 
 
-// CONSTANT AND GLOBAL VAR DEFINITION
+// INSTANTIATE GRID W/ DATA AND COLUMN
+function setGridData(rowsParam)
+{
+  // if (rowsParam == null)
+  // {
+  //   return data;
+  // }
+  data = [];
+  let currRow = [];
 
-//global var
-let gridData = [];
-let columnDataMap = {};
-let columnData = [];
-let changesObj = {};
+  if (rowsParam != null)
+  {
+    for (let i = 0; i < rowsParam.length; i++)
+    {
+      if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
+        currRow = changeObj[i];
+      } else {
+        currRow = Object.values(rowsParam[i]);
+      }
 
-
-const siteColorMap = {
-    // change to be dynamic later
-    "backgroundColor": "#46708c",
-    "accentColor": "#1d659c",
+      // currRow = Object.values(rowsParam[i]);
+      data.push(currRow);
+    }
+    // reset changeObj?
+    // changeObj = {};
+  }
+  
+  console.log(data);
+  return data;
 }
 
-const defaultColDef = { 
-    sortable:true, 
-    filter: true, 
-    // floatingFilter: true, 
-    editable: true, 
-    enableRowGroup: true,
-    enablePivot: true,
-    // allow every column to be aggregated
-    enableValue: true,
-    // changes context meny to only have filter
-    menuTabs: ['filterMenuTab']
-}
+function setColumnData(colHeaderParam, dataParam)
+{
+  columnHeaderData = [];
 
-const sideBarDef = {
-    toolPanels: ["columns", "filters"],
-    position: "left",
-    defaultToolPanel: 'columns',
-}
+  if (colHeaderParam != null)
+  {
+    return colHeaderParam;
+  } else {
+    if (dataParam != null)
+    {
+      columnHeaderData = Object.keys(dataParam[0]);
 
-// Grid Options: default grid configurations
-let gridOptions = {
-  // Row Data: The data to be displayed.
-    rowData:  getGridData(),
-    onRowDataUpdated: (event) => {
-        getGridData();
-    },
-  // Column Definitions: Defines & controls grid columns.
-    columnDefs: getColumnData(),
-    defaultColDef: defaultColDef,
-//  Filtering - customize definition later - use customComponent tutorial as example
-    sideBar: sideBarDef,
-//  Editing Events
-    onCellValueChanged: onCellValueChanged,
-    undoRedoCellEditing: true,
-//   other param
-    allowDragFromColumnsToolPanel: true,
-    getRowId: (params) => params.data.id,
-    enableRangeSelection: true,
-    columnHoverHighlight: true,
-    enterNavigatesVerticallyAfterEdit: true,
-    statusBar: {
-        statusPanels: [
-            {
-                statusPanel: 'agTotalAndFilteredRowCountComponent',
-                align: 'left',
-            },
-            { statusPanel: 'agSelectedRowCountComponent' },
-            {
-                statusPanel: 'agAggregationComponent',
-                statusPanelParams: {
-                    aggFuncs: ['count']
-                }
-            }
-        ]
-    },
-
-};
-
-//EVENT HANDLING
-function onCellValueChanged(params) {
-
-    var rowId = params.node.id;
-    var rowData = params.data;
-
-    changesObj[rowId] = rowData;
-
-    const servletResponse = fetch(
-        LOGGED_IN_USER_SERVLET_REQUEST_URL,
-        {
-          method: "GET",
-          credentials: "include"
-        }
-      );
-
-      console.log(servletResponse);
-
-      servletResponse.then(response => {
-        console.log(response);
-
-        if (response.ok) {
-            return response.json();
-        } else if (response.status === 404) {
-            return response.json();
-        } else {
-            throw new Error('Error from servlet :(')
-        }
-      }).then(data => {
-        console.log("YAy");
-        console.log(data);
-      }).catch(error => {
-        console.log("ERror");
-        console.log(error);
-      });
+    }
+  }
 
 
-    Appian.Component.saveValue('changeData', changesObj);
+  return columnHeaderData;
 
 }
 
-function onFilterTextBoxChanged() {
-    api.setGridOption(
-        'quickFilterText',
-        document.getElementById('filter-text-box').value
-      );
+function setColMetaData(columnConfigParam)
+{
+  // columnConfigParam?.forEach((colConfig) => {
+  //   console.log(colConfig);
+
+  // });
+  let filteredMetaData = [];
+
+  for (let i = 0; i < columnConfigParam.length; i++) {
+    if ("readOnly" in Object.keys(columnConfigParam[i])) {
+      if (columnConfigParam[i]["readOnly"] === false) {
+        delete columnConfigParam[i].readOnly;
+      }
+    }
+  }
+
+  return columnConfigParam;
 }
 
-//Grid Configuration
-// Create grid
-const myGridElement = document.querySelector('#myGrid');
-//grid placed inside of DOM element
-const api = agGrid.createGrid(myGridElement, gridOptions);
+// HANDLE CHANGES IN DATA
+function onChange(cellMeta, newValue, source)
+{
+
+  if (cellMeta != null)
+  {
+    
+    let dataItem = data[cellMeta.row];
+    let fieldName = columnHeaderData[cellMeta.visualCol];
+
+    // console.log(dataItem);
+    changeObj[cellMeta.row] = dataItem;
+
+  }
+
+}
+
+let hotGrid;
+try {
+// init grid
+  const container = document.getElementById("myGrid");
+  hotGrid = new Handsontable(container, {
+    licenseKey: "non-commercial-and-evaluation",
+  });
+} catch (error) {
+  console.error(`An error occurred ${error}`);
+}
 
 Appian.Component.onNewValue(newValues => {
 
-    let dataParam = newValues.rows;
-    let columnParam = newValues.headerCells;
-    let configParam = newValues.columnConfigs;
-    let darkModeParam = newValues.darkMode;
-    let gridOptionsParam = newValues.gridOptions;
-    let changeDataParam = newValues.changeData;
+  // retrieve component parameters
+  let dataParam = newValues.rows;
+  let colHeaderParam = newValues.headerCells;
+  let configParam = newValues.columnConfigs;
+  let darkModeParam = newValues.darkMode;
+  let gridOptionsParam = newValues.gridOptions;
+  let styleParam = newValues.style;
+  let changeDataParam = newValues.changeData;
 
-    console.log("newValues");
-    console.log(newValues);
+  console.log("newValues");
+  console.log(newValues);
 
+  try {
 
-    if (gridOptionsParam && gridOptionsParam.length != 0) {
-        setGridOptions(gridOptionsParam);
+    if (hotGrid == null || hotGrid == undefined) {
+      console.error(`Hot grid null or undefined: ${hotGrid}`);
     }
 
-    setColumnData(columnParam, configParam);
+    let contextMenu = [
+      "row_above",
+      "row_below",
+      "remove_row",
+      "---------",
+      "undo",
+      "redo",
+      "cut",
+      "copy",
+      "---------",
+      "borders",
+      "mergeCells",
+      "---------",
+      "hidden_columns_hide",
+      "hidden_columns_show",
 
-    setGridData(dataParam);
+    ];
 
-    // this will now be called darkMode: true (default false)
-    setTheme(darkModeParam);
+    let columnMenu = [
+      "alignment",
+      "---------",
+      "filter_by_condition",
+      "filter_by_condition2",
+      "filter_operators",
+      "filter_by_value",
+      "filter_action_bar"
+    ];
 
-    // reset change data - triggered by "save changes" in interface
-    if (changeDataParam == 0 && changesObj.length != 0) {
-        // when local var in appian set to {}, this also sets to empty
-        changesObj = {};
-        // trigger an update of new data stored in the gridData object
-        Appian.Component.saveValue("rows", gridData);
+    let height = 800;
+
+    if (styleParam != null)
+      {
+        if ('height' in styleParam) 
+          {
+            console.log("Height in style");
+            console.log(styleParam["height"]);
+            let heightValue = styleParam.height;
+            if (heightValue == "AUTO")
+              {
+                console.log("AUTO");
+                height = 41 + (dataParam.length * 42);
+                // max of 1200 px
+                if (height > 1200) {
+                  height = 1200;
+                }
+              }
+            else
+            {
+              let intHeight = parseInt(heightValue);
+              if (!isNaN(intHeight))
+                {
+                  height = intHeight;
+                }
+            }
+  
+            console.log("height");
+            console.log(height);
+            hotGrid.updateSettings({ height: height });
+  
+          }
+          else
+          {
+            console.log("Height not in style");
+          }
+      }
+  
+    // update grid settings
+    hotGrid.updateSettings({
+      data: setGridData(dataParam),
+      colHeaders: setColumnData(colHeaderParam, dataParam),
+      columns: setColMetaData(configParam),
+      multiColumnSorting: true,
+      mergeCells: true,
+      customBorders: true,
+      copyPaste: true,
+      dropdownMenu: columnMenu,
+      hiddenColumns: {
+        indicators: true
+      },
+      contextMenu: contextMenu,
+      allowInsertColumn: false,
+      filters: true,
+      allowInsertRow: true,
+      manualColumnMove: true,
+      manualColumnResize: true,
+      rowHeaders: false,
+      manualRowMove: false,
+      rowHeights: 40,
+      className: "htMiddle",
+    });
+
+    if (gridOptionsParam != null)
+    {   
+      hotGrid.updateSettings(gridOptionsParam);
+    } else {
+      console.log("gridOptions param is null");
     }
+
+    hotGrid.render();
+
+
+    // EVENT HANDLING
+    hotGrid.addHook('afterChange', (changes, [source]) => {
+
+      console.log([source]);
+  
+      // call handle change function
+      changes?.forEach(([row, prop, oldValue, newValue]) => {
+  
+        if (newValue != oldValue)
+        {
+          let cellMeta = hotGrid.getCellMeta(row, prop);
+          onChange(cellMeta, newValue, [source]);
+          // console.log(changeObj);
+          Appian.Component.saveValue("changeData", changeObj);
+        }
+  
+      });
+  
+    });
+
+    // Function to call after a new row has been created
+    hotGrid.addHook('afterCreateRow', (row, amount) => {
+      console.log(`${amount} row(s) were created, starting at index ${row}`);
+      // need to specially handle this edit - find last PK and increment?
+    });
+
+    hotGrid.addHook('afterColumnMove', (movedColumns, finalIndex, dropIndex, movePossible, orderChanged) => {
+      console.log(movedColumns, finalIndex, dropIndex, movePossible, orderChanged);
+      // let cellMeta = hotGrid.getCellMeta(1,1);
+      // console.log(cellMeta);
+    });
+
+    hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
+      console.log(currentSortConfig);
+      console.log(destinationSortConfigs);
+    });
+
+
+
+  } catch (error) {
+    console.error("An error occured creating the grid:", error);
+  }
 
 
 });
 
 
-// GRID OPTIONS
-function setGridOptions(gridOptionsParam) {
+  // // Get all rows in the table body
+  // let rows = document.querySelectorAll('.handsontable tbody tr');
 
-    // TO DO: add further grid options from Appian designer to predet. ones
-    // gridOptions = {...gridOptions, ...gridOptionsParam};
+  // // Add event listeners to each row for mouseover and mouseout events
+  // rows.forEach(row => {
+  //   row.addEventListener('mouseover', function() {
+  //     // Highlight the entire row by adding a CSS class
+  //     this.classList.add('highlighted-row');
+  //   });
 
-    // iterates through gridOptions param and sets each to grid configurations
-    for (let key in gridOptionsParam) {
-        if (gridOptionsParam.hasOwnProperty(key)) {
-            var value = gridOptionsParam[key];
+  //   row.addEventListener('mouseout', function() {
+  //     // Remove the highlighting CSS class when mouse moves out of the row
+  //     this.classList.remove('highlighted-row');
+  //   });
+  // });
 
-            // console.log(`key: ${key}, value: ${value}`);
+  // let cells = document.querySelectorAll(".handsontable tbody td, .handsontable thead th");
 
-            if (value.length > 1) {
-                // TO DO: has not been tested - is it even needed?
-                api.setGridOption(key, ...value);
-            } else {
-                api.setGridOption(key, value);
-            }
-        }
-    }
-}
+  // cells.forEach((cell) => {
+  //   cell.addEventListener("mouseover", function () {
+  //     // Get the cell's index within its row
+  //     let cellIndex = this.cellIndex;
 
-//COLUMN DEFINTIONS
-function setColumnData(columnParam, configParam) {
-    columnData = [];
-    columnDataMap = {};
-    var currObj;
+  //     console.log(cellIndex);
+  //     // Highlight the entire column (including header) by adding a CSS class
+  //     document
+  //       .querySelectorAll(
+  //         `.handsontable tbody td:nth-child(${
+  //           cellIndex + 1
+  //         }), .handsontable thead th:nth-child(${cellIndex + 1})`
+  //       )
+  //       .forEach((colCell) => {
+  //         colCell.classList.add("highlighted-column");
+  //       });
+  //   });
 
-    for (var i = 0; i < columnParam.length; i++) {
-        currObj = { field: columnParam[i] };
-//        add to column data map - helpful for quick references to fields
-        columnDataMap[columnParam[i]] = currObj;
-//        add config objects for this field
-        if (configParam && configParam.length != 0) {
-            currObj = setColumnDataHelper(currObj, configParam);
-        }
-//      add to column Data
-        columnData.push( currObj );
-    }
+  //   cell.addEventListener("mouseout", function () {
+  //     // Remove the highlighting CSS class when mouse moves out of the column
+  //     document.querySelectorAll(".highlighted-column").forEach((colCell) => {
+  //       colCell.classList.remove("highlighted-column");
+  //     });
+  //   });
+  // });
 
-    // save to grid configurations
-    api.setGridOption('columnDefs', columnData);
-
-}
-
-function setColumnDataHelper(columnParamObj, configParam) {
-    for (var i = 0; i < configParam.length; i++) {
-        if (configParam[i].field) {
-            if (columnParamObj.field === configParam[i].field) {
-                // really do not love this - remove if cellClassRules is not improved
-                if('cellClassRules' in configParam[i]) {
-                    configParam[i]['cellClassRules'] = setCellClassRules(configParam[i]['cellClassRules']);
-                }
-
-                // combines column definitions set in Appian designer (through params) with default
-                return Object.assign(columnParamObj, configParam[i]);
-            }
-        }
-        
-
-    }
-    return columnParamObj;
-}
-
-// STYLING - column level
-function setCellClassRules(rulesParam) {
-    if (rulesParam in CELL_CLASS_RULES_MAP) {
-        return CELL_CLASS_RULES_MAP[rulesParam];
-    }
-}
-
-function getColumnData() {
-    return columnData;
-}
-
-//GRID DATA
-function setGridData(data) {
-    // tracks current state of data
-    gridData = [];
-    let currRow = [];
-
-    if (!data || data.length == 0) {
-        api.setGridOption('rowData', gridData);
-    }
-
-    for (let i = 0; i < data.length; i++) {
-         currRow = data[i];
-        // check if row is in changesObj - update grid data with changes from user
-        if ( changesObj && changesObj[data[i].id] ) {
-            // add logic to call pre processing function
-            gridData.push( changesObj[data[i].id] );
-        } 
-        else {
-            gridData.push(currRow);
-        }
-    }
-
-    api.setGridOption('rowData', gridData);
-
-}
-
-function getGridData() {
-    return gridData;
-}
-
-// THEME
-function setTheme(darkMode) {
-    // Get the grid element by ID
-    const gridElement = document.getElementById("myGrid");
-
-    if (darkMode) {
-        gridElement.className = `ag-theme-quartz-dark`;
-    } else {
-        gridElement.className = `ag-theme-quartz`;
-    }
-
-}
 
