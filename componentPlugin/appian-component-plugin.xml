@@ -33,6 +33,12 @@
       <category>input-only</category>
       <type>Variant</type>
     </parameter>
+
+     <parameter>
+      <name>style</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
     
     <parameter>
       <name>darkMode</name>
