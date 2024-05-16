@@ -175,7 +175,7 @@ function getFormattedTimeAndDate(date) {
   };
   
   // Convert the Date object to a string in the local timezone with specified options
-  let localDateStringWithOptions = date.toLocaleString(undefined, options);
+  // let localDateStringWithOptions = date.toLocaleString(undefined, options);
   
   console.log(localDateStringWithOptions);
 
@@ -190,7 +190,7 @@ export function timeAndDateRenderer(instance, td, row, col, prop, value, cellPro
     const originalDate = new Date(value);
 
     console.log("Date and Time");
-    const dateTime = getFormattedTimeAndDate(originalDate);
+    // const dateTime = getFormattedTimeAndDate(originalDate);
     // Format the date and time components
     const formattedDate = getFormattedDate(originalDate);
     const formattedTime = getFormattedTime(originalDate);

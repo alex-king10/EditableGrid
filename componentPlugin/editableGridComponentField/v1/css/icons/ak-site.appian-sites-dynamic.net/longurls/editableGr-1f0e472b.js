@@ -15,10 +15,7 @@ import {
 // GLOBAL VAR
 let data = [];
 let columnHeaderData = [];
-let columnMetaData = [];
 let changeObj = {};
-let columnWidths = [];
-let sumColWidths = 0;
 
 // REGISTER CUSTOM RENDERERS
 
@@ -113,7 +110,6 @@ function setColumnData(colHeaderParam, dataParam)
 
   if (colHeaderParam != null)
   {
-    columnHeaderData = colHeaderParam;
     return colHeaderParam;
   } else {
     if (dataParam != null)
@@ -130,66 +126,21 @@ function setColumnData(colHeaderParam, dataParam)
 
 function setColMetaData(columnConfigParam)
 {
-  if (columnConfigParam != null) {
-    let filteredMetaData = [];
+  // columnConfigParam?.forEach((colConfig) => {
+  //   console.log(colConfig);
 
-    for (let i = 0; i < columnConfigParam.length; i++) {
-      if ("readOnly" in Object.keys(columnConfigParam[i])) {
-        if (columnConfigParam[i]["readOnly"] === false) {
-          delete columnConfigParam[i].readOnly;
-        }
+  // });
+  let filteredMetaData = [];
+
+  for (let i = 0; i < columnConfigParam.length; i++) {
+    if ("readOnly" in Object.keys(columnConfigParam[i])) {
+      if (columnConfigParam[i]["readOnly"] === false) {
+        delete columnConfigParam[i].readOnly;
       }
     }
   }
 
-  columnMetaData = columnConfigParam;
   return columnConfigParam;
-}
-
-function setGridHeight(dataParam, styleParam) {
-
-  let height = 800;
-
-  if (styleParam != null)
-    {
-      if ('height' in styleParam) 
-        {
-          let heightValue = styleParam.height;
-          if (heightValue == "AUTO")
-            {
-              let calcHeight = 41 + (dataParam.length * 41);
-
-              if (dataParam.length == 0) {
-                calcHeight = 200;
-              }
-
-              // max of 1200 px
-              if (calcHeight < 1201) {
-                height = calcHeight;
-              } else {
-                console.log(`Number of records is too high to display auto height of ${calcHeight}. Setting height to ${height}.`);
-              }
-            }
-          else
-          {
-            let intHeight = parseInt(heightValue);
-            if (!isNaN(intHeight))
-              {
-                height = intHeight;
-              }
-          }
-
-        }
-        else
-        {
-          if (dataParam.length == 0) {
-            height = 200;
-          }
-          console.log("Height not in style");
-        }
-  }
-
-  return height;
 }
 
 // HANDLE CHANGES IN DATA
@@ -211,7 +162,6 @@ function onChange(cellMeta, newValue, source)
 
 let hotGrid;
 try {
-
 // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
@@ -269,15 +219,49 @@ Appian.Component.onNewValue(newValues => {
       "filter_action_bar"
     ];
 
+    let height = 800;
 
+    if (styleParam != null)
+      {
+        if ('height' in styleParam) 
+          {
+            console.log("Height in style");
+            console.log(styleParam["height"]);
+            let heightValue = styleParam.height;
+            if (heightValue == "AUTO")
+              {
+                console.log("AUTO");
+                height = 41 + (dataParam.length * 41);
+                // max of 12,000 px
+                if (height > 12000) {
+                  height = 800;
+                }
+              }
+            else
+            {
+              let intHeight = parseInt(heightValue);
+              if (!isNaN(intHeight))
+                {
+                  height = intHeight;
+                }
+            }
+  
+            console.log("height");
+            console.log(height);
+            hotGrid.updateSettings({ height: height });
+  
+          }
+          else
+          {
+            console.log("Height not in style");
+          }
+      }
   
     // update grid settings
     hotGrid.updateSettings({
       data: setGridData(dataParam),
       colHeaders: setColumnData(colHeaderParam, dataParam),
       columns: setColMetaData(configParam),
-      height: setGridHeight(dataParam, styleParam),
-      // colWidths: columnWidths,
       multiColumnSorting: true,
       mergeCells: true,
       customBorders: true,
@@ -345,54 +329,6 @@ Appian.Component.onNewValue(newValues => {
       console.log(destinationSortConfigs);
     });
 
-    // // calculate column widths and reset if needed
-
-    // const columnPlugin = hotGrid.getPlugin('autoColumnSize');
-
-    // // set widths of all columns on init render
-    //   // retrieves widths of all columns
-    // if (columnHeaderData != null) {
-    //   for (let i = 0; i < columnHeaderData.length; i++) {
-    //     let colWidth = columnPlugin.getColumnWidth(i);
-    //     console.log(`colWidth for column ${i}: ${colWidth}`);
-    //     columnWidths.push(colWidth);
-    //     sumColWidths += colWidth;
-    //   }
-    // }
-
-    // console.log(columnWidths);
-
-    // // if column is resized, track new values. Make bigger if needed.
-    // hotGrid.addHook('beforeColumnResize', (newSize, column, isDoubleClick) => {
-    //   console.log('beforeColumnResize');
-    //   console.log(newSize, column, isDoubleClick);
-
-    //   // use something like getColumnWidth
-    //   console.log(`sumColWidths: ${sumColWidths}`);
-
-    //   // will be number of columns/wtHider width
-    //     // need to do a query selector to get the width of div of .wtHider
-    //   let minColWidth = 200;
-
-    //   // handle change
-    //   sumColWidths -= columnWidths[column];
-
-    //   if (newSize > minColWidth) {
-    //     console.log(`New Size (${newSize}) greater than min width (${minColWidth})`);
-
-    //     columnWidths[column] = newSize;
-    //     sumColWidths += newSize;
-    //   } else {
-    //     console.log(`New Size (${newSize}) less than min width (${minColWidth})`);
-    //     sumColWidths += minColWidth;
-    //     columnWidths[column] = minColWidth;
-    //     // hotGrid.updateSettings({colWidths: columnWidths});
-    //   }
-
-    //   console.log(columnWidths);
-
-
-    // });
 
 
   } catch (error) {

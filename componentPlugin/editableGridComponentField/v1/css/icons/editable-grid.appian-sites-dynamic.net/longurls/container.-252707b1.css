@@ -6,8 +6,7 @@
 }  */
 
 #myGrid {
-  height: 200px;
-  width: 100%;
+  height: 800px;
   margin: 0;
   padding: 0;
   /* overflow: hidden; */
@@ -18,6 +17,28 @@
   border-bottom: 1px solid #ccc;
 }
 
+
+/* header */
+/* #myGrid > div.ht_clone_top.handsontable > div > div > div > table > thead {
+  height: 47px;
+} */
+
+/* header font */
+/* #myGrid > div.ht_clone_top.handsontable > div > div > div > table > thead > tr > th.ht__highlight.ht__active_highlight > div > span { */
+/* .handsontable span.colHeader {
+  padding: 15px;
+  font-weight: 500;
+  text-align: left;
+  overflow: hidden;
+  position: absolute;
+  left: 0px;
+} */
+
+/* cells */
+/* .handsontable .htMiddle {
+  vertical-align: middle;
+  padding-left: 15px;
+} */
 
 .handsontable tbody td {
   padding-left: 15px;
@@ -33,6 +54,7 @@
 
 .handsontable tbody td,
 .handsontable thead th {
+  /* min-width: 100px; */
   max-width: 700px;
   height: 40px; 
   overflow: hidden;
@@ -47,35 +69,29 @@
   font-weight: 450;
 }
 
-/* span with text in header */
-.handsontable span.colHeader {
-    display: block !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
+/* minimized column case */
+/* .handsontable span .colHeader {
+  display: block !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+} */
 
 
-/* button in header */
 .handsontable thead th .changeType  {
-  display: block;
-  margin: 0px;
   background-color: inherit;
   content: "";
-  background-image: url('./icons/chevron-down.svg');
+  background-image: url('./icons/hamburger-menu.svg');
   width: 16px; 
   height: 16px;
   border: none;
   opacity: 0;
   transition: opacity 0.3s ease;
-  padding: 0px;
 }
 
 .handsontable thead th:hover .changeType{
-  display: block;
   opacity: 1;
   color: #f0f0f0;
   border: none;
-  margin: 0px;
 }
 
 
@@ -83,6 +99,10 @@
   content: "" !important;
 }
 
+/* rounding corners
+--could do ht-middle or ht-dimmed within these and also apply styling for rounded selection 
+
+--why this works: this changes on the actual cell, before was doing the container */
 
 .handsontable thead th:first-child {
   border-top-left-radius: 10px;
@@ -90,8 +110,7 @@
 }
 
 .handsontable thead th:last-child {
-  border-top-right-radius: 10px;
-  border-right: 0px;
+  border-top-right-radius: 10px
 }
 
 /* .handsontable tr:last-child td:first-child {
