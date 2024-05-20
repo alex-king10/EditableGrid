@@ -5,8 +5,10 @@
   padding: 0;
 }  */
 
+
 #myGrid {
   height: 200px;
+  width: 100%;
   margin: 0;
   padding: 0;
   /* overflow: hidden; */
@@ -32,7 +34,6 @@
 
 .handsontable tbody td,
 .handsontable thead th {
-  /* min-width: 100px; */
   max-width: 700px;
   height: 40px; 
   overflow: hidden;
@@ -44,48 +45,38 @@
   padding: 10px !important;
   height: auto !important;
   font-size: 14px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* display: flex; */
-  /* flex-direction: row-reverse; */
+  font-weight: 450;
 }
 
 /* span with text in header */
-.handsontable .handsontable span .colHeader {
-    display: block !important;
+.handsontable span.colHeader {
+    /* display: block !important; */
     overflow: hidden;
     text-overflow: ellipsis;
-    position: relative;
-    padding-right: 20px
-
 }
-
-/* .handsontable .handsontable span .colHeader .columnSorting .sortAction .descending {
-  
-} */
 
 
 /* button in header */
 .handsontable thead th .changeType  {
-  display: block;
-  margin: 0px;
+  /* display: block; */
+  /* margin: 0px; */
   background-color: inherit;
-  /* content: ""; */
+  content: "";
   background-image: url('./icons/chevron-down.svg');
-  width: 16px;
+  width: 16px; 
   height: 16px;
   border: none;
   opacity: 0;
   transition: opacity 0.3s ease;
-  padding: 0px;
+  /* padding: 0px; */
 }
 
 .handsontable thead th:hover .changeType{
-  display: block;
+  /* display: block; */
   opacity: 1;
   color: #f0f0f0;
   border: none;
-  margin: 0px;
+  /* margin: 0px; */
 }
 
 
@@ -104,13 +95,13 @@
   border-right: 0px;
 }
 
-/* .handsontable tr:last-child td:first-child {
+.handsontable tr:last-child td:first-child {
   border-bottom-left-radius: 10px
 }
 
 .handsontable tr:last-child td:last-child {
   border-bottom-right-radius: 10px
-} */
+}
 
 
 /* cell classes - styling */

@@ -146,6 +146,81 @@ function setColMetaData(columnConfigParam)
   return columnConfigParam;
 }
 
+function setColMetaData2(dataParam, columnConfigParam) {
+  let columnHeaderData2 = [];
+  let queryInfo = null;
+
+  if (dataParam != null) {
+    queryInfo = Object.keys(dataParam[0]);
+    console.log(queryInfo);
+  }
+
+  if (queryInfo != null) {
+    for (let i = 0; i < queryInfo.length; i++) {
+      let currDataField = queryInfo[i];
+      let currColumnObject = null;
+      console.log("currDataField");
+      console.log(currDataField);
+
+      // find if currDataField in columnConfigParam
+      if (columnConfigParam != null) {
+        for (let j = 0; j < columnConfigParam.length; j++) {
+          let currColConfig = columnConfigParam[j];
+
+          // if currDataField is in config param
+          if (currColConfig.field == currDataField) {
+            // if no title specified, use field name
+            if (currColConfig.title == undefined) {
+              currColConfig['title'] = currDataField;
+            }
+
+            // remove 'field' from object
+            delete currColConfig.field;
+
+            // add modified currColConfid to object
+            currColumnObject = currColConfig;
+
+            break;
+          }
+
+          // if (Object.hasOwn(columnConfigParam[j], 'field')) {
+
+          //   console.log(columnConfigParam[j].field);
+
+          //   if (columnConfigParam[j].field == currDataField) {
+
+          //     let fieldName = columnConfigParam[j].field;
+
+          //     currColumnObject = columnConfigParam[j];
+          //     break;
+          //   }
+          // }
+        }
+      } else { console.error("Column Config Param is null"); }
+
+      console.log(currDataField);
+      console.log(currColumnObject);
+      // if currColumnObject still null --> not in config param
+      if (currColumnObject == null) {
+        currColumnObject = { title: currDataField };
+      }
+
+      columnHeaderData2.push(currColumnObject);
+
+    }
+
+  } else {
+    console.error("Query info null");
+  }
+
+  console.log(columnHeaderData2);
+  return columnHeaderData2;
+
+
+}
+
+
+
 function setGridHeight(dataParam, styleParam) {
 
   let height = 800;
@@ -192,6 +267,39 @@ function setGridHeight(dataParam, styleParam) {
   return height;
 }
 
+function adjustOuterContainerWidth() {
+  const myGrid = document.getElementById('myGrid');
+  const innerContainer = document.getElementsByClassName('wtHider');
+
+  console.log(innerContainer);
+
+  let innerWidthArr = [];
+  // Get the width of the inner container
+  for (let i = 0; i < innerContainer.length; i++) {
+    innerWidthArr.push(innerContainer[i].offsetWidth);
+  }
+  
+  const initInnerWidth = innerContainer[0].offsetWidth;
+
+  // Get the width of the outer container
+  const outerWidth = myGrid.offsetWidth;
+
+  console.log(`initInnerWidth: ${initInnerWidth}`);
+  console.log(`innerWidthArr: ${innerWidthArr}`);
+  console.log(`outerWidth: ${outerWidth}`);
+
+  // Set the outer container's width to match the inner container's width if the inner width is smaller
+  if (initInnerWidth < outerWidth) {
+    console.log('initInnerWidth < outerWidth');
+    myGrid.style.width = `${initInnerWidth}px`;
+
+    console.log(myGrid.offsetWidth);
+  } else {
+    // Optionally, reset the width to auto if you want to handle the case where the inner width is larger
+    myGrid.style.width = '100%';
+  }
+}
+
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
 {
@@ -235,6 +343,7 @@ Appian.Component.onNewValue(newValues => {
   console.log("newValues");
   console.log(newValues);
 
+
   try {
 
     if (hotGrid == null || hotGrid == undefined) {
@@ -269,13 +378,13 @@ Appian.Component.onNewValue(newValues => {
       "filter_action_bar"
     ];
 
-
   
     // update grid settings
     hotGrid.updateSettings({
       data: setGridData(dataParam),
-      colHeaders: setColumnData(colHeaderParam, dataParam),
-      columns: setColMetaData(configParam),
+      // colHeaders: setColumnData(colHeaderParam, dataParam),
+      columns: setColMetaData2(dataParam, configParam),
+      // columns: setColMetaData(configParam),
       height: setGridHeight(dataParam, styleParam),
       // colWidths: columnWidths,
       multiColumnSorting: true,
@@ -290,7 +399,7 @@ Appian.Component.onNewValue(newValues => {
       allowInsertColumn: false,
       filters: true,
       allowInsertRow: true,
-      manualColumnMove: true,
+      manualColumnMove: false,
       manualColumnResize: true,
       rowHeaders: false,
       manualRowMove: false,
@@ -363,36 +472,38 @@ Appian.Component.onNewValue(newValues => {
     // console.log(columnWidths);
 
     // // if column is resized, track new values. Make bigger if needed.
-    // hotGrid.addHook('beforeColumnResize', (newSize, column, isDoubleClick) => {
-    //   console.log('beforeColumnResize');
-    //   console.log(newSize, column, isDoubleClick);
+    hotGrid.addHook('beforeColumnResize', (newSize, column, isDoubleClick) => {
+      console.log('beforeColumnResize');
+      console.log(newSize, column, isDoubleClick);
 
-    //   // use something like getColumnWidth
-    //   console.log(`sumColWidths: ${sumColWidths}`);
+      adjustOuterContainerWidth();
 
-    //   // will be number of columns/wtHider width
-    //     // need to do a query selector to get the width of div of .wtHider
-    //   let minColWidth = 200;
+      // use something like getColumnWidth
+      // console.log(`sumColWidths: ${sumColWidths}`);
 
-    //   // handle change
-    //   sumColWidths -= columnWidths[column];
+      // will be number of columns/wtHider width
+        // need to do a query selector to get the width of div of .wtHider
+      // let minColWidth = 200;
 
-    //   if (newSize > minColWidth) {
-    //     console.log(`New Size (${newSize}) greater than min width (${minColWidth})`);
+      // handle change
+      // sumColWidths -= columnWidths[column];
 
-    //     columnWidths[column] = newSize;
-    //     sumColWidths += newSize;
-    //   } else {
-    //     console.log(`New Size (${newSize}) less than min width (${minColWidth})`);
-    //     sumColWidths += minColWidth;
-    //     columnWidths[column] = minColWidth;
-    //     // hotGrid.updateSettings({colWidths: columnWidths});
-    //   }
+      // if (newSize > minColWidth) {
+      //   console.log(`New Size (${newSize}) greater than min width (${minColWidth})`);
+
+      //   columnWidths[column] = newSize;
+      //   sumColWidths += newSize;
+      // } else {
+      //   console.log(`New Size (${newSize}) less than min width (${minColWidth})`);
+      //   sumColWidths += minColWidth;
+      //   columnWidths[column] = minColWidth;
+        // hotGrid.updateSettings({colWidths: columnWidths});
+      // }
 
     //   console.log(columnWidths);
 
 
-    // });
+    });
 
 
   } catch (error) {
@@ -401,50 +512,3 @@ Appian.Component.onNewValue(newValues => {
 
 
 });
-
-
-  // // Get all rows in the table body
-  // let rows = document.querySelectorAll('.handsontable tbody tr');
-
-  // // Add event listeners to each row for mouseover and mouseout events
-  // rows.forEach(row => {
-  //   row.addEventListener('mouseover', function() {
-  //     // Highlight the entire row by adding a CSS class
-  //     this.classList.add('highlighted-row');
-  //   });
-
-  //   row.addEventListener('mouseout', function() {
-  //     // Remove the highlighting CSS class when mouse moves out of the row
-  //     this.classList.remove('highlighted-row');
-  //   });
-  // });
-
-  // let cells = document.querySelectorAll(".handsontable tbody td, .handsontable thead th");
-
-  // cells.forEach((cell) => {
-  //   cell.addEventListener("mouseover", function () {
-  //     // Get the cell's index within its row
-  //     let cellIndex = this.cellIndex;
-
-  //     console.log(cellIndex);
-  //     // Highlight the entire column (including header) by adding a CSS class
-  //     document
-  //       .querySelectorAll(
-  //         `.handsontable tbody td:nth-child(${
-  //           cellIndex + 1
-  //         }), .handsontable thead th:nth-child(${cellIndex + 1})`
-  //       )
-  //       .forEach((colCell) => {
-  //         colCell.classList.add("highlighted-column");
-  //       });
-  //   });
-
-  //   cell.addEventListener("mouseout", function () {
-  //     // Remove the highlighting CSS class when mouse moves out of the column
-  //     document.querySelectorAll(".highlighted-column").forEach((colCell) => {
-  //       colCell.classList.remove("highlighted-column");
-  //     });
-  //   });
-  // });
-
-
