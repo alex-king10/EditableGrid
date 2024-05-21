@@ -73,13 +73,9 @@ export function progressBarRenderer(
   
 
 export function userRenderer(instance, td, row, col, prop, value, cellProperties) {
-  // console.log([instance, td, row, col, prop, value, cellProperties]);
-  console.log(value);
-
   var userID;
 
   try {
-    // var jsonObject = JSON.parse(value);
     
     if ('id' in value) {
       userID = value.id;
@@ -89,8 +85,7 @@ export function userRenderer(instance, td, row, col, prop, value, cellProperties
   } catch (error) { console.error(error); }
 
   const text = document.createTextNode(userID);
-  // const text = document.createTextNode(JSON.stringify(value));
-  // console.log(text);
+
   td.innerText = '';
   td.appendChild(text);
   td.classList.add('cellStyle-appianObject'); // Add the custom CSS class here
