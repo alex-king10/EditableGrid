@@ -388,6 +388,7 @@ Appian.Component.onNewValue(newValues => {
       height: setGridHeight(dataParam, styleParam),
       // colWidths: columnWidths,
       multiColumnSorting: true,
+      stretchH: 'all',
       mergeCells: true,
       customBorders: true,
       copyPaste: true,
@@ -454,56 +455,7 @@ Appian.Component.onNewValue(newValues => {
       console.log(destinationSortConfigs);
     });
 
-    // // calculate column widths and reset if needed
-
-    // const columnPlugin = hotGrid.getPlugin('autoColumnSize');
-
-    // // set widths of all columns on init render
-    //   // retrieves widths of all columns
-    // if (columnHeaderData != null) {
-    //   for (let i = 0; i < columnHeaderData.length; i++) {
-    //     let colWidth = columnPlugin.getColumnWidth(i);
-    //     console.log(`colWidth for column ${i}: ${colWidth}`);
-    //     columnWidths.push(colWidth);
-    //     sumColWidths += colWidth;
-    //   }
-    // }
-
-    // console.log(columnWidths);
-
     // // if column is resized, track new values. Make bigger if needed.
-    hotGrid.addHook('beforeColumnResize', (newSize, column, isDoubleClick) => {
-      console.log('beforeColumnResize');
-      console.log(newSize, column, isDoubleClick);
-
-      adjustOuterContainerWidth();
-
-      // use something like getColumnWidth
-      // console.log(`sumColWidths: ${sumColWidths}`);
-
-      // will be number of columns/wtHider width
-        // need to do a query selector to get the width of div of .wtHider
-      // let minColWidth = 200;
-
-      // handle change
-      // sumColWidths -= columnWidths[column];
-
-      // if (newSize > minColWidth) {
-      //   console.log(`New Size (${newSize}) greater than min width (${minColWidth})`);
-
-      //   columnWidths[column] = newSize;
-      //   sumColWidths += newSize;
-      // } else {
-      //   console.log(`New Size (${newSize}) less than min width (${minColWidth})`);
-      //   sumColWidths += minColWidth;
-      //   columnWidths[column] = minColWidth;
-        // hotGrid.updateSettings({colWidths: columnWidths});
-      // }
-
-    //   console.log(columnWidths);
-
-
-    });
 
 
   } catch (error) {
