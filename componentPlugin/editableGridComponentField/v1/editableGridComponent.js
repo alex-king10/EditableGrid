@@ -11,6 +11,9 @@ import {
   fileRenderer
 } from "./customRenderers.js";
 
+// import {
+//   CustomObjectEditor
+// } from "./customEditors.js";
 
 // GLOBAL VAR
 let data = [];
@@ -19,6 +22,47 @@ let columnMetaData = [];
 let changeObj = {};
 let columnWidths = [];
 let sumColWidths = 0;
+
+// CREATE CUSTOM EDITORS
+
+class CustomObjectEditor extends Handsontable.editors.TextEditor {
+  createElements() {
+    super.createElements();
+
+    // Create input element for editing
+    this.TEXTAREA = this.hot.rootDocument.createElement("input");
+    this.TEXTAREA.setAttribute("type", "text");
+    this.TEXTAREA.setAttribute("data-hot-input", true);
+    this.textareaStyle = this.TEXTAREA.style;
+    this.textareaStyle.width = 0;
+    this.textareaStyle.height = 0;
+
+    this.TEXTAREA_PARENT.innerText = "";
+    this.TEXTAREA_PARENT.appendChild(this.TEXTAREA);
+  }
+
+  prepare(row, col, prop, td, originalValue, cellProperties) {
+    const idValue = originalValue && originalValue.id ? originalValue.id : "";
+    originalValue = idValue;
+
+    super.prepare(row, col, prop, td, originalValue, cellProperties);
+    this.setValue(idValue);
+  }
+
+  saveValue(value, ctrlDown) {
+    // Create an object with the new id value
+    const newValue = { id: value[0] };
+    let newValueArray = [];
+    newValueArray.push(newValue);
+
+    // super.saveValue(newValue, ctrlDown);
+    super.saveValue(newValueArray, ctrlDown);
+    // Save the new object back to the cell
+    hotGrid.setDataAtCell(this.row, this.col, newValue);
+  }
+
+}
+
 
 // REGISTER CUSTOM RENDERERS
 
@@ -34,12 +78,14 @@ Handsontable.renderers.registerRenderer('apn.longTextRenderer', longTextRenderer
 // CUSTOM CELL TYPES
 
 // Register Group/User Shared Cell Type - appianObject
+  // editor - can't cast from dictionary to user error when saving in Appian interface
 Handsontable.cellTypes.registerCellType('appianObject', {
   renderer: 'apn.userRenderer',
   editor: false,
+  // editor: CustomObjectEditor,
   className: 'cellStyle-appianObject',
   readOnly: true,
-  myCustomProperty: 'foo'
+  // myCustomProperty: 'foo'
 });
 
 // Register Long Text Cell Type
@@ -159,8 +205,8 @@ function setColMetaData2(dataParam, columnConfigParam) {
     for (let i = 0; i < queryInfo.length; i++) {
       let currDataField = queryInfo[i];
       let currColumnObject = null;
-      console.log("currDataField");
-      console.log(currDataField);
+      // console.log("currDataField");
+      // console.log(currDataField);
 
       // find if currDataField in columnConfigParam
       if (columnConfigParam != null) {
@@ -198,8 +244,8 @@ function setColMetaData2(dataParam, columnConfigParam) {
         }
       } else { console.error("Column Config Param is null"); }
 
-      console.log(currDataField);
-      console.log(currColumnObject);
+      // console.log(currDataField);
+      // console.log(currColumnObject);
       // if currColumnObject still null --> not in config param
       if (currColumnObject == null) {
         currColumnObject = { title: currDataField };
@@ -386,7 +432,7 @@ Appian.Component.onNewValue(newValues => {
       columns: setColMetaData2(dataParam, configParam),
       // columns: setColMetaData(configParam),
       height: setGridHeight(dataParam, styleParam),
-      // colWidths: columnWidths,
+     stretchH: 'all',
       multiColumnSorting: true,
       mergeCells: true,
       customBorders: true,
@@ -420,7 +466,7 @@ Appian.Component.onNewValue(newValues => {
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
 
-      console.log([source]);
+      // console.log([source]);
   
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {

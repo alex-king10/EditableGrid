@@ -184,7 +184,7 @@ export function timeAndDateRenderer(instance, td, row, col, prop, value, cellPro
     // Parse the original datetime string
     const originalDate = new Date(value);
 
-    console.log("Date and Time");
+    // console.log("Date and Time");
     // const dateTime = getFormattedTimeAndDate(originalDate);
     // Format the date and time components
     const formattedDate = getFormattedDate(originalDate);
