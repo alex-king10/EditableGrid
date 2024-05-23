@@ -267,38 +267,20 @@ function setGridHeight(dataParam, styleParam) {
   return height;
 }
 
-function adjustOuterContainerWidth() {
-  const myGrid = document.getElementById('myGrid');
-  const innerContainer = document.getElementsByClassName('wtHider');
+function setStyle(styleParam) {
 
-  console.log(innerContainer);
-
-  let innerWidthArr = [];
-  // Get the width of the inner container
-  for (let i = 0; i < innerContainer.length; i++) {
-    innerWidthArr.push(innerContainer[i].offsetWidth);
+  if (styleParam != null && 'highlightColor' in styleParam) {
+    const highlightColor = styleParam.highlightColor;
+    const area = document.querySelector('.area');
+    if (area) {
+      area.style.background = `${highlightColor} !important`;
+    } else {
+      console.log(area);
+    }
   }
-  
-  const initInnerWidth = innerContainer[0].offsetWidth;
 
-  // Get the width of the outer container
-  const outerWidth = myGrid.offsetWidth;
-
-  console.log(`initInnerWidth: ${initInnerWidth}`);
-  console.log(`innerWidthArr: ${innerWidthArr}`);
-  console.log(`outerWidth: ${outerWidth}`);
-
-  // Set the outer container's width to match the inner container's width if the inner width is smaller
-  if (initInnerWidth < outerWidth) {
-    console.log('initInnerWidth < outerWidth');
-    myGrid.style.width = `${initInnerWidth}px`;
-
-    console.log(myGrid.offsetWidth);
-  } else {
-    // Optionally, reset the width to auto if you want to handle the case where the inner width is larger
-    myGrid.style.width = '100%';
-  }
 }
+
 
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
@@ -377,6 +359,8 @@ Appian.Component.onNewValue(newValues => {
       "filter_by_value",
       "filter_action_bar"
     ];
+
+    setStyle(styleParam);
 
   
     // update grid settings
