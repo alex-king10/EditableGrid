@@ -421,7 +421,10 @@ Appian.Component.onNewValue(newValues => {
       stretchH: 'all',
       mergeCells: true,
       customBorders: true,
-      copyPaste: true,
+      copyPaste: {
+        columnsLimit: 25,
+        rowsLimit: 200,
+      },
       dropdownMenu: columnMenu,
       hiddenColumns: {
         indicators: true
