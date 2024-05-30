@@ -54,6 +54,15 @@
     text-overflow: ellipsis;
 }
 
+/* sorting arrow indicator */
+.handsontable span.colHeader.columnSorting:before {
+  background-position-x: right;
+  padding-left: 0px;
+  position: absolute !important;
+  right: 0px !important;
+}
+
+
 
 /* button in header */
 .handsontable thead th .changeType  {

@@ -397,8 +397,8 @@ Appian.Component.onNewValue(newValues => {
     ];
 
     let columnMenu = [
-      "alignment",
-      "---------",
+      // "alignment",
+      // "---------",
       "filter_by_condition",
       "filter_by_condition2",
       "filter_operators",
