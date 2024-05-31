@@ -11,9 +11,6 @@ import {
   fileRenderer
 } from "./customRenderers.js";
 
-// import {
-//   CustomObjectEditor
-// } from "./customEditors.js";
 
 // GLOBAL VAR
 // let data = [];
@@ -253,8 +250,6 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
 }
 
-
-
 function setGridHeight(dataParam, styleParam) {
 
   let height = 800;
@@ -320,7 +315,6 @@ function setStyle(styleParam) {
 function onChange(cellMeta, newValue, source)
 {
 
-
   if (cellMeta != null)
   {
     
@@ -337,10 +331,14 @@ function onChange(cellMeta, newValue, source)
 let hotGrid;
 try {
 
+
 // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
     licenseKey: "non-commercial-and-evaluation",
+    formulas: {
+      engine: HyperFormula,
+    },
   });
 } catch (error) {
   console.error(`An error occurred ${error}`);
@@ -407,7 +405,6 @@ Appian.Component.onNewValue(newValues => {
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
-      stretchH: 'all',
       mergeCells: true,
       customBorders: true,
       copyPaste: {
