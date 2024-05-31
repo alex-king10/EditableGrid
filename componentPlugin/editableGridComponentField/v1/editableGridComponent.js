@@ -16,10 +16,11 @@ import {
 // } from "./customEditors.js";
 
 // GLOBAL VAR
-let data = [];
+// let data = [];
 let dataMap = [];
 let columnHeaderData = [];
 let columnMetaData = [];
+let colIdxMap = {};
 let changeObj = {};
 let columnWidths = [];
 let sumColWidths = 0;
@@ -130,7 +131,7 @@ function setGridData(rowsParam)
   // {
   //   return data;
   // }
-  data = [];
+  // data = [];
   dataMap = [];
   let currRow = [];
   let currMapRow = [];
@@ -147,17 +148,16 @@ function setGridData(rowsParam)
       }
 
       // currRow = Object.values(rowsParam[i]);
-      data.push(currRow);
+      // data.push(currRow);
       dataMap.push(currMapRow);
     }
     // reset changeObj?
     // changeObj = {};
   }
   
-  console.log(data);
+  // console.log(data);
   console.log(dataMap);
   return dataMap;
-  // return data;
 }
 
 function setColumnData(colHeaderParam, dataParam)
@@ -172,7 +172,6 @@ function setColumnData(colHeaderParam, dataParam)
     if (dataParam != null)
     {
       columnHeaderData = Object.keys(dataParam[0]);
-
     }
   }
 
@@ -203,13 +202,15 @@ function setColMetaData2(dataParam, columnConfigParam) {
   let columnHeaderData2 = [];
   let queryInfo = null;
 
+  // get field names
   if (dataParam != null) {
     queryInfo = Object.keys(dataParam[0]);
-    console.log(queryInfo);
   }
 
   if (queryInfo != null) {
     for (let i = 0; i < queryInfo.length; i++) {
+      // add colName: col Index to map
+      colIdxMap[queryInfo[i]] = i;
       let currDataField = queryInfo[i];
       let currColumnObject = null;
 
@@ -225,9 +226,6 @@ function setColMetaData2(dataParam, columnConfigParam) {
             if (currColConfig.title == undefined) {
               currColConfig['title'] = currDataField;
             }
-
-            // remove 'field' from object
-            // delete currColConfig.field;
 
             // add modified currColConfig to object
             currColumnObject = currColConfig;
@@ -251,9 +249,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
     console.error("Query info null");
   }
 
-  console.log(columnHeaderData2);
   return columnHeaderData2;
-
 
 }
 
@@ -323,6 +319,7 @@ function setStyle(styleParam) {
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
 {
+
 
   if (cellMeta != null)
   {
@@ -445,17 +442,20 @@ Appian.Component.onNewValue(newValues => {
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
-
-      // console.log([source]);
   
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {
   
         if (newValue != oldValue)
         {
-          let cellMeta = hotGrid.getCellMeta(row, prop);
-          onChange(cellMeta, newValue, [source]);
-          Appian.Component.saveValue("changeData", changeObj);
+
+          let colIdx = colIdxMap[prop];
+          let cellMeta;
+          if (colIdx != undefined) {
+            cellMeta = hotGrid.getCellMeta(row, colIdx);
+            onChange(cellMeta, newValue, [source]);
+            Appian.Component.saveValue("changeData", Object.values(changeObj));
+          }
         }
   
       });
