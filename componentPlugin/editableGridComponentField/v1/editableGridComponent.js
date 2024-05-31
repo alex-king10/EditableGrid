@@ -17,6 +17,7 @@ import {
 
 // GLOBAL VAR
 let data = [];
+let dataMap = [];
 let columnHeaderData = [];
 let columnMetaData = [];
 let changeObj = {};
@@ -130,27 +131,33 @@ function setGridData(rowsParam)
   //   return data;
   // }
   data = [];
+  dataMap = [];
   let currRow = [];
+  let currMapRow = [];
 
   if (rowsParam != null)
   {
     for (let i = 0; i < rowsParam.length; i++)
     {
       if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
-        currRow = changeObj[i];
+        currRow = Object.values(changeObj[i]);
       } else {
-        currRow = Object.values(rowsParam[i]);
+        currRow =  Object.values(rowsParam[i]);
+        currMapRow = rowsParam[i];
       }
 
       // currRow = Object.values(rowsParam[i]);
       data.push(currRow);
+      dataMap.push(currMapRow);
     }
     // reset changeObj?
     // changeObj = {};
   }
   
   console.log(data);
-  return data;
+  console.log(dataMap);
+  return dataMap;
+  // return data;
 }
 
 function setColumnData(colHeaderParam, dataParam)
@@ -205,50 +212,35 @@ function setColMetaData2(dataParam, columnConfigParam) {
     for (let i = 0; i < queryInfo.length; i++) {
       let currDataField = queryInfo[i];
       let currColumnObject = null;
-      // console.log("currDataField");
-      // console.log(currDataField);
 
       // find if currDataField in columnConfigParam
       if (columnConfigParam != null) {
         for (let j = 0; j < columnConfigParam.length; j++) {
           let currColConfig = columnConfigParam[j];
+          // currColumnObject = currColConfig;
 
           // if currDataField is in config param
-          if (currColConfig.field == currDataField) {
+          if (currColConfig.data == currDataField) {
             // if no title specified, use field name
             if (currColConfig.title == undefined) {
               currColConfig['title'] = currDataField;
             }
 
             // remove 'field' from object
-            delete currColConfig.field;
+            // delete currColConfig.field;
 
-            // add modified currColConfid to object
+            // add modified currColConfig to object
             currColumnObject = currColConfig;
 
             break;
           }
 
-          // if (Object.hasOwn(columnConfigParam[j], 'field')) {
-
-          //   console.log(columnConfigParam[j].field);
-
-          //   if (columnConfigParam[j].field == currDataField) {
-
-          //     let fieldName = columnConfigParam[j].field;
-
-          //     currColumnObject = columnConfigParam[j];
-          //     break;
-          //   }
-          // }
         }
       } else { console.error("Column Config Param is null"); }
 
-      // console.log(currDataField);
-      // console.log(currColumnObject);
       // if currColumnObject still null --> not in config param
       if (currColumnObject == null) {
-        currColumnObject = { title: currDataField };
+        currColumnObject = { title: currDataField, data: currDataField };
       }
 
       columnHeaderData2.push(currColumnObject);
@@ -335,10 +327,10 @@ function onChange(cellMeta, newValue, source)
   if (cellMeta != null)
   {
     
-    let dataItem = data[cellMeta.row];
+    let dataItem = dataMap[cellMeta.row];
     let fieldName = columnHeaderData[cellMeta.visualCol];
 
-    // console.log(dataItem);
+    console.log(dataItem);
     changeObj[cellMeta.row] = dataItem;
 
   }
@@ -416,7 +408,7 @@ Appian.Component.onNewValue(newValues => {
       columns: setColMetaData2(dataParam, configParam),
       // columns: setColMetaData(configParam),
       height: setGridHeight(dataParam, styleParam),
-     stretchH: 'all',
+      stretchH: 'all',
       multiColumnSorting: true,
       stretchH: 'all',
       mergeCells: true,
@@ -463,7 +455,6 @@ Appian.Component.onNewValue(newValues => {
         {
           let cellMeta = hotGrid.getCellMeta(row, prop);
           onChange(cellMeta, newValue, [source]);
-          // console.log(changeObj);
           Appian.Component.saveValue("changeData", changeObj);
         }
   
@@ -483,12 +474,11 @@ Appian.Component.onNewValue(newValues => {
       // console.log(cellMeta);
     });
 
-    hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
-      console.log(currentSortConfig);
-      console.log(destinationSortConfigs);
-    });
+    // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
+    //   console.log(currentSortConfig);
+    //   console.log(destinationSortConfigs);
+    // });
 
-    // // if column is resized, track new values. Make bigger if needed.
 
 
   } catch (error) {
