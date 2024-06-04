@@ -8,7 +8,8 @@ import {
   timeAndDateRenderer,
   customDateRenderer,
   longTextRenderer,
-  fileRenderer
+  fileRenderer,
+  relatedRecordRenderer
 } from "./customRenderers.js";
 
 // import {
@@ -76,6 +77,7 @@ Handsontable.renderers.registerRenderer('apn.dropdownRenderer', dropdownRenderer
 Handsontable.renderers.registerRenderer('apn.timeAndDateRenderer', timeAndDateRenderer);
 Handsontable.renderers.registerRenderer('apn.customDateRenderer', customDateRenderer);
 Handsontable.renderers.registerRenderer('apn.longTextRenderer', longTextRenderer);
+Handsontable.renderers.registerRenderer('apn.relatedRecordRenderer', relatedRecordRenderer);
 
 // CUSTOM CELL TYPES
 
@@ -123,6 +125,13 @@ Handsontable.cellTypes.registerCellType('appianDropdown', {
   choiceValues: 'choiceValues'
 });
 
+// 'apn.relatedRecordRenderer
+Handsontable.cellTypes.registerCellType('appianRelatedRecord', {
+  renderer: 'apn.relatedRecordRenderer',
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  displayField: 'displayField'
+});
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
 function setGridData(rowsParam)
