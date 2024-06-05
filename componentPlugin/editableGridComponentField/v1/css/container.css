@@ -6,7 +6,8 @@
 }  */
 
 #myGrid {
-  height: 800px;
+  height: 200px;
+  width: 100%;
   margin: 0;
   padding: 0;
   /* overflow: hidden; */
@@ -53,10 +54,19 @@
     text-overflow: ellipsis;
 }
 
+/* sorting arrow indicator */
+.handsontable span.colHeader.columnSorting:before {
+  background-position-x: right;
+  padding-left: 0px;
+  position: absolute !important;
+  right: 0px !important;
+}
+
+
 
 /* button in header */
 .handsontable thead th .changeType  {
-  display: block;
+  /* display: block; */
   margin: 0px;
   background-color: inherit;
   content: "";
@@ -66,15 +76,15 @@
   border: none;
   opacity: 0;
   transition: opacity 0.3s ease;
-  padding: 0px;
+  /* padding: 0px; */
 }
 
 .handsontable thead th:hover .changeType{
-  display: block;
+  /* display: block; */
   opacity: 1;
   color: #f0f0f0;
   border: none;
-  margin: 0px;
+  /* margin: 0px; */
 }
 
 

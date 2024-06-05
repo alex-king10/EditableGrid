@@ -73,13 +73,9 @@ export function progressBarRenderer(
   
 
 export function userRenderer(instance, td, row, col, prop, value, cellProperties) {
-  // console.log([instance, td, row, col, prop, value, cellProperties]);
-  console.log(value);
-
   var userID;
 
   try {
-    // var jsonObject = JSON.parse(value);
     
     if ('id' in value) {
       userID = value.id;
@@ -89,8 +85,46 @@ export function userRenderer(instance, td, row, col, prop, value, cellProperties
   } catch (error) { console.error(error); }
 
   const text = document.createTextNode(userID);
-  // const text = document.createTextNode(JSON.stringify(value));
-  // console.log(text);
+
+  td.innerText = '';
+  td.appendChild(text);
+  td.classList.add('cellStyle-appianObject'); // Add the custom CSS class here
+
+  return td;
+  
+}
+
+export function relatedRecordRenderer(instance, td, row, col, prop, value, cellProperties) {
+  // var userID;
+  let displayField;
+  let displayValue;
+
+  try {
+
+    if ('displayField' in cellProperties) {
+      displayField = cellProperties.displayField;
+
+      console.log("value");
+      console.log(value);
+
+      console.log("displayField");
+      console.log(displayField);
+
+      if (displayField in value) {
+        displayValue = value[displayField];
+        console.log(displayValue);
+      }
+
+      // displayValue = value.displayField;
+      // console.log(displayValue);
+
+    } else {
+      displayValue = JSON.stringify(value);
+    }
+  } catch (error) { console.error(error); }
+
+  const text = document.createTextNode(displayValue);
+
   td.innerText = '';
   td.appendChild(text);
   td.classList.add('cellStyle-appianObject'); // Add the custom CSS class here
@@ -175,7 +209,7 @@ function getFormattedTimeAndDate(date) {
   };
   
   // Convert the Date object to a string in the local timezone with specified options
-  let localDateStringWithOptions = date.toLocaleString(undefined, options);
+  // let localDateStringWithOptions = date.toLocaleString(undefined, options);
   
   console.log(localDateStringWithOptions);
 
@@ -189,8 +223,8 @@ export function timeAndDateRenderer(instance, td, row, col, prop, value, cellPro
     // Parse the original datetime string
     const originalDate = new Date(value);
 
-    console.log("Date and Time");
-    const dateTime = getFormattedTimeAndDate(originalDate);
+    // console.log("Date and Time");
+    // const dateTime = getFormattedTimeAndDate(originalDate);
     // Format the date and time components
     const formattedDate = getFormattedDate(originalDate);
     const formattedTime = getFormattedTime(originalDate);
