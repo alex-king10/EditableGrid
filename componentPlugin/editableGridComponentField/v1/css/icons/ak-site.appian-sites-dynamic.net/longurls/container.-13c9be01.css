@@ -5,7 +5,6 @@
   padding: 0;
 }  */
 
-
 #myGrid {
   height: 200px;
   width: 100%;
@@ -33,10 +32,13 @@
 }
 
 .handsontable tbody td,
-.handsontable thead th {
+.handsontable thead th,
+.handsontable tbody th  {
   max-width: 700px;
-  height: 40px; 
+  height: 40px !important;
   overflow: hidden;
+  border-top: 1px !important;
+  vertical-align: middle;
 }
 
 
@@ -50,16 +52,25 @@
 
 /* span with text in header */
 .handsontable span.colHeader {
-    /* display: block !important; */
+    display: block !important;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* sorting arrow indicator */
+.handsontable span.colHeader.columnSorting:before {
+  background-position-x: right;
+  padding-left: 0px;
+  position: absolute !important;
+  right: 0px !important;
+}
+
 
 
 /* button in header */
 .handsontable thead th .changeType  {
   /* display: block; */
-  /* margin: 0px; */
+  margin: 0px;
   background-color: inherit;
   content: "";
   background-image: url('./icons/chevron-down.svg');
@@ -90,18 +101,24 @@
   border-left: 0px;
 }
 
+.handsontable tbody th {
+  border-top-left-radius: 10px;
+  border-left: 0px;
+  border-top: 5px;
+}
+
 .handsontable thead th:last-child {
   border-top-right-radius: 10px;
   border-right: 0px;
 }
 
-.handsontable tr:last-child td:first-child {
+/* .handsontable tr:last-child td:first-child {
   border-bottom-left-radius: 10px
 }
 
 .handsontable tr:last-child td:last-child {
   border-bottom-right-radius: 10px
-}
+} */
 
 
 /* cell classes - styling */

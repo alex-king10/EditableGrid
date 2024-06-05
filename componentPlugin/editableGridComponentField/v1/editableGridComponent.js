@@ -12,13 +12,11 @@ import {
   relatedRecordRenderer
 } from "./customRenderers.js";
 
-// import {
-//   CustomObjectEditor
-// } from "./customEditors.js";
 
 // GLOBAL VAR
 // let data = [];
 let dataMap = [];
+let gridMode = "auto";
 let columnHeaderData = [];
 let columnMetaData = [];
 let colIdxMap = {};
@@ -232,7 +230,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
           // if currDataField is in config param
           if (currColConfig.data == currDataField) {
             // if no title specified, use field name
-            if (currColConfig.title == undefined) {
+            if (currColConfig.title == undefined && gridMode != "worksheet") {
               currColConfig['title'] = currDataField;
             }
 
@@ -247,7 +245,11 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
       // if currColumnObject still null --> not in config param
       if (currColumnObject == null) {
-        currColumnObject = { title: currDataField, data: currDataField };
+        if (gridMode == "worksheet") {
+          currColumnObject = { data: currDataField };
+        } else {
+          currColumnObject = { title: currDataField, data: currDataField };
+        }
       }
 
       columnHeaderData2.push(currColumnObject);
@@ -261,8 +263,6 @@ function setColMetaData2(dataParam, columnConfigParam) {
   return columnHeaderData2;
 
 }
-
-
 
 function setGridHeight(dataParam, styleParam) {
 
@@ -312,15 +312,38 @@ function setGridHeight(dataParam, styleParam) {
 
 function setStyle(styleParam) {
 
-  if (styleParam != null && 'highlightColor' in styleParam) {
-    const highlightColor = styleParam.highlightColor;
-    const area = document.querySelector('.area');
-    if (area) {
-      area.style.background = `${highlightColor} !important`;
-    } else {
-      console.log(area);
+  if (styleParam != null) {
+
+    // set highlight color - not working ATM
+    if ('highlightColor' in styleParam) {
+      const highlightColor = styleParam.highlightColor;
+      const area = document.querySelector('.area');
+      if (area) {
+        area.style.background = `${highlightColor} !important`;
+      } else {
+        console.log(area);
+      }
+    }
+
+    // set mode (worksheet or auto)
+    if ('mode' in styleParam) {
+      if (styleParam.mode == "worksheet") {
+        gridMode = "worksheet";
+        hotGrid.updateSettings({
+          // style edits needed on these
+          rowHeaders: true,
+          colHeaders: true,
+        });
+      } else {
+        gridMode = "auto";
+        hotGrid.updateSettings({
+          rowHeaders: false,
+        });
+      }
+
     }
   }
+
 
 }
 
@@ -328,7 +351,6 @@ function setStyle(styleParam) {
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
 {
-
 
   if (cellMeta != null)
   {
@@ -346,10 +368,14 @@ function onChange(cellMeta, newValue, source)
 let hotGrid;
 try {
 
+
 // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
     licenseKey: "non-commercial-and-evaluation",
+    formulas: {
+      engine: HyperFormula,
+    },
   });
 } catch (error) {
   console.error(`An error occurred ${error}`);
@@ -416,7 +442,6 @@ Appian.Component.onNewValue(newValues => {
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
-      stretchH: 'all',
       mergeCells: true,
       customBorders: true,
       copyPaste: {
@@ -433,7 +458,7 @@ Appian.Component.onNewValue(newValues => {
       allowInsertRow: true,
       manualColumnMove: false,
       manualColumnResize: true,
-      rowHeaders: false,
+      
       manualRowMove: false,
       rowHeights: 40,
       className: "htMiddle",
