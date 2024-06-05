@@ -35,7 +35,6 @@
 .handsontable thead th,
 .handsontable tbody th  {
   max-width: 700px;
-  height: 40px !important;
   overflow: hidden;
   /* border-top: 1px !important; */
   vertical-align: middle;
@@ -43,6 +42,7 @@
 
 [role="rowheader"] {
   border-left: 0px !important;
+  height: 40px !important;
 }
 
 [role="row"] {
