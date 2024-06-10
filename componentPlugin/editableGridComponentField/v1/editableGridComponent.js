@@ -8,17 +8,62 @@ import {
   timeAndDateRenderer,
   customDateRenderer,
   longTextRenderer,
-  fileRenderer
+  fileRenderer,
+  relatedRecordRenderer
 } from "./customRenderers.js";
 
 
 // GLOBAL VAR
-let data = [];
+// let data = [];
+let dataMap = [];
+let gridMode = "auto";
 let columnHeaderData = [];
 let columnMetaData = [];
+let colIdxMap = {};
 let changeObj = {};
 let columnWidths = [];
 let sumColWidths = 0;
+
+// CREATE CUSTOM EDITORS
+
+class CustomObjectEditor extends Handsontable.editors.TextEditor {
+  createElements() {
+    super.createElements();
+
+    // Create input element for editing
+    this.TEXTAREA = this.hot.rootDocument.createElement("input");
+    this.TEXTAREA.setAttribute("type", "text");
+    this.TEXTAREA.setAttribute("data-hot-input", true);
+    this.textareaStyle = this.TEXTAREA.style;
+    this.textareaStyle.width = 0;
+    this.textareaStyle.height = 0;
+
+    this.TEXTAREA_PARENT.innerText = "";
+    this.TEXTAREA_PARENT.appendChild(this.TEXTAREA);
+  }
+
+  prepare(row, col, prop, td, originalValue, cellProperties) {
+    const idValue = originalValue && originalValue.id ? originalValue.id : "";
+    originalValue = idValue;
+
+    super.prepare(row, col, prop, td, originalValue, cellProperties);
+    this.setValue(idValue);
+  }
+
+  saveValue(value, ctrlDown) {
+    // Create an object with the new id value
+    const newValue = { id: value[0] };
+    let newValueArray = [];
+    newValueArray.push(newValue);
+
+    // super.saveValue(newValue, ctrlDown);
+    super.saveValue(newValueArray, ctrlDown);
+    // Save the new object back to the cell
+    hotGrid.setDataAtCell(this.row, this.col, newValue);
+  }
+
+}
+
 
 // REGISTER CUSTOM RENDERERS
 
@@ -30,16 +75,19 @@ Handsontable.renderers.registerRenderer('apn.dropdownRenderer', dropdownRenderer
 Handsontable.renderers.registerRenderer('apn.timeAndDateRenderer', timeAndDateRenderer);
 Handsontable.renderers.registerRenderer('apn.customDateRenderer', customDateRenderer);
 Handsontable.renderers.registerRenderer('apn.longTextRenderer', longTextRenderer);
+Handsontable.renderers.registerRenderer('apn.relatedRecordRenderer', relatedRecordRenderer);
 
 // CUSTOM CELL TYPES
 
 // Register Group/User Shared Cell Type - appianObject
+  // editor - can't cast from dictionary to user error when saving in Appian interface
 Handsontable.cellTypes.registerCellType('appianObject', {
   renderer: 'apn.userRenderer',
   editor: false,
+  // editor: CustomObjectEditor,
   className: 'cellStyle-appianObject',
   readOnly: true,
-  myCustomProperty: 'foo'
+  // myCustomProperty: 'foo'
 });
 
 // Register Long Text Cell Type
@@ -75,6 +123,13 @@ Handsontable.cellTypes.registerCellType('appianDropdown', {
   choiceValues: 'choiceValues'
 });
 
+// 'apn.relatedRecordRenderer
+Handsontable.cellTypes.registerCellType('appianRelatedRecord', {
+  renderer: 'apn.relatedRecordRenderer',
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  displayField: 'displayField'
+});
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
 function setGridData(rowsParam)
@@ -83,28 +138,33 @@ function setGridData(rowsParam)
   // {
   //   return data;
   // }
-  data = [];
+  // data = [];
+  dataMap = [];
   let currRow = [];
+  let currMapRow = [];
 
   if (rowsParam != null)
   {
     for (let i = 0; i < rowsParam.length; i++)
     {
       if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
-        currRow = changeObj[i];
+        currRow = Object.values(changeObj[i]);
       } else {
-        currRow = Object.values(rowsParam[i]);
+        currRow =  Object.values(rowsParam[i]);
+        currMapRow = rowsParam[i];
       }
 
       // currRow = Object.values(rowsParam[i]);
-      data.push(currRow);
+      // data.push(currRow);
+      dataMap.push(currMapRow);
     }
     // reset changeObj?
     // changeObj = {};
   }
   
-  console.log(data);
-  return data;
+  // console.log(data);
+  console.log(dataMap);
+  return dataMap;
 }
 
 function setColumnData(colHeaderParam, dataParam)
@@ -119,7 +179,6 @@ function setColumnData(colHeaderParam, dataParam)
     if (dataParam != null)
     {
       columnHeaderData = Object.keys(dataParam[0]);
-
     }
   }
 
@@ -150,59 +209,47 @@ function setColMetaData2(dataParam, columnConfigParam) {
   let columnHeaderData2 = [];
   let queryInfo = null;
 
+  // get field names
   if (dataParam != null) {
     queryInfo = Object.keys(dataParam[0]);
-    console.log(queryInfo);
   }
 
   if (queryInfo != null) {
     for (let i = 0; i < queryInfo.length; i++) {
+      // add colName: col Index to map
+      colIdxMap[queryInfo[i]] = i;
       let currDataField = queryInfo[i];
       let currColumnObject = null;
-      console.log("currDataField");
-      console.log(currDataField);
 
       // find if currDataField in columnConfigParam
       if (columnConfigParam != null) {
         for (let j = 0; j < columnConfigParam.length; j++) {
           let currColConfig = columnConfigParam[j];
+          // currColumnObject = currColConfig;
 
           // if currDataField is in config param
-          if (currColConfig.field == currDataField) {
+          if (currColConfig.data == currDataField) {
             // if no title specified, use field name
-            if (currColConfig.title == undefined) {
+            if (currColConfig.title == undefined && gridMode != "worksheet") {
               currColConfig['title'] = currDataField;
             }
 
-            // remove 'field' from object
-            delete currColConfig.field;
-
-            // add modified currColConfid to object
+            // add modified currColConfig to object
             currColumnObject = currColConfig;
 
             break;
           }
 
-          // if (Object.hasOwn(columnConfigParam[j], 'field')) {
-
-          //   console.log(columnConfigParam[j].field);
-
-          //   if (columnConfigParam[j].field == currDataField) {
-
-          //     let fieldName = columnConfigParam[j].field;
-
-          //     currColumnObject = columnConfigParam[j];
-          //     break;
-          //   }
-          // }
         }
       } else { console.error("Column Config Param is null"); }
 
-      console.log(currDataField);
-      console.log(currColumnObject);
       // if currColumnObject still null --> not in config param
       if (currColumnObject == null) {
-        currColumnObject = { title: currDataField };
+        if (gridMode == "worksheet") {
+          currColumnObject = { data: currDataField };
+        } else {
+          currColumnObject = { title: currDataField, data: currDataField };
+        }
       }
 
       columnHeaderData2.push(currColumnObject);
@@ -213,13 +260,9 @@ function setColMetaData2(dataParam, columnConfigParam) {
     console.error("Query info null");
   }
 
-  console.log(columnHeaderData2);
   return columnHeaderData2;
 
-
 }
-
-
 
 function setGridHeight(dataParam, styleParam) {
 
@@ -269,15 +312,38 @@ function setGridHeight(dataParam, styleParam) {
 
 function setStyle(styleParam) {
 
-  if (styleParam != null && 'highlightColor' in styleParam) {
-    const highlightColor = styleParam.highlightColor;
-    const area = document.querySelector('.area');
-    if (area) {
-      area.style.background = `${highlightColor} !important`;
-    } else {
-      console.log(area);
+  if (styleParam != null) {
+
+    // set highlight color - not working ATM
+    if ('highlightColor' in styleParam) {
+      const highlightColor = styleParam.highlightColor;
+      const area = document.querySelector('.area');
+      if (area) {
+        area.style.background = `${highlightColor} !important`;
+      } else {
+        console.log(area);
+      }
+    }
+
+    // set mode (worksheet or auto)
+    if ('mode' in styleParam) {
+      if (styleParam.mode == "worksheet") {
+        gridMode = "worksheet";
+        hotGrid.updateSettings({
+          // style edits needed on these
+          rowHeaders: true,
+          colHeaders: true,
+        });
+      } else {
+        gridMode = "auto";
+        hotGrid.updateSettings({
+          rowHeaders: false,
+        });
+      }
+
     }
   }
+
 
 }
 
@@ -289,10 +355,10 @@ function onChange(cellMeta, newValue, source)
   if (cellMeta != null)
   {
     
-    let dataItem = data[cellMeta.row];
+    let dataItem = dataMap[cellMeta.row];
     let fieldName = columnHeaderData[cellMeta.visualCol];
 
-    // console.log(dataItem);
+    console.log(dataItem);
     changeObj[cellMeta.row] = dataItem;
 
   }
@@ -302,10 +368,14 @@ function onChange(cellMeta, newValue, source)
 let hotGrid;
 try {
 
+
 // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
     licenseKey: "non-commercial-and-evaluation",
+    formulas: {
+      engine: HyperFormula,
+    },
   });
 } catch (error) {
   console.error(`An error occurred ${error}`);
@@ -351,8 +421,8 @@ Appian.Component.onNewValue(newValues => {
     ];
 
     let columnMenu = [
-      "alignment",
-      "---------",
+      // "alignment",
+      // "---------",
       "filter_by_condition",
       "filter_by_condition2",
       "filter_operators",
@@ -370,12 +440,14 @@ Appian.Component.onNewValue(newValues => {
       columns: setColMetaData2(dataParam, configParam),
       // columns: setColMetaData(configParam),
       height: setGridHeight(dataParam, styleParam),
-      // colWidths: columnWidths,
-      multiColumnSorting: true,
       stretchH: 'all',
+      multiColumnSorting: true,
       mergeCells: true,
       customBorders: true,
-      copyPaste: true,
+      copyPaste: {
+        columnsLimit: 25,
+        rowsLimit: 200,
+      },
       dropdownMenu: columnMenu,
       hiddenColumns: {
         indicators: true
@@ -386,7 +458,7 @@ Appian.Component.onNewValue(newValues => {
       allowInsertRow: true,
       manualColumnMove: false,
       manualColumnResize: true,
-      rowHeaders: false,
+      
       manualRowMove: false,
       rowHeights: 40,
       className: "htMiddle",
@@ -404,18 +476,20 @@ Appian.Component.onNewValue(newValues => {
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
-
-      console.log([source]);
   
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {
   
         if (newValue != oldValue)
         {
-          let cellMeta = hotGrid.getCellMeta(row, prop);
-          onChange(cellMeta, newValue, [source]);
-          // console.log(changeObj);
-          Appian.Component.saveValue("changeData", changeObj);
+
+          let colIdx = colIdxMap[prop];
+          let cellMeta;
+          if (colIdx != undefined) {
+            cellMeta = hotGrid.getCellMeta(row, colIdx);
+            onChange(cellMeta, newValue, [source]);
+            Appian.Component.saveValue("changeData", Object.values(changeObj));
+          }
         }
   
       });
@@ -434,12 +508,11 @@ Appian.Component.onNewValue(newValues => {
       // console.log(cellMeta);
     });
 
-    hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
-      console.log(currentSortConfig);
-      console.log(destinationSortConfigs);
-    });
+    // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
+    //   console.log(currentSortConfig);
+    //   console.log(destinationSortConfigs);
+    // });
 
-    // // if column is resized, track new values. Make bigger if needed.
 
 
   } catch (error) {

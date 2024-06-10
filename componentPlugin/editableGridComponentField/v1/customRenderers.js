@@ -94,6 +94,45 @@ export function userRenderer(instance, td, row, col, prop, value, cellProperties
   
 }
 
+export function relatedRecordRenderer(instance, td, row, col, prop, value, cellProperties) {
+  // var userID;
+  let displayField;
+  let displayValue;
+
+  try {
+
+    if ('displayField' in cellProperties) {
+      displayField = cellProperties.displayField;
+
+      console.log("value");
+      console.log(value);
+
+      console.log("displayField");
+      console.log(displayField);
+
+      if (displayField in value) {
+        displayValue = value[displayField];
+        console.log(displayValue);
+      }
+
+      // displayValue = value.displayField;
+      // console.log(displayValue);
+
+    } else {
+      displayValue = JSON.stringify(value);
+    }
+  } catch (error) { console.error(error); }
+
+  const text = document.createTextNode(displayValue);
+
+  td.innerText = '';
+  td.appendChild(text);
+  td.classList.add('cellStyle-appianObject'); // Add the custom CSS class here
+
+  return td;
+  
+}
+
 export function dropdownRenderer(instance, td, row, col, prop, value, cellProperties) {
   // console.log([instance, td, row, col, prop, value, cellProperties]);
 
@@ -184,7 +223,7 @@ export function timeAndDateRenderer(instance, td, row, col, prop, value, cellPro
     // Parse the original datetime string
     const originalDate = new Date(value);
 
-    console.log("Date and Time");
+    // console.log("Date and Time");
     // const dateTime = getFormattedTimeAndDate(originalDate);
     // Format the date and time components
     const formattedDate = getFormattedDate(originalDate);

@@ -32,7 +32,8 @@
 }
 
 .handsontable tbody td,
-.handsontable thead th {
+.handsontable thead th,
+.handsontable tbody th  {
   max-width: 700px;
   overflow: hidden;
   /* border-top: 1px !important; */
@@ -57,12 +58,23 @@
   font-weight: 450;
 }
 
+
+
 /* span with text in header */
 .handsontable span.colHeader {
     display: block !important;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* sorting arrow indicator */
+.handsontable span.colHeader.columnSorting:before {
+  background-position-x: right;
+  padding-left: 0px;
+  position: absolute !important;
+  right: 0px !important;
+}
+
 
 
 /* button in header */
@@ -93,16 +105,23 @@
   content: "" !important;
 }
 
-
+/* top left corner */
 .handsontable thead th:first-child {
   border-top-left-radius: 10px;
   border-left: 0px;
 }
 
-.handsontable thead th:last-child {
+.handsontable thead th:last-child[role="columnheader"] {
   border-top-right-radius: 10px;
   border-right: 0px;
 }
+
+/* removes bottom border from row - looks weird when not AUTO */
+/* 
+.handsontable tbody tr:last-child td,
+.handsontable tbody tr:last-child th {
+  border-bottom: 0px !important;
+} */
 
 /* .handsontable tr:last-child td:first-child {
   border-bottom-left-radius: 10px
