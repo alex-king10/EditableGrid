@@ -275,7 +275,7 @@ function setGridHeight(dataParam, styleParam) {
           let heightValue = styleParam.height;
           if (heightValue == "AUTO")
             {
-              let calcHeight = 41 + (dataParam.length * 41);
+              let calcHeight = 46 + (dataParam.length * 41);
 
               if (dataParam.length == 0) {
                 calcHeight = 200;
@@ -368,7 +368,6 @@ function onChange(cellMeta, newValue, source)
 let hotGrid;
 try {
 
-
 // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
@@ -421,8 +420,6 @@ Appian.Component.onNewValue(newValues => {
     ];
 
     let columnMenu = [
-      // "alignment",
-      // "---------",
       "filter_by_condition",
       "filter_by_condition2",
       "filter_operators",
@@ -456,7 +453,7 @@ Appian.Component.onNewValue(newValues => {
       allowInsertColumn: false,
       filters: true,
       allowInsertRow: true,
-      manualColumnMove: false,
+      manualColumnMove: true,
       manualColumnResize: true,
       
       manualRowMove: false,
@@ -506,6 +503,14 @@ Appian.Component.onNewValue(newValues => {
       console.log(movedColumns, finalIndex, dropIndex, movePossible, orderChanged);
       // let cellMeta = hotGrid.getCellMeta(1,1);
       // console.log(cellMeta);
+    });
+
+    hotGrid.addHook('afterSelection', (row, column, row2, column2, preventScrolling, selectionLayerLevel) => {
+      console.log('row');
+      console.log(row);
+
+      console.log('row2');
+      console.log(row2);
     });
 
     // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {

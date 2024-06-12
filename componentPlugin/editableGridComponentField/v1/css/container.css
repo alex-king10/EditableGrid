@@ -6,6 +6,11 @@
 }  */
 
 #myGrid {
+  /* create color palette  */
+  --header-color: color-mix(in srgb, #fff, #181d1f 3%);
+  --border-color: color-mix(in srgb, #fff, #181d1f 15%);
+  --highlighted-header-color: color-mix(in srgb, #fff, #181d1f 7%);
+
   height: 200px;
   width: 100%;
   margin: 0;
@@ -13,50 +18,78 @@
   /* overflow: hidden; */
   overflow: auto !important;
   border-radius: 10px;
-  border-right: 1px solid #ccc;
-  border-left: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
+  border-right: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+
 }
 
 
-.handsontable tbody td {
+#myGrid .handsontable tbody td:not(.listbox) {
   padding-left: 15px;
   padding-right: 15px;
   font-size: 14px;
   border-left: 0px !important;
   border-right: 0px;
+  border-bottom: 1px solid var(--border-color);
   height: 40px;
   overflow: hidden; /* Hide overflow text */
   text-overflow: ellipsis; /* Show ellipsis for overflow text */
   white-space: nowrap;
 }
 
-.handsontable tbody td,
+.handsontable tbody td:not(.listbox),
 .handsontable thead th,
 .handsontable tbody th  {
+  /* height: 41px !important; */
   max-width: 700px;
   overflow: hidden;
-  /* border-top: 1px !important; */
+  font-weight: 450;
   vertical-align: middle;
 }
 
-[role="rowheader"] {
-  height: 40px !important;
-  border-left: 0px !important;
+.handsontable thead [role="columnheader"],
+.handsontable thead th {
+  text-align: left;
+  padding: 10px !important;
+  height: 25px !important;
+  font-size: 14px;
+  font-weight: 450;
+  background-color: var(--header-color);
+  border-color: var(--border-color);
 }
+
+.handsontable thead [role="columnheader"].ht__highlight {
+  background-color: var(--highlighted-header-color) !important;
+}
+
+.handsontable tbody [role="rowheader"] {
+  height: 41px !important;
+  border-left: 0px !important;
+  background-color: var(--header-color);
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.handsontable tbody [role="rowheader"].ht__highlight {
+  background-color: var(--highlighted-header-color) !important;
+}
+
+/* row and col header styling */
+
 
 [role="row"] {
   border-left: 0px !important;
 }
 
 
+/* 
 .handsontable thead th {
   text-align: left;
   padding: 10px !important;
   height: auto !important;
   font-size: 14px;
   font-weight: 450;
-}
+} */
 
 
 
@@ -103,6 +136,17 @@
 
 .handsontable .changeType:before{
   content: "" !important;
+}
+
+/* dropdown menu icon */
+.htAutocompleteArrow {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  content: "";
+}
+
+td:hover .htAutocompleteArrow {
+  opacity: 1;
 }
 
 /* top left corner */
