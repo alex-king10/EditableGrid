@@ -505,13 +505,6 @@ Appian.Component.onNewValue(newValues => {
       // console.log(cellMeta);
     });
 
-    hotGrid.addHook('afterSelection', (row, column, row2, column2, preventScrolling, selectionLayerLevel) => {
-      console.log('row');
-      console.log(row);
-
-      console.log('row2');
-      console.log(row2);
-    });
 
     // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
     //   console.log(currentSortConfig);
