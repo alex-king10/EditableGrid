@@ -100,6 +100,7 @@ Handsontable.cellTypes.registerCellType('longText', {
 Handsontable.cellTypes.registerCellType('appianDateAndTime', {
   renderer: 'apn.timeAndDateRenderer',
   // editor:  Handsontable.editors.NumericEditor,
+  editor: false,
   className: 'cellStyle-appianObject',
   // readOnly: true,
 });
@@ -134,11 +135,7 @@ Handsontable.cellTypes.registerCellType('appianRelatedRecord', {
 // INSTANTIATE GRID W/ DATA AND COLUMN
 function setGridData(rowsParam)
 {
-  // if (rowsParam == null)
-  // {
-  //   return data;
-  // }
-  // data = [];
+
   dataMap = [];
   let currRow = [];
   let currMapRow = [];
@@ -153,6 +150,7 @@ function setGridData(rowsParam)
         currRow =  Object.values(rowsParam[i]);
         currMapRow = rowsParam[i];
       }
+      // currMapRow = rowsParam[i];
 
       // currRow = Object.values(rowsParam[i]);
       // data.push(currRow);
@@ -162,8 +160,9 @@ function setGridData(rowsParam)
     // changeObj = {};
   }
   
-  // console.log(data);
   console.log(dataMap);
+  console.log(rowsParam);
+
   return dataMap;
 }
 
@@ -378,7 +377,6 @@ async function getLoggedInUser() {
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
-    console.log(response);
     return response.body;
   })
   .then( readableStream => {
@@ -407,25 +405,6 @@ async function getLoggedInUser() {
     console.error('Fetch error:', error);
   });
 
-  // try {
-  //   const response = await fetch(myURL, {
-  //     method: 'GET',
-  //     headers: {
-  //       'Content-Type': 'application/json'
-  //     }
-  //   });
-  //   if (!response.ok) {
-  //       throw new Error(`HTTP error! status: ${response.status}`);
-  //   }
-
-  //   console.log(response);
-
-  //   // const data = await response.json(); // or response.text(), response.blob(), etc.
-  //   // console.log(data);
-
-  // } catch (error) {
-  //   console.error('Error making request:', error);
-  // }
 }
 
 let hotGrid;
@@ -497,9 +476,9 @@ Appian.Component.onNewValue(newValues => {
   
     // update grid settings
     hotGrid.updateSettings({
+      columns: setColMetaData2(dataParam, configParam),
       data: setGridData(dataParam),
       // colHeaders: setColumnData(colHeaderParam, dataParam),
-      columns: setColMetaData2(dataParam, configParam),
       // columns: setColMetaData(configParam),
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
@@ -520,7 +499,7 @@ Appian.Component.onNewValue(newValues => {
       allowInsertRow: true,
       manualColumnMove: true,
       manualColumnResize: true,
-      
+      // nestedRows: true,
       manualRowMove: false,
       rowHeights: 40,
       className: "htMiddle",
@@ -538,10 +517,9 @@ Appian.Component.onNewValue(newValues => {
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
-  
+
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {
-  
         if (newValue != oldValue)
         {
 
@@ -549,6 +527,7 @@ Appian.Component.onNewValue(newValues => {
           let cellMeta;
           if (colIdx != undefined) {
             cellMeta = hotGrid.getCellMeta(row, colIdx);
+
             onChange(cellMeta, newValue, [source]);
             Appian.Component.saveValue("changeData", Object.values(changeObj));
           }
