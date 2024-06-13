@@ -1,4 +1,3 @@
-// import { data } from "./constants.js";
 import { 
   safeHtmlRenderer, 
   coverRenderer,
@@ -12,6 +11,7 @@ import {
   relatedRecordRenderer
 } from "./customRenderers.js";
 
+import {LOGGED_IN_USER_SERVLET_REQUEST_URL} from "./constants.js";
 
 // GLOBAL VAR
 // let data = [];
@@ -365,8 +365,73 @@ function onChange(cellMeta, newValue, source)
 
 }
 
+async function getLoggedInUser() {
+  const myURL = LOGGED_IN_USER_SERVLET_REQUEST_URL;
+  
+
+  // handle readableStream
+    // add include credentials
+  fetch(myURL, {
+    credentials: 'include'
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    console.log(response);
+    return response.body;
+  })
+  .then( readableStream => {
+    const reader = readableStream.getReader();
+    const decoder = new TextDecoder();
+    let result = '';
+
+    function read() {
+      reader.read().then(( { done, value }) => {
+        if (done) {
+          console.log("Stream done");
+          console.log(result);
+          return;
+        }
+
+        result += decoder.decode(value, { stream: true});
+        read();
+      }).catch(error=> {
+        console.error('Error reading stream:', error);
+      });
+    }
+
+    read();
+  })
+  .catch(error => {
+    console.error('Fetch error:', error);
+  });
+
+  // try {
+  //   const response = await fetch(myURL, {
+  //     method: 'GET',
+  //     headers: {
+  //       'Content-Type': 'application/json'
+  //     }
+  //   });
+  //   if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //   }
+
+  //   console.log(response);
+
+  //   // const data = await response.json(); // or response.text(), response.blob(), etc.
+  //   // console.log(data);
+
+  // } catch (error) {
+  //   console.error('Error making request:', error);
+  // }
+}
+
 let hotGrid;
 try {
+
+  getLoggedInUser();
 
 // init grid
   const container = document.getElementById("myGrid");
