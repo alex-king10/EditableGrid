@@ -160,6 +160,16 @@ td:hover .htAutocompleteArrow {
   border-right: 0px;
 }
 
+.htSelectEditor {
+  /*
+   * This hack enables to change <select> dimensions in WebKit browsers
+   */
+  -webkit-appearance: menulist-button !important;
+  position: absolute;
+  width: auto;
+  z-index: 300;
+}
+
 /* removes bottom border from row - looks weird when not AUTO */
 /* 
 .handsontable tbody tr:last-child td,

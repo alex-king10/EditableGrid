@@ -11,20 +11,36 @@ import {
   relatedRecordRenderer
 } from "./customRenderers.js";
 
-import {LOGGED_IN_USER_SERVLET_REQUEST_URL} from "./constants.js";
+import {LOGGED_IN_USER_SERVLET_REQUEST_URL, getUserInfoServlet, getUserInfo } from "./constants.js";
 
 // GLOBAL VAR
 // let data = [];
 let dataMap = [];
 let gridMode = "auto";
-let columnHeaderData = [];
-let columnMetaData = [];
 let colIdxMap = {};
 let changeObj = {};
-let columnWidths = [];
-let sumColWidths = 0;
+const CUSTOM_CELL_TYPES = ["appianUser", "appianGroup"];
+let currCustomCellTypes = [];
+let columnHeaderData = [];
+// const customGridOptions = ["formulas"];
 
 // CREATE CUSTOM EDITORS
+
+class PasswordEditor extends Handsontable.editors.TextEditor {
+  createElements() {
+    super.createElements();
+    console.log(this);
+    this.TEXTAREA = this.hot.rootDocument.createElement('input');
+    this.TEXTAREA.setAttribute('type', 'password');
+    this.TEXTAREA.setAttribute('data-hot-input', true); // Makes the element recognizable by HOT as its own component's element.
+    this.textareaStyle = this.TEXTAREA.style;
+    this.textareaStyle.width = 0;
+    this.textareaStyle.height = 0;
+
+    this.TEXTAREA_PARENT.innerText = '';
+    this.TEXTAREA_PARENT.appendChild(this.TEXTAREA);
+  }
+}
 
 class CustomObjectEditor extends Handsontable.editors.TextEditor {
   createElements() {
@@ -65,6 +81,106 @@ class CustomObjectEditor extends Handsontable.editors.TextEditor {
 }
 
 
+// CUSTOM SELECT EDITOR
+
+class SelectEditor extends Handsontable.editors.BaseEditor {
+  /**
+   * Initializes editor instance, DOM Element and mount hooks.
+   */
+  init() {
+    // Create detached node, add CSS class and make sure its not visible
+    this.select = this.hot.rootDocument.createElement('SELECT');
+    this.select.classList.add('htSelectEditor');
+    this.select.style.display = 'none';
+
+    // Attach node to DOM, by appending it to the container holding the table
+    this.hot.rootElement.appendChild(this.select);
+  }
+
+  prepareOptions(optionsToPrepare) {
+    let preparedOptions = {};
+  
+    if (Array.isArray(optionsToPrepare)) {
+      for (let i = 0, len = optionsToPrepare.length; i < len; i++) {
+        preparedOptions[optionsToPrepare[i]] = optionsToPrepare[i];
+      }
+  
+    } else if (typeof optionsToPrepare === 'object') {
+      preparedOptions = optionsToPrepare;
+    }
+  
+    return preparedOptions;
+  }
+  
+
+    // Create options in prepare() method
+  prepare(row, col, prop, td, originalValue, cellProperties) {
+      // Remember to invoke parent's method
+      super.prepare(row, col, prop, td, originalValue, cellProperties);
+
+      const selectOptions = this.cellProperties.selectOptions;
+      let options;
+
+      if (typeof selectOptions === 'function') {
+        options = this.prepareOptions(selectOptions(this.row, this.col, this.prop));
+      } else {
+        options = this.prepareOptions(selectOptions);
+      }
+
+      this.select.innerText = '';
+
+      Object.keys(options).forEach((key) => {
+        const optionElement = this.hot.rootDocument.createElement('OPTION');
+        optionElement.value = key;
+        optionElement.innerText = options[key];
+        this.select.appendChild(optionElement);
+      });
+  }
+
+  getValue() {
+    return this.select.value;
+  }
+  
+  setValue(value) {
+    this.select.value = value;
+  }
+  
+  open() {
+    const {
+      top,
+      start,
+      width,
+      height,
+    } = this.getEditedCellRect();
+    const selectStyle = this.select.style;
+  
+    this._opened = true;
+  
+    selectStyle.height = `${height}px`;
+    selectStyle.minWidth = `${width}px`;
+    selectStyle.top = `${top}px`;
+    selectStyle[this.hot.isRtl() ? 'right' : 'left'] = `${start}px`;
+    selectStyle.margin = '0px';
+    selectStyle.display = '';
+  }
+  
+  focus() {
+    this.select.focus();
+  }
+  
+  close() {
+    this._opened = false;
+    this.select.style.display = 'none';
+  }
+  
+
+}
+
+Handsontable.editors.registerEditor('appianSelectEditor', SelectEditor);
+
+
+
+
 // REGISTER CUSTOM RENDERERS
 
 Handsontable.renderers.registerRenderer('my.progressBarRenderer', progressBarRenderer);
@@ -79,14 +195,25 @@ Handsontable.renderers.registerRenderer('apn.relatedRecordRenderer', relatedReco
 
 // CUSTOM CELL TYPES
 
-// Register Group/User Shared Cell Type - appianObject
-  // editor - can't cast from dictionary to user error when saving in Appian interface
-Handsontable.cellTypes.registerCellType('appianObject', {
+// Register User Cell Type - appianObject
+Handsontable.cellTypes.registerCellType('appianUser', {
   renderer: 'apn.userRenderer',
   editor: false,
   // editor: CustomObjectEditor,
   className: 'cellStyle-appianObject',
   readOnly: true,
+  displayField: 'displayField'
+  // myCustomProperty: 'foo'
+});
+
+// Register Group Cell Type - appianObject
+Handsontable.cellTypes.registerCellType('appianGroup', {
+  renderer: 'apn.userRenderer',
+  editor: false,
+  // editor: CustomObjectEditor,
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  displayField: 'displayField'
   // myCustomProperty: 'foo'
 });
 
@@ -132,8 +259,28 @@ Handsontable.cellTypes.registerCellType('appianRelatedRecord', {
   displayField: 'displayField'
 });
 
+// REGISTER EDITORS
+Handsontable.editors.registerEditor('appianPasswordEditor', PasswordEditor);
+
+
+// DATA PROCESSING FUNCTIONS
+async function preprocessData(fieldMetaData, data) {
+  let type = fieldMetaData.type;
+  let displayField;
+  if ('displayField' in fieldMetaData) { displayField = fieldMetaData.displayField; }
+
+  let newData = "";
+  if (type == 'appianUser') {
+    if ('id' in data) { data = data.id; }
+    newData = await getUserInfo(data, displayField);
+  }
+
+  return newData;
+}
+
+
 // INSTANTIATE GRID W/ DATA AND COLUMN
-function setGridData(rowsParam)
+async function setGridData(rowsParam, currCustomCellTypes)
 {
 
   dataMap = [];
@@ -143,65 +290,45 @@ function setGridData(rowsParam)
   if (rowsParam != null)
   {
     for (let i = 0; i < rowsParam.length; i++)
-    {
+    
       if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
         currRow = Object.values(changeObj[i]);
       } else {
-        currRow =  Object.values(rowsParam[i]);
+        // currRow =  Object.values(rowsParam[i]);
         currMapRow = rowsParam[i];
       }
-      // currMapRow = rowsParam[i];
+      // Collect promises
+      let promises = [];
+      
+      // check if data needs to be preprocessed
+      currCustomCellTypes.forEach((customCell) => {
+        let field = Object.keys(customCell)[0];
+        let fieldMetaData = customCell[field];
+        let currData = currMapRow[field];
 
-      // currRow = Object.values(rowsParam[i]);
-      // data.push(currRow);
+        if (field in currMapRow) {
+          promises.push(
+            preprocessData(fieldMetaData, currData).then(newData => {
+              console.log(newData);
+              currMapRow[field] = newData.content;
+            }).catch(error => {
+              console.error(error);
+            })
+          );
+
+        }
+
+      });
+
+      await Promise.all(promises);
+      
       dataMap.push(currMapRow);
-    }
-    // reset changeObj?
-    // changeObj = {};
   }
   
   console.log(dataMap);
-  console.log(rowsParam);
+  hotGrid.updateSettings({data: dataMap});
 
   return dataMap;
-}
-
-function setColumnData(colHeaderParam, dataParam)
-{
-  columnHeaderData = [];
-
-  if (colHeaderParam != null)
-  {
-    columnHeaderData = colHeaderParam;
-    return colHeaderParam;
-  } else {
-    if (dataParam != null)
-    {
-      columnHeaderData = Object.keys(dataParam[0]);
-    }
-  }
-
-
-  return columnHeaderData;
-
-}
-
-function setColMetaData(columnConfigParam)
-{
-  if (columnConfigParam != null) {
-    let filteredMetaData = [];
-
-    for (let i = 0; i < columnConfigParam.length; i++) {
-      if ("readOnly" in Object.keys(columnConfigParam[i])) {
-        if (columnConfigParam[i]["readOnly"] === false) {
-          delete columnConfigParam[i].readOnly;
-        }
-      }
-    }
-  }
-
-  columnMetaData = columnConfigParam;
-  return columnConfigParam;
 }
 
 function setColMetaData2(dataParam, columnConfigParam) {
@@ -251,6 +378,22 @@ function setColMetaData2(dataParam, columnConfigParam) {
         }
       }
 
+      // check if currColumnObject is a special type
+      if ('type' in currColumnObject) {
+        if ( CUSTOM_CELL_TYPES.includes(currColumnObject.type) ) {
+          let colObj = {};
+          let colData = {};
+          colData['type'] = currColumnObject.type;
+          if ('displayField' in currColumnObject) {
+            colData['displayField'] = currColumnObject.displayField;
+          }
+          colObj[currColumnObject.data] = colData;
+
+          currCustomCellTypes.push(colObj);
+
+        }
+      }
+
       columnHeaderData2.push(currColumnObject);
 
     }
@@ -259,6 +402,9 @@ function setColMetaData2(dataParam, columnConfigParam) {
     console.error("Query info null");
   }
 
+  console.log(currCustomCellTypes);
+  console.log("End of setColMeta");
+  columnHeaderData = columnHeaderData2;
   return columnHeaderData2;
 
 }
@@ -346,6 +492,23 @@ function setStyle(styleParam) {
 
 }
 
+// function setCustomGridOption(option) {
+  
+// }
+
+// function setGridOptions(gridOptionsParam) {
+//   if (gridOptionsParam != null) {
+//     gridOptionsParam.forEach((option) => {
+//       // handle custom options (formulas)
+//       if (option in customGridOptions) {
+        
+//       } else {
+//         hotGrid.updateSettings(option);
+//       }
+//     });
+//   }
+// }
+
 
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
@@ -355,7 +518,7 @@ function onChange(cellMeta, newValue, source)
   {
     
     let dataItem = dataMap[cellMeta.row];
-    let fieldName = columnHeaderData[cellMeta.visualCol];
+    // let fieldName = columnHeaderData[cellMeta.visualCol];
 
     console.log(dataItem);
     changeObj[cellMeta.row] = dataItem;
@@ -363,6 +526,8 @@ function onChange(cellMeta, newValue, source)
   }
 
 }
+
+
 
 async function getLoggedInUser() {
   const myURL = LOGGED_IN_USER_SERVLET_REQUEST_URL;
@@ -410,15 +575,15 @@ async function getLoggedInUser() {
 let hotGrid;
 try {
 
-  getLoggedInUser();
+  // getLoggedInUser();
 
 // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
     licenseKey: "non-commercial-and-evaluation",
-    formulas: {
-      engine: HyperFormula,
-    },
+    // formulas: {
+    //   engine: HyperFormula,
+    // },
   });
 } catch (error) {
   console.error(`An error occurred ${error}`);
@@ -472,12 +637,15 @@ Appian.Component.onNewValue(newValues => {
     ];
 
     setStyle(styleParam);
+    // setColMetaData2(dataParam, configParam);
+    // setGridData(dataParam, currCustomCellTypes);
 
   
     // update grid settings
     hotGrid.updateSettings({
       columns: setColMetaData2(dataParam, configParam),
-      data: setGridData(dataParam),
+      // data: setGridData(dataParam, currCustomCellTypes),
+      // data: setGridData(dataParam),
       // colHeaders: setColumnData(colHeaderParam, dataParam),
       // columns: setColMetaData(configParam),
       height: setGridHeight(dataParam, styleParam),
@@ -499,11 +667,13 @@ Appian.Component.onNewValue(newValues => {
       allowInsertRow: true,
       manualColumnMove: true,
       manualColumnResize: true,
-      // nestedRows: true,
+      // minSpareRows: 1,
       manualRowMove: false,
       rowHeights: 40,
       className: "htMiddle",
     });
+
+    setGridData(dataParam, currCustomCellTypes);
 
     if (gridOptionsParam != null)
     {   
@@ -535,6 +705,12 @@ Appian.Component.onNewValue(newValues => {
   
       });
   
+    });
+
+    hotGrid.addHook('beforeChange', (changes, [source]) => {
+      changes?.forEach(([row, prop, oldValue, newValue]) => {
+        console.log([row, prop, oldValue, newValue]);
+      });
     });
 
     // Function to call after a new row has been created

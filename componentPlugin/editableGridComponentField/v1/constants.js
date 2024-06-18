@@ -50,12 +50,69 @@ export const CELL_CLASS_RULES_MAP = {
     "numRangeCellClassRules": numRangeCellClassRules
 }
 
+
 // servlet constants
+
 const BASE_URL =
   window.location != window.parent.location
     ? document.referrer
     : document.location.href;
 export const LOGGED_IN_USER_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getloggedinuser`;
+export const USER_INFO_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getuserinfo`;
+
+export async function getUserInfo(userID, displayField) {
+    let url = `${USER_INFO_SERVLET_REQUEST_URL}?userID=${encodeURIComponent(userID)}&displayField=${encodeURIComponent(displayField)}`;
+    const response = await fetch(url, {
+        credentials: 'include'
+    });
+    const result = await response.json();
+    return result;
+}
+
+export function getUserInfoServlet(userID, displayField) {
+    // const myURL = LOGGED_IN_USER_SERVLET_REQUEST_URL;
+    // userID = "admin.user";
+    // displayField = "fullName";
+
+    let url = `${USER_INFO_SERVLET_REQUEST_URL}?userID=${encodeURIComponent(userID)}&displayField=${encodeURIComponent(displayField)}`;
+    // handle readableStream
+    fetch(url, {
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+    //   console.log(response);
+      return response.body;
+    })
+    .then( readableStream => {
+      const reader = readableStream.getReader();
+      const decoder = new TextDecoder();
+      let result = '';
+  
+      function read() {
+        reader.read().then(( { done, value }) => {
+          if (done) {
+            console.log("Stream done");
+            console.log(result); 
+            return result;
+          }
+  
+          result += decoder.decode(value, { stream: true});
+          read();
+        }).catch(error=> {
+          console.error('Error reading stream:', error);
+        });
+      }
+  
+      read();
+    })
+    .catch(error => {
+      console.error('Fetch error:', error);
+    });
+  
+  }
 
 
 export const SELECTED_CLASS = "selected";

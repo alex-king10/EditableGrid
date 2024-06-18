@@ -12,5 +12,11 @@
         </description>
         <url-pattern>/getloggedinuser</url-pattern>
     </servlet>
+    <servlet name="Get User Info" key="getUserInfo" class="com.appiancorp.cto.editablegrid.servlet.GetUserInfoServlet">
+        <description>
+            Servlet to get user information.
+        </description>
+        <url-pattern>/getuserinfo</url-pattern>
+    </servlet>
 
 </appian-plugin>
