@@ -32,6 +32,7 @@ public class GetLoggedInUserServlet extends AppianServlet {
 //do i need to add something to allow CORS requests??
         JSONObject result = new JSONObject();
         String financeUUID = "168e5b0c-8188-45be-be8a-588dcd20e84c";
+        String pmUUID = "d10b0644-f5b5-4059-be50-baee40a1cf56";
         try {
             String getNameExpression = String.format("tostring(recordType!{%s})", financeUUID);
             TypedValue expressionResult = pds.evaluateExpression(getNameExpression);

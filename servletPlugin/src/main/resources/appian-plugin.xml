@@ -18,5 +18,11 @@
         </description>
         <url-pattern>/getuserinfo</url-pattern>
     </servlet>
+    <servlet name="Get Group Info" key="getGroupInfo" class="com.appiancorp.cto.editablegrid.servlet.GetGroupInfoServlet">
+        <description>
+            Servlet to get user information.
+        </description>
+        <url-pattern>/getgroupinfo</url-pattern>
+    </servlet>
 
 </appian-plugin>

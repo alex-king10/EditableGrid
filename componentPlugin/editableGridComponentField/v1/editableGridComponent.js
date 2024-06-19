@@ -11,7 +11,7 @@ import {
   relatedRecordRenderer
 } from "./customRenderers.js";
 
-import {LOGGED_IN_USER_SERVLET_REQUEST_URL, getUserInfoServlet, getUserInfo } from "./constants.js";
+import {LOGGED_IN_USER_SERVLET_REQUEST_URL, getUserInfo, getGroupInfo } from "./constants.js";
 
 // GLOBAL VAR
 // let data = [];
@@ -197,24 +197,19 @@ Handsontable.renderers.registerRenderer('apn.relatedRecordRenderer', relatedReco
 
 // Register User Cell Type - appianObject
 Handsontable.cellTypes.registerCellType('appianUser', {
-  renderer: 'apn.userRenderer',
+  renderer: 'text',
   editor: false,
-  // editor: CustomObjectEditor,
   className: 'cellStyle-appianObject',
   readOnly: true,
   displayField: 'displayField'
-  // myCustomProperty: 'foo'
 });
 
 // Register Group Cell Type - appianObject
 Handsontable.cellTypes.registerCellType('appianGroup', {
-  renderer: 'apn.userRenderer',
+  renderer: 'text',
   editor: false,
-  // editor: CustomObjectEditor,
   className: 'cellStyle-appianObject',
   readOnly: true,
-  displayField: 'displayField'
-  // myCustomProperty: 'foo'
 });
 
 // Register Long Text Cell Type
@@ -264,6 +259,7 @@ Handsontable.editors.registerEditor('appianPasswordEditor', PasswordEditor);
 
 
 // DATA PROCESSING FUNCTIONS
+  // handles differentiation b/w data types
 async function preprocessData(fieldMetaData, data) {
   let type = fieldMetaData.type;
   let displayField;
@@ -273,6 +269,9 @@ async function preprocessData(fieldMetaData, data) {
   if (type == 'appianUser') {
     if ('id' in data) { data = data.id; }
     newData = await getUserInfo(data, displayField);
+  } else if (type == 'appianGroup') {
+    if ('id' in data) { data = data.id; }
+    newData = await getGroupInfo(data, displayField);
   }
 
   return newData;
@@ -299,7 +298,7 @@ async function setGridData(rowsParam, currCustomCellTypes)
       }
       // Collect promises
       let promises = [];
-      
+
       // check if data needs to be preprocessed
       currCustomCellTypes.forEach((customCell) => {
         let field = Object.keys(customCell)[0];
@@ -309,7 +308,6 @@ async function setGridData(rowsParam, currCustomCellTypes)
         if (field in currMapRow) {
           promises.push(
             preprocessData(fieldMetaData, currData).then(newData => {
-              console.log(newData);
               currMapRow[field] = newData.content;
             }).catch(error => {
               console.error(error);
@@ -393,7 +391,6 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
         }
       }
-
       columnHeaderData2.push(currColumnObject);
 
     }
@@ -402,8 +399,6 @@ function setColMetaData2(dataParam, columnConfigParam) {
     console.error("Query info null");
   }
 
-  console.log(currCustomCellTypes);
-  console.log("End of setColMeta");
   columnHeaderData = columnHeaderData2;
   return columnHeaderData2;
 
@@ -553,7 +548,7 @@ async function getLoggedInUser() {
       reader.read().then(( { done, value }) => {
         if (done) {
           console.log("Stream done");
-          console.log(result);
+          // console.log(result);
           return;
         }
 

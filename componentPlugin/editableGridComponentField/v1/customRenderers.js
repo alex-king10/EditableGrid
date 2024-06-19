@@ -1,5 +1,5 @@
 
-import { getUserInfoServlet, USER_INFO_SERVLET_REQUEST_URL } from "./constants.js";
+import { USER_INFO_SERVLET_REQUEST_URL } from "./constants.js";
 
 export function safeHtmlRenderer(instance, td, row, col, prop, value, cellProperties) {
     // WARNING: Be sure you only allow certain HTML tags to avoid XSS threats.
@@ -73,7 +73,7 @@ export function progressBarRenderer(
   td.appendChild(div);
 }
   
-
+// not being used currently. Text renderer works fine.
 export function userRenderer(instance, td, row, col, prop, value, cellProperties) {
   var userID;
   let content;
@@ -82,65 +82,14 @@ export function userRenderer(instance, td, row, col, prop, value, cellProperties
 
   try {
 
-    // might need to move this logic to a function that only runs once?
 
-    // retrieve ID and displayField
-    // if ('id' in value) {
-    //   content = value.id;
-
-    //   if (displayField != undefined && displayFieldOptions.includes(displayField)) {
-    //     // if displayField exists and is valid, make servlet request
-    //     console.log(content);
-    //     console.log(displayField);
-
-    //     let response = getUserInfoServlet(content, displayField); 
-    //     let indexedResponse;
-
-    //     if (response != null && 'displayField' in response) {
-    //       console.log(response);
-    //       if (response.displayField != null) {
-
-    //         indexedResponse = response.displayField;
-    //         // console.log(indexedResponse);
-
-    //       }
-    //     } 
-    //     // content = indexedResponse;
-    //   }
-    // } else {
-    //   content = "";
-    // }
-
-    // if (displayField != undefined) {
-    //   if (displayField == "id") {
-    //     if ('id' in value) {
-    //       content = value.id;
-    //     } else {
-    //       content = JSON.stringify(value);
-    //       console.error("ID not in object");
-    //     }
-    //   }
-    //   else if (displayField == "name") {
-    //     // call servlet here
-    //     // let response = callServlet( "admin.user", "fullName");
-    //     // console.log(response);
-    //     content = "name";
-    //   }
-    // }
     if (value != undefined) {
-      console.log(value);
       content = value;
     }
-    
-    // if ('id' in value) {
-    //   userID = value.id;
-    // } else {
-    //   userID = JSON.stringify(value);
-    // }
+
   } catch (error) { console.error(error); }
 
   const text = document.createTextNode(content);
-  // const text = document.createTextNode(userID);
 
   td.innerText = '';
   td.appendChild(text);
