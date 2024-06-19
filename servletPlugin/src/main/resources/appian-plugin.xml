@@ -18,5 +18,11 @@
         </description>
         <url-pattern>/getuserinfo</url-pattern>
     </servlet>
+    <servlet name="Execute Process" key="executeProcess" class="com.appiancorp.cto.editablegrid.servlet.ExecutePMServlet">
+        <description>
+            Servlet to execute a process model.
+        </description>
+        <url-pattern>/executeprocess</url-pattern>
+    </servlet>
 
 </appian-plugin>
