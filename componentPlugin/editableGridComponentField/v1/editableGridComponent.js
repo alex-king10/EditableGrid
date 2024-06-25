@@ -5,6 +5,7 @@ import {
   userRenderer, 
   dropdownRenderer, 
   timeAndDateRenderer,
+  getFormattedDate,
   customDateRenderer,
   longTextRenderer,
   fileRenderer,
@@ -19,7 +20,7 @@ let dataMap = [];
 let gridMode = "auto";
 let colIdxMap = {};
 let changeObj = {};
-const CUSTOM_CELL_TYPES = ["appianUser", "appianGroup"];
+const CUSTOM_CELL_TYPES = ["appianUser", "appianGroup", "appianDate"];
 let currCustomCellTypes = [];
 let columnHeaderData = [];
 // const customGridOptions = ["formulas"];
@@ -229,10 +230,12 @@ Handsontable.cellTypes.registerCellType('appianDateAndTime', {
 
 // Register Custom Date Cell Type
 Handsontable.cellTypes.registerCellType('appianDate', {
-  renderer: 'apn.customDateRenderer',
-  // editor:  Handsontable.editors.NumericEditor,
+  // renderer: 'date',
+  // type: 'date',
+  renderer: Handsontable.renderers.DateRenderer,
+  editor:  Handsontable.editors.DateEditor,
   className: 'cellStyle-appianObject',
-  readOnly: true,
+  // readOnly: true,
 });
 
 // Register Appian Dropdown ? - will be an extension of their dropdown option
@@ -271,7 +274,12 @@ async function preprocessData(fieldMetaData, data) {
     newData = await getUserInfo(data, displayField);
   } else if (type == 'appianGroup') {
     if ('id' in data) { data = data.id; }
-    newData = await getGroupInfo(data, displayField);
+    newData = await getGroupInfo(data);
+  } else if (type == 'appianDate') {
+    // newData = getFormattedDate(data);
+    newData = new Date(data);
+    newData = getFormattedDate(newData);
+
   }
 
   return newData;
@@ -288,8 +296,9 @@ async function setGridData(rowsParam, currCustomCellTypes)
 
   if (rowsParam != null)
   {
-    for (let i = 0; i < rowsParam.length; i++)
-    
+    for (let i = 0; i < rowsParam.length; i++) {
+
+      // figure out why i can't remove this
       if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
         currRow = Object.values(changeObj[i]);
       } else {
@@ -306,13 +315,20 @@ async function setGridData(rowsParam, currCustomCellTypes)
         let currData = currMapRow[field];
 
         if (field in currMapRow) {
-          promises.push(
-            preprocessData(fieldMetaData, currData).then(newData => {
-              currMapRow[field] = newData.content;
-            }).catch(error => {
-              console.error(error);
-            })
-          );
+          if (fieldMetaData.type == "appianDate") {
+            let newData = new Date(currData);
+            newData = getFormattedDate(newData);
+            currMapRow[field] = newData;
+          } else {
+            promises.push(
+              preprocessData(fieldMetaData, currData).then(newData => {
+                currMapRow[field] = newData.content;
+              }).catch(error => {
+                console.error(error);
+              })
+            );
+          }
+          
 
         }
 
@@ -321,6 +337,8 @@ async function setGridData(rowsParam, currCustomCellTypes)
       await Promise.all(promises);
       
       dataMap.push(currMapRow);
+    }
+    
   }
   
   console.log(dataMap);
@@ -487,22 +505,6 @@ function setStyle(styleParam) {
 
 }
 
-// function setCustomGridOption(option) {
-  
-// }
-
-// function setGridOptions(gridOptionsParam) {
-//   if (gridOptionsParam != null) {
-//     gridOptionsParam.forEach((option) => {
-//       // handle custom options (formulas)
-//       if (option in customGridOptions) {
-        
-//       } else {
-//         hotGrid.updateSettings(option);
-//       }
-//     });
-//   }
-// }
 
 
 // HANDLE CHANGES IN DATA
@@ -639,7 +641,7 @@ Appian.Component.onNewValue(newValues => {
     // update grid settings
     hotGrid.updateSettings({
       columns: setColMetaData2(dataParam, configParam),
-      // data: setGridData(dataParam, currCustomCellTypes),
+      data: setGridData(dataParam, currCustomCellTypes),
       // data: setGridData(dataParam),
       // colHeaders: setColumnData(colHeaderParam, dataParam),
       // columns: setColMetaData(configParam),
@@ -662,13 +664,13 @@ Appian.Component.onNewValue(newValues => {
       allowInsertRow: true,
       manualColumnMove: true,
       manualColumnResize: true,
-      // minSpareRows: 1,
+      minSpareRows: 1,
       manualRowMove: false,
       rowHeights: 40,
       className: "htMiddle",
     });
 
-    setGridData(dataParam, currCustomCellTypes);
+    // setGridData(dataParam, currCustomCellTypes);
 
     if (gridOptionsParam != null)
     {   

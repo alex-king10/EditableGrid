@@ -176,7 +176,7 @@ export function dropdownRenderer(instance, td, row, col, prop, value, cellProper
 }
 
 // Receives a Date object and returns a formattedDate string
-function getFormattedDate(date) {
+export function getFormattedDate(date) {
   // Get the date components
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');

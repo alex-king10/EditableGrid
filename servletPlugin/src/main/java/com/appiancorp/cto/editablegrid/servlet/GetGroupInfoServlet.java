@@ -3,6 +3,8 @@ package com.appiancorp.cto.editablegrid.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -14,6 +16,7 @@ import com.appiancorp.suiteapi.personalization.GroupService;
 import com.appiancorp.suiteapi.personalization.GroupSummary;
 import com.appiancorp.suiteapi.process.ProcessDesignService;
 import com.appiancorp.suiteapi.servlet.AppianServlet;
+import com.appiancorp.suiteapi.type.TypedValue;
 
 public class GetGroupInfoServlet extends AppianServlet {
 //    private static final Logger LOG = LogManager.getLogger(GetLoggedInUserServlet.class);
@@ -33,28 +36,20 @@ public class GetGroupInfoServlet extends AppianServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         JSONObject result = new JSONObject();
 
-//        result.put("Hello?", "hi");
-
-
-        String financeUUID = "168e5b0c-8188-45be-be8a-588dcd20e84c";
-
-        Long groupID = 43L;
 //
         try {
-//            Boolean groupExist = gs.getGroupName(groupID);
-//            result.put("group exists?", groupExist);
-////            groupID = req.getParameter("groupID");
-//            String displayField = req.getParameter("displayField");
-//
-//            result.put("GroupID", groupID);
-            result.put("Hello?", "hi");
-//
-////            if (groupID != -1) {
-////                String groupName = gs.getGroupName(groupID);
-////
-////                result.put("Group Name", groupName);
-////            }
-//
+//            get group ID from request
+            String groupIDString = req.getParameter("groupID");
+            int groupID = Integer.parseInt(groupIDString);
+            String getGroupName = "group(" + groupID + ", \"groupName\")";
+            TypedValue expressionResult = pds.evaluateExpression(getGroupName);
+            result.put("Expression Result", expressionResult);
+
+//            filter group name from response
+            String resultString = expressionResult.getValue().toString();
+
+            result.put("content", resultString);
+
         } catch (Exception e) {
             result.put("Error", e.toString());
         }

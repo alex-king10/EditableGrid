@@ -24,5 +24,11 @@
         </description>
         <url-pattern>/getgroupinfo</url-pattern>
     </servlet>
+    <servlet name="Write Records" key="writeRecords" class="com.appiancorp.cto.editablegrid.servlet.WriteRecordServlet">
+        <description>
+            Servlet to get user information.
+        </description>
+        <url-pattern>/writerecord</url-pattern>
+    </servlet>
 
 </appian-plugin>
