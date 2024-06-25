@@ -1,81 +1,19 @@
 import { 
-  safeHtmlRenderer, 
-  coverRenderer,
-  progressBarRenderer, 
   userRenderer, 
-  dropdownRenderer, 
-  timeAndDateRenderer,
-  customDateRenderer,
-  longTextRenderer,
-  fileRenderer,
-  relatedRecordRenderer
 } from "./customRenderers.js";
 
 import {LOGGED_IN_USER_SERVLET_REQUEST_URL} from "./constants.js";
 
 // GLOBAL VAR
-// let data = [];
 let dataMap = [];
 let gridMode = "auto";
-let columnHeaderData = [];
-let columnMetaData = [];
 let colIdxMap = {};
 let changeObj = {};
-let columnWidths = [];
-let sumColWidths = 0;
-
-// CREATE CUSTOM EDITORS
-
-class CustomObjectEditor extends Handsontable.editors.TextEditor {
-  createElements() {
-    super.createElements();
-
-    // Create input element for editing
-    this.TEXTAREA = this.hot.rootDocument.createElement("input");
-    this.TEXTAREA.setAttribute("type", "text");
-    this.TEXTAREA.setAttribute("data-hot-input", true);
-    this.textareaStyle = this.TEXTAREA.style;
-    this.textareaStyle.width = 0;
-    this.textareaStyle.height = 0;
-
-    this.TEXTAREA_PARENT.innerText = "";
-    this.TEXTAREA_PARENT.appendChild(this.TEXTAREA);
-  }
-
-  prepare(row, col, prop, td, originalValue, cellProperties) {
-    const idValue = originalValue && originalValue.id ? originalValue.id : "";
-    originalValue = idValue;
-
-    super.prepare(row, col, prop, td, originalValue, cellProperties);
-    this.setValue(idValue);
-  }
-
-  saveValue(value, ctrlDown) {
-    // Create an object with the new id value
-    const newValue = { id: value[0] };
-    let newValueArray = [];
-    newValueArray.push(newValue);
-
-    // super.saveValue(newValue, ctrlDown);
-    super.saveValue(newValueArray, ctrlDown);
-    // Save the new object back to the cell
-    hotGrid.setDataAtCell(this.row, this.col, newValue);
-  }
-
-}
 
 
 // REGISTER CUSTOM RENDERERS
 
-Handsontable.renderers.registerRenderer('my.progressBarRenderer', progressBarRenderer);
-Handsontable.renderers.registerRenderer('my.coverRenderer', coverRenderer);
-Handsontable.renderers.registerRenderer('my.fileRenderer', fileRenderer);
 Handsontable.renderers.registerRenderer('apn.userRenderer', userRenderer);
-Handsontable.renderers.registerRenderer('apn.dropdownRenderer', dropdownRenderer);
-Handsontable.renderers.registerRenderer('apn.timeAndDateRenderer', timeAndDateRenderer);
-Handsontable.renderers.registerRenderer('apn.customDateRenderer', customDateRenderer);
-Handsontable.renderers.registerRenderer('apn.longTextRenderer', longTextRenderer);
-Handsontable.renderers.registerRenderer('apn.relatedRecordRenderer', relatedRecordRenderer);
 
 // CUSTOM CELL TYPES
 
@@ -90,47 +28,6 @@ Handsontable.cellTypes.registerCellType('appianObject', {
   // myCustomProperty: 'foo'
 });
 
-// Register Long Text Cell Type
-Handsontable.cellTypes.registerCellType('longText', {
-  renderer: 'apn.longTextRenderer',
-  myCustomProperty: 'foo',
-});
-
-// Register Date and Time Cell Type
-Handsontable.cellTypes.registerCellType('appianDateAndTime', {
-  renderer: 'apn.timeAndDateRenderer',
-  // editor:  Handsontable.editors.NumericEditor,
-  editor: false,
-  className: 'cellStyle-appianObject',
-  // readOnly: true,
-});
-
-// Register Custom Date Cell Type
-Handsontable.cellTypes.registerCellType('appianDate', {
-  renderer: 'apn.customDateRenderer',
-  // editor:  Handsontable.editors.NumericEditor,
-  className: 'cellStyle-appianObject',
-  readOnly: true,
-});
-
-// Register Appian Dropdown ? - will be an extension of their dropdown option
-// maybe to do later. Will just do renderer for now
-Handsontable.cellTypes.registerCellType('appianDropdown', {
-  renderer: 'apn.dropdownRenderer',
-  // editor:  Handsontable.editors.NumericEditor,
-  className: 'cellStyle-appianObject',
-  readOnly: true,
-  choiceLabels: 'choiceLabels',
-  choiceValues: 'choiceValues'
-});
-
-// 'apn.relatedRecordRenderer
-Handsontable.cellTypes.registerCellType('appianRelatedRecord', {
-  renderer: 'apn.relatedRecordRenderer',
-  className: 'cellStyle-appianObject',
-  readOnly: true,
-  displayField: 'displayField'
-});
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
 function setGridData(rowsParam)
@@ -152,8 +49,6 @@ function setGridData(rowsParam)
       }
       // currMapRow = rowsParam[i];
 
-      // currRow = Object.values(rowsParam[i]);
-      // data.push(currRow);
       dataMap.push(currMapRow);
     }
     // reset changeObj?
@@ -164,44 +59,6 @@ function setGridData(rowsParam)
   console.log(rowsParam);
 
   return dataMap;
-}
-
-function setColumnData(colHeaderParam, dataParam)
-{
-  columnHeaderData = [];
-
-  if (colHeaderParam != null)
-  {
-    columnHeaderData = colHeaderParam;
-    return colHeaderParam;
-  } else {
-    if (dataParam != null)
-    {
-      columnHeaderData = Object.keys(dataParam[0]);
-    }
-  }
-
-
-  return columnHeaderData;
-
-}
-
-function setColMetaData(columnConfigParam)
-{
-  if (columnConfigParam != null) {
-    let filteredMetaData = [];
-
-    for (let i = 0; i < columnConfigParam.length; i++) {
-      if ("readOnly" in Object.keys(columnConfigParam[i])) {
-        if (columnConfigParam[i]["readOnly"] === false) {
-          delete columnConfigParam[i].readOnly;
-        }
-      }
-    }
-  }
-
-  columnMetaData = columnConfigParam;
-  return columnConfigParam;
 }
 
 function setColMetaData2(dataParam, columnConfigParam) {
@@ -313,20 +170,9 @@ function setStyle(styleParam) {
 
   if (styleParam != null) {
 
-    // set highlight color - not working ATM
-    if ('highlightColor' in styleParam) {
-      const highlightColor = styleParam.highlightColor;
-      const area = document.querySelector('.area');
-      if (area) {
-        area.style.background = `${highlightColor} !important`;
-      } else {
-        console.log(area);
-      }
-    }
-
     // set mode (worksheet or auto)
     if ('mode' in styleParam) {
-      if (styleParam.mode == "worksheet") {
+      if (styleParam.mode == "WORKSHEET") {
         gridMode = "worksheet";
         hotGrid.updateSettings({
           // style edits needed on these
@@ -334,6 +180,7 @@ function setStyle(styleParam) {
           colHeaders: true,
         });
       } else {
+        // documentation will tell user to write "AUTO"
         gridMode = "auto";
         hotGrid.updateSettings({
           rowHeaders: false,
@@ -355,7 +202,6 @@ function onChange(cellMeta, newValue, source)
   {
     
     let dataItem = dataMap[cellMeta.row];
-    let fieldName = columnHeaderData[cellMeta.visualCol];
 
     console.log(dataItem);
     changeObj[cellMeta.row] = dataItem;
@@ -478,8 +324,7 @@ Appian.Component.onNewValue(newValues => {
     hotGrid.updateSettings({
       columns: setColMetaData2(dataParam, configParam),
       data: setGridData(dataParam),
-      // colHeaders: setColumnData(colHeaderParam, dataParam),
-      // columns: setColMetaData(configParam),
+      columns: setColMetaData2(dataParam, configParam),
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
@@ -499,7 +344,6 @@ Appian.Component.onNewValue(newValues => {
       allowInsertRow: true,
       manualColumnMove: true,
       manualColumnResize: true,
-      // nestedRows: true,
       manualRowMove: false,
       rowHeights: 40,
       className: "htMiddle",
@@ -511,8 +355,6 @@ Appian.Component.onNewValue(newValues => {
     } else {
       console.log("gridOptions param is null");
     }
-
-    // hotGrid.render();
 
 
     // EVENT HANDLING
@@ -536,25 +378,6 @@ Appian.Component.onNewValue(newValues => {
       });
   
     });
-
-    // Function to call after a new row has been created
-    hotGrid.addHook('afterCreateRow', (row, amount) => {
-      console.log(`${amount} row(s) were created, starting at index ${row}`);
-      // need to specially handle this edit - find last PK and increment?
-    });
-
-    hotGrid.addHook('afterColumnMove', (movedColumns, finalIndex, dropIndex, movePossible, orderChanged) => {
-      console.log(movedColumns, finalIndex, dropIndex, movePossible, orderChanged);
-      // let cellMeta = hotGrid.getCellMeta(1,1);
-      // console.log(cellMeta);
-    });
-
-
-    // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
-    //   console.log(currentSortConfig);
-    //   console.log(destinationSortConfigs);
-    // });
-
 
 
   } catch (error) {

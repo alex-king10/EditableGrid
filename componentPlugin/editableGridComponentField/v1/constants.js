@@ -57,7 +57,7 @@ const BASE_URL =
     : document.location.href;
 export const LOGGED_IN_USER_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getloggedinuser`;
 
-
+  
 export const SELECTED_CLASS = "selected";
 export const ODD_ROW_CLASS = "odd";
-
+  
