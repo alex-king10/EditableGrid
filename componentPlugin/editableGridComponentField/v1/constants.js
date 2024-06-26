@@ -59,6 +59,7 @@ const BASE_URL =
     : document.location.href;
 export const LOGGED_IN_USER_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getloggedinuser`;
 export const USER_INFO_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getuserinfo`;
+export const USER_SECURITY_INFO_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getusersecurity`;
 
 export async function getUserInfo(userID, displayField) {
     let url = `${USER_INFO_SERVLET_REQUEST_URL}?userID=${encodeURIComponent(userID)}&displayField=${encodeURIComponent(displayField)}`;
@@ -67,6 +68,43 @@ export async function getUserInfo(userID, displayField) {
     });
     const result = await response.json();
     return result;
+}
+
+export async function getUserSecurityInfo(groupObject) {
+  let editorGroupID;
+  let viewerGroupID;
+
+  let url = USER_SECURITY_INFO_SERVLET_REQUEST_URL;
+
+  if (groupObject != null) {
+    if ('editor' in groupObject) {
+      editorGroupID = groupObject.editor;
+      url = `${url}?editor=${editorGroupID}`;
+    }
+    if ('viewer' in groupObject) {
+      viewerGroupID = groupObject.viewer;
+      if (editorGroupID != undefined) {
+        url = `${url}&viewer=${viewerGroupID}`;
+      } else {
+        url = `${url}?viewer=${viewerGroupID}`;
+      }
+
+    }
+  }
+
+  console.log(url);
+
+  const response = await fetch(url, {
+      credentials: 'include'
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  return result;
 }
 
 export function getUserInfoServlet(userID, displayField) {

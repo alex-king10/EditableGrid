@@ -37,11 +37,11 @@ public class GetUserSecurityPermission extends AppianServlet {
             String editorGroupStr = req.getParameter("editor");
             TypedValue username = pds.evaluateExpression("loggedInUser()");
             String usernameStr = username.getValue().toString();
+            result.put("Username", usernameStr);
 
             int viewerGroupID;
             int editorGroupID;
             if (usernameStr != null) {
-
                 if (editorGroupStr != null) {
                     editorGroupID = Integer.parseInt(editorGroupStr);
                     String isEditorExpression = String.format("a!isUserMemberOfGroup(\"%s\", %s)", usernameStr, editorGroupID);
@@ -49,6 +49,8 @@ public class GetUserSecurityPermission extends AppianServlet {
 
                     if ( isEditor.getValue().toString().equals("1") ) {
                         result.put("editor", true);
+                    } else {
+                        result.put("editor", false);
                     }
                 }
 
@@ -58,6 +60,8 @@ public class GetUserSecurityPermission extends AppianServlet {
                     TypedValue isViewer = pds.evaluateExpression(isViewerExpression);
                     if ( isViewer.getValue().toString().equals("1") ) {
                         result.put("viewer", true);
+                    } else {
+                        result.put("viewer", false);
                     }
                 }
 
