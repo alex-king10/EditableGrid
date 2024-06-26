@@ -227,16 +227,14 @@ Appian.Component.onNewValue(newValues => {
 
   // retrieve component parameters
   let dataParam = newValues.rows;
-  let colHeaderParam = newValues.headerCells;
   let configParam = newValues.columnConfigs;
-  let darkModeParam = newValues.darkMode;
   let gridOptionsParam = newValues.gridOptions;
   let styleParam = newValues.style;
   let changeDataParam = newValues.changeData;
+  let securityParam = newValues.securityGroups;
 
   console.log("newValues");
   console.log(newValues);
-
 
   try {
 
