@@ -297,6 +297,7 @@ Appian.Component.onNewValue(newValues => {
       manualColumnMove: true,
       manualColumnResize: true,
       manualRowMove: false,
+      minSpareRows: 1,
       rowHeights: 40,
       className: "htMiddle",
     });

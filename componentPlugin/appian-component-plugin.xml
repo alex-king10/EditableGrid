@@ -10,11 +10,11 @@
   <component rule-name="editableGridComponentField" version="1.0.0">
     <sdk-version>2.0.0</sdk-version>
     
-    <parameter>
+    <!-- <parameter>
       <name>headerCells</name>
       <category>input-only</category>
       <type>Variant</type>
-    </parameter>
+    </parameter> -->
 
     <parameter>
       <name>columnConfigs</name>
@@ -40,11 +40,11 @@
       <type>Variant</type>
     </parameter>
     
-    <parameter>
+    <!-- <parameter>
       <name>darkMode</name>
       <category>input-only</category>
       <type>Boolean</type>
-    </parameter>
+    </parameter> -->
 
     <parameter>
       <name>changeData</name>
