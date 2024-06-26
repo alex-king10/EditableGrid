@@ -336,16 +336,23 @@ Appian.Component.onNewValue(newValues => {
       console.log("gridOptions param is null");
     }
 
+    hotGrid.addHook('beforeChange', (changes, source) => {
+      if (userPermissionLevel == "viewer") {
+        changes?.forEach(change => {
+          const [row, prop, oldValue, newValue] = change;
+          change[3] = oldValue;
+        });
+      }
+
+    });
+
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
-  
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {
-  
         if (newValue != oldValue && userPermissionLevel == "editor")
         {
-
           let colIdx = colIdxMap[prop];
           let cellMeta;
           if (colIdx != undefined) {
