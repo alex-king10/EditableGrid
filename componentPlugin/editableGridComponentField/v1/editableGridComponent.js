@@ -203,6 +203,12 @@ async function getUserPermission(securityParam) {
 
   let permissionObj = await getUserSecurityInfo(groups);
 
+  if (!('editor' in permissionObj) && !('viewer' in permissionObj) ) {
+    // default if none specified - all users can edit
+    userPermissionLevel = "editor";
+    return userPermissionLevel;
+  }
+  
   if ('editor' in permissionObj && permissionObj.editor == true) { userPermissionLevel = "editor"; }
   else if ('viewer' in permissionObj ) {
     if (permissionObj.viewer == true) { userPermissionLevel = "viewer"; }
@@ -210,6 +216,7 @@ async function getUserPermission(securityParam) {
   } else {
     userPermissionLevel = "viewer";
   }
+
 
   return userPermissionLevel;
 }
@@ -345,7 +352,6 @@ Appian.Component.onNewValue(newValues => {
       }
 
     });
-
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
