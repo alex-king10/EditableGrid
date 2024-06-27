@@ -44,6 +44,7 @@ function setGridData(rowsParam)
     {
       if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
         currRow = Object.values(changeObj[i]);
+        currMapRow = changeObj[i];
       } else {
         currRow =  Object.values(rowsParam[i]);
         currMapRow = rowsParam[i];
