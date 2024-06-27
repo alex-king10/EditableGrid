@@ -18,17 +18,17 @@
         </description>
         <url-pattern>/getuserinfo</url-pattern>
     </servlet>
-    <servlet name="Get Group Info" key="getGroupInfo" class="com.appiancorp.cto.editablegrid.servlet.GetGroupInfoServlet">
+    <servlet name="Execute Process" key="executeProcess" class="com.appiancorp.cto.editablegrid.servlet.ExecutePMServlet">
         <description>
-            Servlet to get user information.
+            Servlet to execute a process model.
         </description>
-        <url-pattern>/getgroupinfo</url-pattern>
+        <url-pattern>/executeprocess</url-pattern>
     </servlet>
-    <servlet name="Write Records" key="writeRecords" class="com.appiancorp.cto.editablegrid.servlet.WriteRecordServlet">
+    <servlet name="Get User Security Info" key="getUserSecurity" class="com.appiancorp.cto.editablegrid.servlet.GetUserSecurityPermission">
         <description>
-            Servlet to get user information.
+            Servlet to check the current user's security level.
         </description>
-        <url-pattern>/writerecord</url-pattern>
+        <url-pattern>/getusersecurity</url-pattern>
     </servlet>
 
 </appian-plugin>

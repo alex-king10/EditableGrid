@@ -1,14 +1,15 @@
+import { getUserSecurityInfo } from "./constants.js";
 import { 
   userRenderer, 
 } from "./customRenderers.js";
 
-import {LOGGED_IN_USER_SERVLET_REQUEST_URL} from "./constants.js";
 
 // GLOBAL VAR
 let dataMap = [];
 let gridMode = "auto";
 let colIdxMap = {};
 let changeObj = {};
+let userPermissionLevel;
 
 
 // REGISTER CUSTOM RENDERERS
@@ -43,11 +44,11 @@ function setGridData(rowsParam)
     {
       if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
         currRow = Object.values(changeObj[i]);
+        currMapRow = changeObj[i];
       } else {
         currRow =  Object.values(rowsParam[i]);
         currMapRow = rowsParam[i];
       }
-      // currMapRow = rowsParam[i];
 
       dataMap.push(currMapRow);
     }
@@ -55,9 +56,8 @@ function setGridData(rowsParam)
     // changeObj = {};
   }
   
+  // console.log(data);
   console.log(dataMap);
-  console.log(rowsParam);
-
   return dataMap;
 }
 
@@ -193,6 +193,35 @@ function setStyle(styleParam) {
 
 }
 
+async function getUserPermission(securityParam) {
+  let groups = {};
+  if (securityParam != null) {
+    if ('editor' in securityParam) { groups['editor'] = securityParam.editor.id; }
+    if ('viewer' in securityParam) { groups['viewer'] = securityParam.viewer.id; }
+  }
+
+  console.log(groups);
+
+  let permissionObj = await getUserSecurityInfo(groups);
+
+  if (!('editor' in permissionObj) && !('viewer' in permissionObj) ) {
+    // default if none specified - all users can edit
+    userPermissionLevel = "editor";
+    return userPermissionLevel;
+  }
+  
+  if ('editor' in permissionObj && permissionObj.editor == true) { userPermissionLevel = "editor"; }
+  else if ('viewer' in permissionObj ) {
+    if (permissionObj.viewer == true) { userPermissionLevel = "viewer"; }
+    else { userPermissionLevel = "editor"; }
+  } else {
+    userPermissionLevel = "viewer";
+  }
+
+
+  return userPermissionLevel;
+}
+
 
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
@@ -210,53 +239,8 @@ function onChange(cellMeta, newValue, source)
 
 }
 
-async function getLoggedInUser() {
-  const myURL = LOGGED_IN_USER_SERVLET_REQUEST_URL;
-  
-
-  // handle readableStream
-    // add include credentials
-  fetch(myURL, {
-    credentials: 'include'
-  })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-    return response.body;
-  })
-  .then( readableStream => {
-    const reader = readableStream.getReader();
-    const decoder = new TextDecoder();
-    let result = '';
-
-    function read() {
-      reader.read().then(( { done, value }) => {
-        if (done) {
-          console.log("Stream done");
-          console.log(result);
-          return;
-        }
-
-        result += decoder.decode(value, { stream: true});
-        read();
-      }).catch(error=> {
-        console.error('Error reading stream:', error);
-      });
-    }
-
-    read();
-  })
-  .catch(error => {
-    console.error('Fetch error:', error);
-  });
-
-}
-
 let hotGrid;
 try {
-
-  getLoggedInUser();
 
 // init grid
   const container = document.getElementById("myGrid");
@@ -274,16 +258,14 @@ Appian.Component.onNewValue(newValues => {
 
   // retrieve component parameters
   let dataParam = newValues.rows;
-  let colHeaderParam = newValues.headerCells;
   let configParam = newValues.columnConfigs;
-  let darkModeParam = newValues.darkMode;
   let gridOptionsParam = newValues.gridOptions;
   let styleParam = newValues.style;
   let changeDataParam = newValues.changeData;
+  let securityParam = newValues.securityGroups;
 
   console.log("newValues");
   console.log(newValues);
-
 
   try {
 
@@ -319,10 +301,15 @@ Appian.Component.onNewValue(newValues => {
 
     setStyle(styleParam);
 
+    getUserPermission(securityParam).then( permissionObj => {
+      console.log("Permission Object:", permissionObj);
+    })
+    .catch(error => {
+      console.error("Error fetching user security info:", error);
+    });
   
     // update grid settings
     hotGrid.updateSettings({
-      columns: setColMetaData2(dataParam, configParam),
       data: setGridData(dataParam),
       columns: setColMetaData2(dataParam, configParam),
       height: setGridHeight(dataParam, styleParam),
@@ -345,6 +332,7 @@ Appian.Component.onNewValue(newValues => {
       manualColumnMove: true,
       manualColumnResize: true,
       manualRowMove: false,
+      minSpareRows: 1,
       rowHeights: 40,
       className: "htMiddle",
     });
@@ -356,20 +344,26 @@ Appian.Component.onNewValue(newValues => {
       console.log("gridOptions param is null");
     }
 
+    hotGrid.addHook('beforeChange', (changes, source) => {
+      if (userPermissionLevel == "viewer") {
+        changes?.forEach(change => {
+          const [row, prop, oldValue, newValue] = change;
+          change[3] = oldValue;
+        });
+      }
+
+    });
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
-
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {
-        if (newValue != oldValue)
+        if (newValue != oldValue && userPermissionLevel == "editor")
         {
-
           let colIdx = colIdxMap[prop];
           let cellMeta;
           if (colIdx != undefined) {
             cellMeta = hotGrid.getCellMeta(row, colIdx);
-
             onChange(cellMeta, newValue, [source]);
             Appian.Component.saveValue("changeData", Object.values(changeObj));
           }
