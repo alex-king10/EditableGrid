@@ -1,4 +1,4 @@
-// import { data } from "./constants.js";
+import { getUserSecurityInfo } from "./constants.js";
 import { 
   userRenderer, 
 } from "./customRenderers.js";
@@ -9,6 +9,7 @@ let dataMap = [];
 let gridMode = "auto";
 let colIdxMap = {};
 let changeObj = {};
+let userPermissionLevel;
 
 
 // REGISTER CUSTOM RENDERERS
@@ -191,6 +192,35 @@ function setStyle(styleParam) {
 
 }
 
+async function getUserPermission(securityParam) {
+  let groups = {};
+  if (securityParam != null) {
+    if ('editor' in securityParam) { groups['editor'] = securityParam.editor.id; }
+    if ('viewer' in securityParam) { groups['viewer'] = securityParam.viewer.id; }
+  }
+
+  console.log(groups);
+
+  let permissionObj = await getUserSecurityInfo(groups);
+
+  if (!('editor' in permissionObj) && !('viewer' in permissionObj) ) {
+    // default if none specified - all users can edit
+    userPermissionLevel = "editor";
+    return userPermissionLevel;
+  }
+  
+  if ('editor' in permissionObj && permissionObj.editor == true) { userPermissionLevel = "editor"; }
+  else if ('viewer' in permissionObj ) {
+    if (permissionObj.viewer == true) { userPermissionLevel = "viewer"; }
+    else { userPermissionLevel = "editor"; }
+  } else {
+    userPermissionLevel = "viewer";
+  }
+
+
+  return userPermissionLevel;
+}
+
 
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
@@ -227,16 +257,14 @@ Appian.Component.onNewValue(newValues => {
 
   // retrieve component parameters
   let dataParam = newValues.rows;
-  let colHeaderParam = newValues.headerCells;
   let configParam = newValues.columnConfigs;
-  let darkModeParam = newValues.darkMode;
   let gridOptionsParam = newValues.gridOptions;
   let styleParam = newValues.style;
   let changeDataParam = newValues.changeData;
+  let securityParam = newValues.securityGroups;
 
   console.log("newValues");
   console.log(newValues);
-
 
   try {
 
@@ -272,6 +300,12 @@ Appian.Component.onNewValue(newValues => {
 
     setStyle(styleParam);
 
+    getUserPermission(securityParam).then( permissionObj => {
+      console.log("Permission Object:", permissionObj);
+    })
+    .catch(error => {
+      console.error("Error fetching user security info:", error);
+    });
   
     // update grid settings
     hotGrid.updateSettings({
@@ -309,16 +343,22 @@ Appian.Component.onNewValue(newValues => {
       console.log("gridOptions param is null");
     }
 
+    hotGrid.addHook('beforeChange', (changes, source) => {
+      if (userPermissionLevel == "viewer") {
+        changes?.forEach(change => {
+          const [row, prop, oldValue, newValue] = change;
+          change[3] = oldValue;
+        });
+      }
+
+    });
 
     // EVENT HANDLING
     hotGrid.addHook('afterChange', (changes, [source]) => {
-  
       // call handle change function
       changes?.forEach(([row, prop, oldValue, newValue]) => {
-  
-        if (newValue != oldValue)
+        if (newValue != oldValue && userPermissionLevel == "editor")
         {
-
           let colIdx = colIdxMap[prop];
           let cellMeta;
           if (colIdx != undefined) {

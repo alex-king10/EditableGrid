@@ -12,5 +12,23 @@
         </description>
         <url-pattern>/getloggedinuser</url-pattern>
     </servlet>
+    <servlet name="Get User Info" key="getUserInfo" class="com.appiancorp.cto.editablegrid.servlet.GetUserInfoServlet">
+        <description>
+            Servlet to get user information.
+        </description>
+        <url-pattern>/getuserinfo</url-pattern>
+    </servlet>
+    <servlet name="Execute Process" key="executeProcess" class="com.appiancorp.cto.editablegrid.servlet.ExecutePMServlet">
+        <description>
+            Servlet to execute a process model.
+        </description>
+        <url-pattern>/executeprocess</url-pattern>
+    </servlet>
+    <servlet name="Get User Security Info" key="getUserSecurity" class="com.appiancorp.cto.editablegrid.servlet.GetUserSecurityPermission">
+        <description>
+            Servlet to check the current user's security level.
+        </description>
+        <url-pattern>/getusersecurity</url-pattern>
+    </servlet>
 
 </appian-plugin>

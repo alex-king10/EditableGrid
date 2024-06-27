@@ -9,12 +9,12 @@
 
   <component rule-name="editableGridComponentField" version="1.0.0">
     <sdk-version>2.0.0</sdk-version>
-    
-    <!-- <parameter>
-      <name>headerCells</name>
-      <category>input-only</category>
+
+    <parameter>
+      <name>rows</name>
+      <category>input-output</category>
       <type>Variant</type>
-    </parameter> -->
+    </parameter>
 
     <parameter>
       <name>columnConfigs</name>
@@ -23,11 +23,17 @@
     </parameter>
 
     <parameter>
-      <name>rows</name>
+      <name>changeData</name>
       <category>input-output</category>
       <type>Variant</type>
     </parameter>
-    
+
+    <parameter>
+      <name>securityGroups</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
+
     <parameter>
       <name>gridOptions</name>
       <category>input-only</category>
@@ -37,18 +43,6 @@
      <parameter>
       <name>style</name>
       <category>input-only</category>
-      <type>Variant</type>
-    </parameter>
-    
-    <!-- <parameter>
-      <name>darkMode</name>
-      <category>input-only</category>
-      <type>Boolean</type>
-    </parameter> -->
-
-    <parameter>
-      <name>changeData</name>
-      <category>input-output</category>
       <type>Variant</type>
     </parameter>
 
