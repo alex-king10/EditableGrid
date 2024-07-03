@@ -348,15 +348,21 @@ Appian.Component.onNewValue(newValues => {
 
     // set Grid Data
     // reset changeObj if component wrote back an empty object
-    if (changeDataParam.length == 0) {
-      // if changes have been made and query (dataParam) is not updated
-      if (dataMap.length == 0) {
-        setGridData(dataParam);
-      } else {
-        setGridData(dataMap);
-      }
 
-      changeObj = {};
+    if (changeDataParam == null) {
+      // initial data load and null changeObj
+      setGridData(dataParam);
+    } else {
+      if (changeDataParam.length == 0) {
+        if (dataMap.length == 0) {
+          // initial data load w/ empty changeObj
+          setGridData(dataParam);
+        } else {
+          // if changes have been made and query (dataParam) is not updated
+          setGridData(dataMap);
+        }
+        changeObj = {};
+      }
     }
 
     setStyle(styleParam);
