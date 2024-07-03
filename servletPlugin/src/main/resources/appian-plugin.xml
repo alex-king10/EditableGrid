@@ -30,5 +30,18 @@
         </description>
         <url-pattern>/getusersecurity</url-pattern>
     </servlet>
+    <servlet name="Get Record By ID" key="getRecordByID" class="com.appiancorp.cto.editablegrid.servlet.GetRecordByID">
+        <description>
+            Servlet to query a record item by ID.
+        </description>
+        <url-pattern>/getRecordByID</url-pattern>
+    </servlet>
+    <servlet name="Get Record Type Information" key="getRecordTypeInfo" class="com.appiancorp.cto.editablegrid.servlet.GetRecordTypeInfo">
+        <description>
+            Servlet to query a record type's information.
+        </description>
+        <url-pattern>/getRecordTypeInfo</url-pattern>
+    </servlet>
+
 
 </appian-plugin>

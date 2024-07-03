@@ -3,6 +3,7 @@ package com.appiancorp.cto.editablegrid.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.lang.reflect.Type;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -10,16 +11,16 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
 
+import com.appiancorp.cto.editablegrid.utils.Constants;
 import com.appiancorp.services.exceptions.ServiceException;
 import com.appiancorp.suiteapi.process.ProcessDesignService;
 import com.appiancorp.suiteapi.servlet.AppianServlet;
 import com.appiancorp.suiteapi.type.TypedValue;
-
-public class GetRecordByID extends AppianServlet {
+public class GetRecordTypeInfo extends AppianServlet {
      ProcessDesignService pds;
 
     //    dependency injection
-    public GetRecordByID(ProcessDesignService pds) {
+    public GetRecordTypeInfo(ProcessDesignService pds) {
         super();
         this.pds = pds;
     }
@@ -31,22 +32,16 @@ public class GetRecordByID extends AppianServlet {
         try {
 
             String recordUUID = req.getParameter("recordUuid");
-            int id = Integer.parseInt(req.getParameter("id"));
+            String pkName = req.getParameter("pkFieldName");
 
             result.put("UUID", recordUUID);
-            result.put("id", id);
+            result.put("PK Name", pkName);
 
-//            String recordUUID = "168e5b0c-8188-45be-be8a-588dcd20e84c";
-//            int recordID = 1;
-            String queryString = String.format("a!queryRecordByIdentifier(recordType!{%s}, %d)", recordUUID, id);
-//            String queryString2 = String.format("a!queryRecordByIdentifier(recordType!{%s}, %d)", recordUUID, 0);
+            String queryStr = String.format(Constants.GET_UUID_FROM_FIELD_NAME, recordUUID, pkName);
+            result.put("queryStr", queryStr);
 
-            TypedValue queryResult = pds.evaluateExpression(queryString);
-
-            boolean isRecord = queryResult.getValue() != null;
-            result.put("doesRecordExist?", isRecord);
-            result.put("value", queryResult.getValue());
-
+            TypedValue queryResult = pds.evaluateExpression(queryStr);
+            result.put("Result Str", queryResult.getValue());
 
 
 

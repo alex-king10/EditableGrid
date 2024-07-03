@@ -60,6 +60,8 @@ const BASE_URL =
 export const LOGGED_IN_USER_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getloggedinuser`;
 export const USER_INFO_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getuserinfo`;
 export const USER_SECURITY_INFO_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getusersecurity`;
+export const GET_RECORD_BY_ID_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getRecordByID`;
+export const GET_RECORD_FIELD_UUID_SERVLET_REQUEST_URL = `${BASE_URL}suite/plugins/servlet/getRecordTypeInfo`;
 
 export async function getUserInfo(userID, displayField) {
     let url = `${USER_INFO_SERVLET_REQUEST_URL}?userID=${encodeURIComponent(userID)}&displayField=${encodeURIComponent(displayField)}`;
@@ -107,6 +109,24 @@ export async function getUserSecurityInfo(groupObject) {
   return result;
 }
 
+export async function getRecordFieldUUID(recordUuid, pkFieldName) {
+  let url = `${GET_RECORD_FIELD_UUID_SERVLET_REQUEST_URL}?recordUuid=${encodeURIComponent(recordUuid)}&pkFieldName=${encodeURIComponent(pkFieldName)}`;
+  const response = await fetch(url, {
+      credentials: 'include'
+  });
+  const result = await response.json();
+  return result;
+}
+
+export async function doesRecordExistServlet(recordUuid, id) {
+  let url = `${GET_RECORD_BY_ID_SERVLET_REQUEST_URL}?recordUuid=${encodeURIComponent(recordUuid)}&id=${encodeURIComponent(id)}`;
+  const response = await fetch(url, {
+      credentials: 'include'
+  });
+  const result = await response.json();
+  return result;
+}
+
 export function getUserInfoServlet(userID, displayField) {
     // const myURL = LOGGED_IN_USER_SERVLET_REQUEST_URL;
     // userID = "admin.user";
@@ -150,7 +170,7 @@ export function getUserInfoServlet(userID, displayField) {
       console.error('Fetch error:', error);
     });
   
-  }
+}
 
   
 export const SELECTED_CLASS = "selected";

@@ -12,17 +12,14 @@ import org.json.JSONObject;
 
 import com.appiancorp.services.exceptions.ServiceException;
 import com.appiancorp.suiteapi.process.ProcessDesignService;
-import com.appiancorp.suiteapi.process.ProcessModel;
-import com.appiancorp.suiteapi.process.ProcessVariable;
-import com.appiancorp.suiteapi.process.security.ProcessModelPermissions;
 import com.appiancorp.suiteapi.servlet.AppianServlet;
 import com.appiancorp.suiteapi.type.TypedValue;
 
-public class GetUserSecurityPermission extends AppianServlet {
+public class GetRecordByID extends AppianServlet {
      ProcessDesignService pds;
 
     //    dependency injection
-    public GetUserSecurityPermission(ProcessDesignService pds) {
+    public GetRecordByID(ProcessDesignService pds) {
         super();
         this.pds = pds;
     }
@@ -33,39 +30,25 @@ public class GetUserSecurityPermission extends AppianServlet {
         JSONObject result = new JSONObject();
         try {
 
-            String viewerGroupStr = req.getParameter("viewer");
-            String editorGroupStr = req.getParameter("editor");
-            TypedValue username = pds.evaluateExpression("loggedInUser()");
-            String usernameStr = username.getValue().toString();
-            result.put("Username", usernameStr);
+            String recordUUID = req.getParameter("recordUuid");
+            int id = Integer.parseInt(req.getParameter("id"));
 
-            int viewerGroupID;
-            int editorGroupID;
-            if (usernameStr != null) {
-                if (editorGroupStr != null) {
-                    editorGroupID = Integer.parseInt(editorGroupStr);
-                    String isEditorExpression = String.format("a!isUserMemberOfGroup(\"%s\", %s)", usernameStr, editorGroupID);
-                    TypedValue isEditor = pds.evaluateExpression(isEditorExpression);
+            result.put("UUID", recordUUID);
+            result.put("id", id);
 
-                    if ( isEditor.getValue().toString().equals("1") ) {
-                        result.put("editor", true);
-                    } else {
-                        result.put("editor", false);
-                    }
-                }
+//            String recordUUID = "168e5b0c-8188-45be-be8a-588dcd20e84c";
+//            int recordID = 1;
+            String queryString = String.format("a!queryRecordByIdentifier(recordType!{%s}, %d)", recordUUID, id);
+//            String queryString2 = String.format("a!queryRecordByIdentifier(recordType!{%s}, %d)", recordUUID, 0);
 
-                if (viewerGroupStr != null) {
-                    viewerGroupID = Integer.parseInt(viewerGroupStr);
-                    String isViewerExpression = String.format("a!isUserMemberOfGroup(\"%s\", %s)", usernameStr, viewerGroupID);
-                    TypedValue isViewer = pds.evaluateExpression(isViewerExpression);
-                    if ( isViewer.getValue().toString().equals("1") ) {
-                        result.put("viewer", true);
-                    } else {
-                        result.put("viewer", false);
-                    }
-                }
+            TypedValue queryResult = pds.evaluateExpression(queryString);
 
-            }
+            boolean isRecord = queryResult.getValue() != null;
+            result.put("doesRecordExist?", isRecord);
+            result.put("value", queryResult.getValue());
+
+
+
 
         } catch (ServiceException e) {
             result.put("Service Exception Error: ", e.toString());

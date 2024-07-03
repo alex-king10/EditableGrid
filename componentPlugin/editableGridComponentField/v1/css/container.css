@@ -10,6 +10,8 @@
   --header-color: color-mix(in srgb, #fff, #181d1f 3%);
   --border-color: color-mix(in srgb, #fff, #181d1f 15%);
   --highlighted-header-color: color-mix(in srgb, #fff, #181d1f 7%);
+  --error-cell-color: #ffbe11;
+  /* --error-cell-color: #ffbeba; */
 
   height: 200px;
   width: 100%;
@@ -32,7 +34,7 @@
   border-left: 0px !important;
   border-right: 0px;
   border-bottom: 1px solid var(--border-color);
-  height: 40px;
+  height: 40px !important;
   overflow: hidden; /* Hide overflow text */
   text-overflow: ellipsis; /* Show ellipsis for overflow text */
   white-space: nowrap;
@@ -203,4 +205,8 @@ td:hover .htAutocompleteArrow {
 
 .handsontable tbody tr .highlighted-row {
   background-color: lightblue !important; /* Change background color to highlight the row */
+}
+
+.appianErrorCell {
+  background-color: var(--error-cell-color)!important;
 }

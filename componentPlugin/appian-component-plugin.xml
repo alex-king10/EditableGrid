@@ -11,6 +11,12 @@
     <sdk-version>2.0.0</sdk-version>
 
     <parameter>
+      <name>recordTypeInfo</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
+
+    <parameter>
       <name>rows</name>
       <category>input-output</category>
       <type>Variant</type>

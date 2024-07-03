@@ -1,4 +1,4 @@
-import { getUserSecurityInfo } from "./constants.js";
+import { getUserSecurityInfo, doesRecordExistServlet, getRecordFieldUUID } from "./constants.js";
 import { 
   userRenderer, 
 } from "./customRenderers.js";
@@ -10,6 +10,8 @@ let gridMode = "auto";
 let colIdxMap = {};
 let changeObj = {};
 let userPermissionLevel;
+let primaryKeyName;
+let recordUUID;
 
 
 // REGISTER CUSTOM RENDERERS
@@ -29,6 +31,39 @@ Handsontable.cellTypes.registerCellType('appianObject', {
   // myCustomProperty: 'foo'
 });
 
+async function doesRecordExist(recordUuid, id) {
+  let result = await doesRecordExistServlet(recordUuid, id);
+  if ('doesRecordExist?' in result) {
+    return result['doesRecordExist?'];
+  }
+
+  return result;
+}
+
+async function getPKField(recordUuid, pkFieldName) {
+  let result = await getRecordFieldUUID(recordUuid, pkFieldName);
+
+  return result;
+  
+}
+
+// CUSTOM VALIDATOR
+const pkValidator = (value, callback) => {
+
+  setTimeout(() => {
+    doesRecordExist(recordUUID, value).then( resultObj => {
+      if (resultObj) {
+        // prevent change
+        callback(false);
+      }  else {
+        callback(true);
+      }
+    })
+  }, 500);
+};
+
+// Register an alias
+Handsontable.validators.registerValidator('primaryKeyValidator', pkValidator);
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
 function setGridData(rowsParam)
@@ -239,6 +274,9 @@ function onChange(cellMeta, newValue, source)
 
 }
 
+
+
+
 let hotGrid;
 try {
 
@@ -263,6 +301,7 @@ Appian.Component.onNewValue(newValues => {
   let styleParam = newValues.style;
   let changeDataParam = newValues.changeData;
   let securityParam = newValues.securityGroups;
+  let recordTypeInfoParam = newValues.recordTypeInfo;
 
   console.log("newValues");
   console.log(newValues);
@@ -299,8 +338,19 @@ Appian.Component.onNewValue(newValues => {
       "filter_action_bar"
     ];
 
+    // find global var - record type UUID and primaryKey
+    if (recordTypeInfoParam != null) {
+      if ('recordType' in recordTypeInfoParam) {
+        recordUUID = recordTypeInfoParam.recordType;
+      }
+      if ('primaryKeyField' in recordTypeInfoParam) {
+        primaryKeyName = recordTypeInfoParam.primaryKeyField;
+      }
+    }
+
     setStyle(styleParam);
 
+    // get permission level for current user
     getUserPermission(securityParam).then( permissionObj => {
       console.log("Permission Object:", permissionObj);
     })
@@ -334,6 +384,7 @@ Appian.Component.onNewValue(newValues => {
       manualRowMove: false,
       minSpareRows: 1,
       rowHeights: 40,
+      // comments: true,
       className: "htMiddle",
     });
 
@@ -344,20 +395,38 @@ Appian.Component.onNewValue(newValues => {
       console.log("gridOptions param is null");
     }
 
+    // Handles and reverts invalid changes made to the grid
+      // If user permission is viewer and not edit
+      // If a PK is changed to a non-unique value (makes a servlet request)
     hotGrid.addHook('beforeChange', (changes, source) => {
-      if (userPermissionLevel == "viewer") {
-        changes?.forEach(change => {
-          const [row, prop, oldValue, newValue] = change;
+      changes?.forEach(change => {
+        const [row, prop, oldValue, newValue] = change;
+        
+        if (userPermissionLevel == "viewer") {
           change[3] = oldValue;
-        });
-      }
-
+        } 
+        else if (newValue != oldValue && userPermissionLevel == "editor") {
+          let colIdx = colIdxMap[prop];
+          if (colIdx != undefined) {
+            if (prop == primaryKeyName) {
+              doesRecordExist(recordUUID, newValue).then( resultObj => {
+                if (resultObj) {
+                  change[3] = oldValue;
+                }
+              });
+            } 
+          }
+        } 
+      })
     });
 
-    // EVENT HANDLING
+    // Handles saving changes made to the grid by calling onChange and updating changeObj
+      // Sends changeObj to Appian local var in changeData param
     hotGrid.addHook('afterChange', (changes, [source]) => {
       // call handle change function
-      changes?.forEach(([row, prop, oldValue, newValue]) => {
+      changes?.forEach(change => {
+        const [row, prop, oldValue, newValue] = change;
+
         if (newValue != oldValue && userPermissionLevel == "editor")
         {
           let colIdx = colIdxMap[prop];
@@ -367,7 +436,7 @@ Appian.Component.onNewValue(newValues => {
             onChange(cellMeta, newValue, [source]);
             Appian.Component.saveValue("changeData", Object.values(changeObj));
           }
-        }
+        } 
   
       });
   
