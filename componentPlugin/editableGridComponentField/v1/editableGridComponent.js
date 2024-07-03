@@ -87,12 +87,10 @@ function setGridData(rowsParam)
 
       dataMap.push(currMapRow);
     }
-    // reset changeObj?
-    // changeObj = {};
+
   }
   
-  // console.log(data);
-  console.log(dataMap);
+  // console.log(dataMap);
   return dataMap;
 }
 
@@ -348,6 +346,19 @@ Appian.Component.onNewValue(newValues => {
       }
     }
 
+    // set Grid Data
+    // reset changeObj if component wrote back an empty object
+    if (changeDataParam.length == 0) {
+      // if changes have been made and query (dataParam) is not updated
+      if (dataMap.length == 0) {
+        setGridData(dataParam);
+      } else {
+        setGridData(dataMap);
+      }
+
+      changeObj = {};
+    }
+
     setStyle(styleParam);
 
     // get permission level for current user
@@ -360,7 +371,7 @@ Appian.Component.onNewValue(newValues => {
   
     // update grid settings
     hotGrid.updateSettings({
-      data: setGridData(dataParam),
+      data: dataMap,
       columns: setColMetaData2(dataParam, configParam),
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
