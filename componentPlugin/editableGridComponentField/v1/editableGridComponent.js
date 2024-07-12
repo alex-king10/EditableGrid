@@ -66,6 +66,37 @@ const pkValidator = (value, callback) => {
 Handsontable.validators.registerValidator('primaryKeyValidator', pkValidator);
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
+function setGridData2(rowsParam, changeObj)
+{
+
+  dataMap = [];
+  let currRow = [];
+  let currMapRow = [];
+  let currRowIdx;
+
+  if (rowsParam != null) {
+    dataMap = rowsParam;
+    if (Object.keys(changeObj).length == 0) {
+      // no updates to make to data var
+      return dataMap;
+    } else {
+      //update changed indices in data var
+      for (let i = 0; i < Object.keys(changeObj).length; i++) {
+        // if (Object.keys(changeObj).length != 0) {
+          // maube check if Object.values(changeObj)[currRowIdx] is valid
+          currRowIdx = Object.keys(changeObj)[i];
+          // update row in data var with value from changeObj
+          dataMap[currRowIdx] = Object.values(changeObj)[i];
+        // }
+      }
+    }
+    
+  }
+  // console.log(dataMap);
+  return dataMap;
+}
+
+// INSTANTIATE GRID W/ DATA AND COLUMN
 function setGridData(rowsParam)
 {
 
@@ -338,8 +369,8 @@ Appian.Component.onNewValue(newValues => {
 
     // find global var - record type UUID and primaryKey
     if (recordTypeInfoParam != null) {
-      if ('recordType' in recordTypeInfoParam) {
-        recordUUID = recordTypeInfoParam.recordType;
+      if ('recordTypeUUID' in recordTypeInfoParam) {
+        recordUUID = recordTypeInfoParam.recordTypeUUID;
       }
       if ('primaryKeyField' in recordTypeInfoParam) {
         primaryKeyName = recordTypeInfoParam.primaryKeyField;
@@ -348,22 +379,27 @@ Appian.Component.onNewValue(newValues => {
 
     // set Grid Data
     // reset changeObj if component wrote back an empty object
+    setGridData2(dataParam, changeObj);
+    // Either initial load of comp. or after "Save Change"
+    if (changeDataParam != null && changeDataParam.length == 0) {
+      changeObj = {};
+    } 
 
-    if (changeDataParam == null) {
-      // initial data load and null changeObj
-      setGridData(dataParam);
-    } else {
-      if (changeDataParam.length == 0) {
-        if (dataMap.length == 0) {
-          // initial data load w/ empty changeObj
-          setGridData(dataParam);
-        } else {
-          // if changes have been made and query (dataParam) is not updated
-          setGridData(dataMap);
-        }
-        changeObj = {};
-      }
-    }
+    // if (changeDataParam == null) {
+    //   // initial data load and null changeObj
+    //   setGridData(dataParam);
+    // } else {
+    //   if (changeDataParam.length == 0) {
+    //     if (dataMap.length == 0) {
+    //       // initial data load w/ empty changeObj
+    //       setGridData(dataParam);
+    //     } else {
+    //       // if changes have been made and query (dataParam) is not updated
+    //       setGridData(dataMap);
+    //     }
+    //     changeObj = {};
+    //   }
+    // }
 
     setStyle(styleParam);
 
