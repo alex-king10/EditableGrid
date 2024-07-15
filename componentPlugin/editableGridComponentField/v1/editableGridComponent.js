@@ -230,33 +230,6 @@ function setGridHeight(dataParam, styleParam) {
   return height;
 }
 
-function setStyle(styleParam) {
-
-  if (styleParam != null) {
-
-    // set mode (worksheet or auto)
-    if ('mode' in styleParam) {
-      if (styleParam.mode == "WORKSHEET") {
-        gridMode = "worksheet";
-        hotGrid.updateSettings({
-          // style edits needed on these
-          rowHeaders: true,
-          colHeaders: true,
-        });
-      } else {
-        // documentation will tell user to write "AUTO"
-        gridMode = "auto";
-        hotGrid.updateSettings({
-          rowHeaders: false,
-        });
-      }
-
-    }
-  }
-
-
-}
-
 async function getUserPermission(securityParam) {
   let groups = {};
   if (securityParam != null) {
@@ -341,7 +314,6 @@ Appian.Component.onNewValue(newValues => {
     let contextMenu = [
       "row_above",
       "row_below",
-      "remove_row",
       "---------",
       "undo",
       "redo",
@@ -349,7 +321,6 @@ Appian.Component.onNewValue(newValues => {
       "copy",
       "---------",
       "borders",
-      "mergeCells",
       "---------",
       "hidden_columns_hide",
       "hidden_columns_show",
@@ -381,24 +352,6 @@ Appian.Component.onNewValue(newValues => {
     if (changeDataParam != null && changeDataParam.length == 0) {
       changeObj = {};
     } 
-
-    // if (changeDataParam == null) {
-    //   // initial data load and null changeObj
-    //   setGridData(dataParam);
-    // } else {
-    //   if (changeDataParam.length == 0) {
-    //     if (dataMap.length == 0) {
-    //       // initial data load w/ empty changeObj
-    //       setGridData(dataParam);
-    //     } else {
-    //       // if changes have been made and query (dataParam) is not updated
-    //       setGridData(dataMap);
-    //     }
-    //     changeObj = {};
-    //   }
-    // }
-
-    setStyle(styleParam);
 
     // get permission level for current user
     getUserPermission(securityParam).then( permissionObj => {
