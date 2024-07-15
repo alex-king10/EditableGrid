@@ -293,12 +293,9 @@ function onChange(cellMeta, newValue, source)
 
   if (cellMeta != null)
   {
-    
     let dataItem = dataMap[cellMeta.row];
-
     console.log(dataItem);
     changeObj[cellMeta.row] = dataItem;
-
   }
 
 }
@@ -313,9 +310,9 @@ try {
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
     licenseKey: "non-commercial-and-evaluation",
-    formulas: {
-      engine: HyperFormula,
-    },
+    // formulas: {
+    //   engine: HyperFormula,
+    // },
   });
 } catch (error) {
   console.error(`An error occurred ${error}`);
