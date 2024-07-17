@@ -12,7 +12,8 @@ let changeObj = {};
 let userPermissionLevel;
 let primaryKeyName;
 let recordUUID;
-
+let relatedRecords = {};
+let columnHeaderData2 = [];
 
 // REGISTER CUSTOM RENDERERS
 
@@ -31,6 +32,13 @@ Handsontable.cellTypes.registerCellType('appianObject', {
   // myCustomProperty: 'foo'
 });
 
+Handsontable.cellTypes.registerCellType('relatedRecord', {
+  type: "text",
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  displayFields: ["fieldName"]
+});
+
 async function doesRecordExist(recordUuid, id) {
   let result = await doesRecordExistServlet(recordUuid, id);
   if ('doesRecordExist?' in result) {
@@ -38,13 +46,6 @@ async function doesRecordExist(recordUuid, id) {
   }
 
   return result;
-}
-
-async function getPKField(recordUuid, pkFieldName) {
-  let result = await getRecordFieldUUID(recordUuid, pkFieldName);
-
-  return result;
-  
 }
 
 // CUSTOM VALIDATOR
@@ -70,25 +71,76 @@ function setGridData2(rowsParam, changeObj)
 {
 
   dataMap = [];
-  let currRow = [];
-  let currMapRow = [];
+  // let currRow = [];
+  // let currMapRow = [];
   let currRowIdx;
 
   if (rowsParam != null) {
     dataMap = rowsParam;
-    if (Object.keys(changeObj).length == 0) {
-      // no updates to make to data var
+    if (Object.keys(changeObj).length == 0 && Object.keys(relatedRecords).length == 0) {
+    // no updates to make to data var
       return dataMap;
     } else {
-      //update changed indices in data var
-      for (let i = 0; i < Object.keys(changeObj).length; i++) {
-        // if (Object.keys(changeObj).length != 0) {
-          // maube check if Object.values(changeObj)[currRowIdx] is valid
+      let currRow;
+      let displayField;
+      let displayFields;
+
+      if (Object.keys(changeObj).length != 0) {
+        //update changed indices in data var
+        for (let i = 0; i < Object.keys(changeObj).length; i++) {
+          // maybe check if Object.values(changeObj)[currRowIdx] is valid
           currRowIdx = Object.keys(changeObj)[i];
+          currChangeItem = Object.values(changeObj)[i];
           // update row in data var with value from changeObj
-          dataMap[currRowIdx] = Object.values(changeObj)[i];
-        // }
+          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
+        }
       }
+          
+      // process related records 
+      if (Object.keys(relatedRecords).length > 0) {
+        // loop over data
+        for (let j = 0; j < dataMap.length; j++) {
+          currRow = dataMap[j];
+          // loop over related record
+          Object.keys(relatedRecords).forEach(relField => {
+             // { ownerRel: ['name'] }
+             if (relField in currRow) {
+              // displayFields = relatedRecords[relField];
+              // for (let i = 0; i < displayFields.length; i++) {
+              //   displayField = displayFields[i];
+              //   if (relField in currRow && currRow[relField] != null) {
+              //     if (displayField in currRow[relField]) {
+              //     // index into data at relRec. 
+              //       currRow[relField] = currRow[relField][displayField];
+              //     } else {
+              //       console.log(`Display field: ${displayField} not in object at index ${j}`);
+              //     }
+              //   } else {
+              //     console.log(`Rel field ${relField} not in object at index ${j}`);
+              //   }
+              // }
+              // only doing first field for now
+              displayField = relatedRecords[relField][0];
+              if (relField in currRow && currRow[relField] != null) {
+                if (displayField in currRow[relField]) {
+                // index into data at relRec. 
+                  currRow[relField] = currRow[relField][displayField];
+                } else {
+                  console.log(`Display field: ${displayField} not in object at index ${j}`);
+                }
+              } else {
+                console.log(`Rel field ${relField} not in object at index ${j}`);
+              }
+             }
+          });
+          
+        }
+        
+      }
+
+
+
+      
     }
     
   }
@@ -126,8 +178,9 @@ function setGridData(rowsParam)
 }
 
 function setColMetaData2(dataParam, columnConfigParam) {
-  let columnHeaderData2 = [];
+  columnHeaderData2 = [];
   let queryInfo = null;
+  let displayFields;
 
   // get field names
   if (dataParam != null) {
@@ -149,8 +202,17 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
           // if currDataField is in config param
           if (currColConfig.data == currDataField) {
+            if ('type' in currColConfig && currColConfig.type == "relatedRecord") {
+              if ('displayFields' in currColConfig) {
+                displayFields = currColConfig.displayFields;
+                // add new col object for each displayField - using fieldValues, fieldTitles (future)
+                relatedRecords[currDataField] = displayFields;
+                
+              }
+            }
+
             // if no title specified, use field name
-            if (currColConfig.title == undefined && gridMode != "worksheet") {
+            if (currColConfig.title == undefined) {
               currColConfig['title'] = currDataField;
             }
 
@@ -165,11 +227,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
       // if currColumnObject still null --> not in config param
       if (currColumnObject == null) {
-        if (gridMode == "worksheet") {
-          currColumnObject = { data: currDataField };
-        } else {
-          currColumnObject = { title: currDataField, data: currDataField };
-        }
+        currColumnObject = { title: currDataField, data: currDataField };
       }
 
       columnHeaderData2.push(currColumnObject);
@@ -293,9 +351,34 @@ function onChange(cellMeta, newValue, source)
 
   if (cellMeta != null)
   {
-    let dataItem = dataMap[cellMeta.row];
-    console.log(dataItem);
-    changeObj[cellMeta.row] = dataItem;
+    // let dataItem = dataMap[cellMeta.row];
+    // console.log(dataItem);
+    // changeObj[cellMeta.row] = dataItem;
+
+    let dataItem = {};
+    let gridRow;
+
+    if (cellMeta.row in changeObj) {
+      changeObj[cellMeta.row][cellMeta.prop] = newValue;
+    } else {
+    // add PK if exists
+      // access data at modified row
+      gridRow = dataMap[cellMeta.row];
+
+      // add new change { name : 'test' }
+      dataItem[cellMeta.prop] = newValue;
+
+      // primaryKeyName is a global var of the string value of the PK field
+      if (primaryKeyName in gridRow && primaryKeyName != cellMeta.prop) {
+        // pkItem[primaryKeyName] = gridRow.primaryKeyName;
+        // add pk { locationAccount: 2 }
+        dataItem[primaryKeyName] = gridRow[primaryKeyName];
+      }
+
+      changeObj[cellMeta.row] = dataItem;
+      
+    }
+
   }
 
 }
@@ -374,6 +457,9 @@ Appian.Component.onNewValue(newValues => {
       }
     }
 
+    // calculate column configurations
+    setColMetaData2(dataParam, configParam);
+
     // set Grid Data
     // reset changeObj if component wrote back an empty object
     setGridData2(dataParam, changeObj);
@@ -381,22 +467,6 @@ Appian.Component.onNewValue(newValues => {
     if (changeDataParam != null && changeDataParam.length == 0) {
       changeObj = {};
     } 
-
-    // if (changeDataParam == null) {
-    //   // initial data load and null changeObj
-    //   setGridData(dataParam);
-    // } else {
-    //   if (changeDataParam.length == 0) {
-    //     if (dataMap.length == 0) {
-    //       // initial data load w/ empty changeObj
-    //       setGridData(dataParam);
-    //     } else {
-    //       // if changes have been made and query (dataParam) is not updated
-    //       setGridData(dataMap);
-    //     }
-    //     changeObj = {};
-    //   }
-    // }
 
     setStyle(styleParam);
 
@@ -411,7 +481,7 @@ Appian.Component.onNewValue(newValues => {
     // update grid settings
     hotGrid.updateSettings({
       data: dataMap,
-      columns: setColMetaData2(dataParam, configParam),
+      columns: columnHeaderData2,
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
