@@ -236,27 +236,27 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
 function setGridHeight(dataParam, styleParam) {
 
+  // default of 800
   let height = 800;
 
-  if (styleParam != null)
+  if (styleParam != null && dataParam != null)
     {
-      if ('height' in styleParam) 
-        {
+      if ('height' in styleParam) {
           let heightValue = styleParam.height;
           if (heightValue == "AUTO")
             {
               let calcHeight = 46 + (dataParam.length * 41);
 
-              if (dataParam.length == 0) {
-                calcHeight = 200;
-              }
-
-              // max of 1200 px
+              // max calculated height of 1200 px. Defaults to 800.
+              // min calculated height of 325 px
               if (calcHeight < 1201) {
-                height = calcHeight;
-              } 
-
-            }
+                if (calcHeight > 325) {
+                  height = calcHeight;
+                } else {
+                  height = 325;
+                }
+              }
+          }
           else
           {
             let intHeight = parseInt(heightValue);
@@ -265,15 +265,14 @@ function setGridHeight(dataParam, styleParam) {
                 height = intHeight;
               }
           }
-
+      }
+      else
+      {
+        // empty grid
+        if (dataParam.length == 0) {
+          height = 200;
         }
-        else
-        {
-          if (dataParam.length == 0) {
-            height = 200;
-          }
-          console.log("Height not in style");
-        }
+      }
   }
 
   return height;
