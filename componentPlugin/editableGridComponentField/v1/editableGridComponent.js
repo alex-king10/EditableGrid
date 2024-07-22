@@ -12,7 +12,8 @@ let changeObj = {};
 let userPermissionLevel;
 let primaryKeyName;
 let recordUUID;
-
+let relatedRecords = {};
+let columnHeaderData2 = [];
 
 // REGISTER CUSTOM RENDERERS
 
@@ -31,6 +32,13 @@ Handsontable.cellTypes.registerCellType('appianObject', {
   // myCustomProperty: 'foo'
 });
 
+Handsontable.cellTypes.registerCellType('relatedRecord', {
+  type: "text",
+  className: 'cellStyle-appianObject',
+  readOnly: true,
+  displayFields: ["fieldName"]
+});
+
 async function doesRecordExist(recordUuid, id) {
   let result = await doesRecordExistServlet(recordUuid, id);
   if ('doesRecordExist?' in result) {
@@ -38,13 +46,6 @@ async function doesRecordExist(recordUuid, id) {
   }
 
   return result;
-}
-
-async function getPKField(recordUuid, pkFieldName) {
-  let result = await getRecordFieldUUID(recordUuid, pkFieldName);
-
-  return result;
-  
 }
 
 // CUSTOM VALIDATOR
@@ -69,30 +70,57 @@ Handsontable.validators.registerValidator('primaryKeyValidator', pkValidator);
 function setGridData2(rowsParam, changeObj)
 {
 
-  dataMap = [];
-  let currRow = [];
-  let currMapRow = [];
   let currRowIdx;
+  let currChangeItem;
 
   if (rowsParam != null) {
     dataMap = rowsParam;
-    if (Object.keys(changeObj).length == 0) {
-      // no updates to make to data var
+    if (Object.keys(changeObj).length == 0 && Object.keys(relatedRecords).length == 0) {
+    // no updates to make to data var
       return dataMap;
     } else {
-      //update changed indices in data var
-      for (let i = 0; i < Object.keys(changeObj).length; i++) {
-        // if (Object.keys(changeObj).length != 0) {
-          // maube check if Object.values(changeObj)[currRowIdx] is valid
+      let currRow;
+      let displayField;
+      let displayFields;
+
+      if (Object.keys(changeObj).length != 0) {
+        //update changed indices in data var
+        for (let i = 0; i < Object.keys(changeObj).length; i++) {
           currRowIdx = Object.keys(changeObj)[i];
+          currChangeItem = Object.values(changeObj)[i];
           // update row in data var with value from changeObj
-          dataMap[currRowIdx] = Object.values(changeObj)[i];
-        // }
+          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
+        }
       }
+          
+      // process related records 
+      if (Object.keys(relatedRecords).length > 0) {
+        // loop over data
+        for (let j = 0; j < dataMap.length; j++) {
+          currRow = dataMap[j];
+          // loop over related record
+          Object.keys(relatedRecords).forEach(relField => {
+             // { ownerRel: ['name'] }
+             if (relField in currRow && currRow[relField] != null) {
+              displayFields = relatedRecords[relField];
+              displayFields?.forEach(displayField => {
+                if (displayField in currRow[relField]) {
+                  currRow[displayField] = currRow[relField][displayField];
+                } else {
+                  console.log(`Display field: ${displayField} not in object at index ${j}`);
+                }
+              });
+
+             }
+          });
+          
+        }
+        
+      }
+      
     }
     
   }
-  // console.log(dataMap);
   return dataMap;
 }
 
@@ -126,8 +154,9 @@ function setGridData(rowsParam)
 }
 
 function setColMetaData2(dataParam, columnConfigParam) {
-  let columnHeaderData2 = [];
+  columnHeaderData2 = [];
   let queryInfo = null;
+  let displayFields;
 
   // get field names
   if (dataParam != null) {
@@ -139,23 +168,47 @@ function setColMetaData2(dataParam, columnConfigParam) {
       // add colName: col Index to map
       colIdxMap[queryInfo[i]] = i;
       let currDataField = queryInfo[i];
-      let currColumnObject = null;
+      let currColConfig = null;
+      let currColConfigList = [];
 
       // find if currDataField in columnConfigParam
       if (columnConfigParam != null) {
         for (let j = 0; j < columnConfigParam.length; j++) {
-          let currColConfig = columnConfigParam[j];
-          // currColumnObject = currColConfig;
+          currColConfig = columnConfigParam[j];
 
           // if currDataField is in config param
           if (currColConfig.data == currDataField) {
+
             // if no title specified, use field name
-            if (currColConfig.title == undefined && gridMode != "worksheet") {
+            if (currColConfig.title == undefined) {
               currColConfig['title'] = currDataField;
             }
 
+            // if related record type, add to global var relatedRecords w/ displayFields
+            if ('type' in currColConfig && currColConfig.type == "relatedRecord") {
+              if ('displayFields' in currColConfig) {
+                displayFields = currColConfig.displayFields;
+                relatedRecords[currDataField] = displayFields;
+                // add new col object for each displayField - using fieldValues, fieldTitles (future) 
+                // currColConfigList.push(currColConfig);
+                let displayFieldObj;
+                displayFields.forEach(displayField => {
+                  displayFieldObj = {};
+                  displayFieldObj["data"] = displayField;
+                  displayFieldObj["editor"] = false;
+                  displayFieldObj["title"] = displayField;
+                  currColConfigList.push(displayFieldObj);
+                });
+              }
+            } else {
+              // add single item to list [{data: "colName"}]
+              currColConfigList.push(currColConfig);
+            }
+
+            
+
             // add modified currColConfig to object
-            currColumnObject = currColConfig;
+            // currColumnObject = currColConfig;
 
             break;
           }
@@ -164,15 +217,12 @@ function setColMetaData2(dataParam, columnConfigParam) {
       } else { console.error("Column Config Param is null"); }
 
       // if currColumnObject still null --> not in config param
-      if (currColumnObject == null) {
-        if (gridMode == "worksheet") {
-          currColumnObject = { data: currDataField };
-        } else {
-          currColumnObject = { title: currDataField, data: currDataField };
-        }
+      if (currColConfig == null) {
+        currColConfig = { title: currDataField, data: currDataField };
+        currColConfigList.push(currColConfig);
       }
 
-      columnHeaderData2.push(currColumnObject);
+      columnHeaderData2.push(...currColConfigList);
 
     }
 
@@ -204,9 +254,8 @@ function setGridHeight(dataParam, styleParam) {
               // max of 1200 px
               if (calcHeight < 1201) {
                 height = calcHeight;
-              } else {
-                console.log(`Number of records is too high to display auto height of ${calcHeight}. Setting height to ${height}.`);
-              }
+              } 
+
             }
           else
           {
@@ -237,8 +286,6 @@ async function getUserPermission(securityParam) {
     if ('viewer' in securityParam) { groups['viewer'] = securityParam.viewer.id; }
   }
 
-  console.log(groups);
-
   let permissionObj = await getUserSecurityInfo(groups);
 
   if (!('editor' in permissionObj) && !('viewer' in permissionObj) ) {
@@ -266,11 +313,33 @@ function onChange(cellMeta, newValue, source)
 
   if (cellMeta != null)
   {
-    
-    let dataItem = dataMap[cellMeta.row];
+    // let dataItem = dataMap[cellMeta.row];
+    // console.log(dataItem);
+    // changeObj[cellMeta.row] = dataItem;
 
-    console.log(dataItem);
-    changeObj[cellMeta.row] = dataItem;
+    let dataItem = {};
+    let gridRow;
+
+    if (cellMeta.row in changeObj) {
+      changeObj[cellMeta.row][cellMeta.prop] = newValue;
+    } else {
+    // add PK if exists
+      // access data at modified row
+      gridRow = dataMap[cellMeta.row];
+
+      // add new change { name : 'test' }
+      dataItem[cellMeta.prop] = newValue;
+
+      // primaryKeyName is a global var of the string value of the PK field
+      if (primaryKeyName in gridRow && primaryKeyName != cellMeta.prop) {
+        // pkItem[primaryKeyName] = gridRow.primaryKeyName;
+        // add pk { locationAccount: 2 }
+        dataItem[primaryKeyName] = gridRow[primaryKeyName];
+      }
+
+      changeObj[cellMeta.row] = dataItem;
+      
+    }
 
   }
 
@@ -345,18 +414,27 @@ Appian.Component.onNewValue(newValues => {
       }
     }
 
+    // calculate column configurations
+    setColMetaData2(dataParam, configParam);
+
     // set Grid Data
-    // reset changeObj if component wrote back an empty object
-    setGridData2(dataParam, changeObj);
-    // Either initial load of comp. or after "Save Change"
+    // initial load or updating dataParam
+    if (dataMap.length == 0) {
+      setGridData2(dataParam, changeObj);
+    } else {
+      setGridData2(dataMap, changeObj);
+    }
+
+    // Empty changeObj - Either initial load of comp. or after "Save Change"
     if (changeDataParam != null && changeDataParam.length == 0) {
       changeObj = {};
     } 
 
     // get permission level for current user
-    getUserPermission(securityParam).then( permissionObj => {
-      console.log("Permission Object:", permissionObj);
-    })
+    getUserPermission(securityParam)
+    // .then( permissionObj => {
+    //   console.log("Permission Object:", permissionObj);
+    // })
     .catch(error => {
       console.error("Error fetching user security info:", error);
     });
@@ -364,7 +442,7 @@ Appian.Component.onNewValue(newValues => {
     // update grid settings
     hotGrid.updateSettings({
       data: dataMap,
-      columns: setColMetaData2(dataParam, configParam),
+      columns: columnHeaderData2,
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
