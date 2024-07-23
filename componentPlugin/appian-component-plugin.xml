@@ -18,7 +18,7 @@
 
     <parameter>
       <name>rows</name>
-      <category>input-output</category>
+      <category>input-only</category>
       <type>Variant</type>
     </parameter>
 
