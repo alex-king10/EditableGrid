@@ -1,7 +1,8 @@
-import { getUserSecurityInfo, doesRecordExistServlet, getRecordFieldUUID } from "./constants.js";
 import { 
-  userRenderer, 
-} from "./customRenderers.js";
+  getUserSecurityInfo, 
+  doesRecordExistServlet, 
+  getRecordFieldUUID 
+} from "./constants.js";
 
 
 // GLOBAL VAR
@@ -15,23 +16,7 @@ let recordUUID;
 let relatedRecords = {};
 let columnHeaderData2 = [];
 
-// REGISTER CUSTOM RENDERERS
-
-Handsontable.renderers.registerRenderer('apn.userRenderer', userRenderer);
-
 // CUSTOM CELL TYPES
-
-// Register Group/User Shared Cell Type - appianObject
-  // editor - can't cast from dictionary to user error when saving in Appian interface
-Handsontable.cellTypes.registerCellType('appianObject', {
-  renderer: 'apn.userRenderer',
-  editor: false,
-  // editor: CustomObjectEditor,
-  className: 'cellStyle-appianObject',
-  readOnly: true,
-  // myCustomProperty: 'foo'
-});
-
 Handsontable.cellTypes.registerCellType('relatedRecord', {
   type: "text",
   className: 'cellStyle-appianObject',
@@ -80,11 +65,10 @@ function setGridData2(rowsParam, changeObj)
       return dataMap;
     } else {
       let currRow;
-      let displayField;
       let displayFields;
 
+      //update changed indices in dataMap var
       if (Object.keys(changeObj).length != 0) {
-        //update changed indices in data var
         for (let i = 0; i < Object.keys(changeObj).length; i++) {
           currRowIdx = Object.keys(changeObj)[i];
           currChangeItem = Object.values(changeObj)[i];
@@ -120,36 +104,17 @@ function setGridData2(rowsParam, changeObj)
       
     }
     
-  }
-  return dataMap;
-}
-
-// INSTANTIATE GRID W/ DATA AND COLUMN
-function setGridData(rowsParam)
-{
-
-  dataMap = [];
-  let currRow = [];
-  let currMapRow = [];
-
-  if (rowsParam != null)
-  {
-    for (let i = 0; i < rowsParam.length; i++)
-    {
-      if ((Object.keys(changeObj).length != 0 && changeObj[i] != undefined)) {
-        currRow = Object.values(changeObj[i]);
-        currMapRow = changeObj[i];
-      } else {
-        currRow =  Object.values(rowsParam[i]);
-        currMapRow = rowsParam[i];
+  } else if (columnHeaderData2.length != 0) {
+    // if no data given, use colConfig as schema and set temp null values in cells
+    let tempRow = {};
+    columnHeaderData2?.forEach(colConfig => {
+      if ('data' in colConfig) {
+        tempRow[colConfig.data] = null;
       }
-
-      dataMap.push(currMapRow);
-    }
-
+    });
+    dataMap.push(tempRow);
   }
-  
-  // console.log(dataMap);
+
   return dataMap;
 }
 
@@ -159,7 +124,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
   let displayFields;
 
   // get field names
-  if (dataParam != null) {
+  if (dataParam != null && dataParam.length != 0) {
     queryInfo = Object.keys(dataParam[0]);
   }
 
@@ -227,7 +192,8 @@ function setColMetaData2(dataParam, columnConfigParam) {
     }
 
   } else {
-    console.error("Query info null");
+    columnHeaderData2 = columnConfigParam;
+    console.log("Query info null");
   }
 
   return columnHeaderData2;
@@ -430,18 +396,22 @@ Appian.Component.onNewValue(newValues => {
     } 
 
     // get permission level for current user
-    getUserPermission(securityParam)
-    // .then( permissionObj => {
-    //   console.log("Permission Object:", permissionObj);
-    // })
-    .catch(error => {
+    getUserPermission(securityParam).catch(error => {
       console.error("Error fetching user security info:", error);
     });
+
+    // if both dataMap and columnData are not null/empty
+    if (!(dataMap.length == 0 && columnHeaderData2.length == 0)) {
+      hotGrid.updateSettings({
+        data: dataMap,
+        columns: columnHeaderData2,
+      })
+    }
   
     // update grid settings
     hotGrid.updateSettings({
-      data: dataMap,
-      columns: columnHeaderData2,
+      // data: dataMap,
+      // columns: columnHeaderData2,
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
@@ -485,18 +455,16 @@ Appian.Component.onNewValue(newValues => {
         if (userPermissionLevel == "viewer") {
           change[3] = oldValue;
         } 
-        else if (newValue != oldValue && userPermissionLevel == "editor") {
-          let colIdx = colIdxMap[prop];
-          if (colIdx != undefined) {
-            if (prop == primaryKeyName) {
-              doesRecordExist(recordUUID, newValue).then( resultObj => {
-                if (resultObj) {
-                  change[3] = oldValue;
-                }
-              });
-            } 
-          }
-        } 
+        // checking if PK is unique
+        // else if (newValue != oldValue && userPermissionLevel == "editor") {
+        //   if (prop == primaryKeyName) {
+        //     doesRecordExist(recordUUID, newValue).then( resultObj => {
+        //       if (resultObj) {
+        //         change[3] = oldValue;
+        //       }
+        //     });
+        //   } 
+        // } 
       })
     });
 
