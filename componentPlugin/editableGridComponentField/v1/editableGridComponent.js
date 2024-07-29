@@ -8,7 +8,8 @@ import {
 // GLOBAL VAR
 let dataMap = [];
 let gridMode = "auto";
-let colIdxMap = {};
+let colIdxMap = [];
+let movedColTracker = {};
 let changeObj = {};
 let userPermissionLevel;
 let primaryKeyName;
@@ -51,14 +52,23 @@ const pkValidator = (value, callback) => {
 // Register an alias
 Handsontable.validators.registerValidator('primaryKeyValidator', pkValidator);
 
+function arraysEqual(arr1, arr2) {
+  if (arr1.length !== arr2.length) return false;
+  for (let i = 0; i < arr1.length; i++) {
+      if (arr1[i] !== arr2[i]) return false;
+  }
+  return true;
+}
+
 // INSTANTIATE GRID W/ DATA AND COLUMN
+  // depends on relatedRecords created in setColMetaData
 function setGridData2(rowsParam, changeObj)
 {
 
   let currRowIdx;
   let currChangeItem;
 
-  if (rowsParam != null) {
+  if (rowsParam != null && rowsParam.length != 0) {
     dataMap = rowsParam;
     if (Object.keys(changeObj).length == 0 && Object.keys(relatedRecords).length == 0) {
     // no updates to make to data var
@@ -87,6 +97,8 @@ function setGridData2(rowsParam, changeObj)
              // { ownerRel: ['name'] }
              if (relField in currRow && currRow[relField] != null) {
               displayFields = relatedRecords[relField];
+
+              // index into object, add specified fields to dataMap as flat key:value pair
               displayFields?.forEach(displayField => {
                 if (displayField in currRow[relField]) {
                   currRow[displayField] = currRow[relField][displayField];
@@ -94,6 +106,11 @@ function setGridData2(rowsParam, changeObj)
                   console.log(`Display field: ${displayField} not in object at index ${j}`);
                 }
               });
+
+                // remove relField:{object} from data
+              if (typeof(currRow[relField]) == 'object') {
+                delete currRow[relField];
+              }
 
              }
           });
@@ -115,6 +132,8 @@ function setGridData2(rowsParam, changeObj)
     dataMap.push(tempRow);
   }
 
+  // if they're both empty, handled in grid creation - no data or column value passed
+
   return dataMap;
 }
 
@@ -131,7 +150,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
   if (queryInfo != null) {
     for (let i = 0; i < queryInfo.length; i++) {
       // add colName: col Index to map
-      colIdxMap[queryInfo[i]] = i;
+      // colIdxMap[queryInfo[i]] = i;
       let currDataField = queryInfo[i];
       let currColConfig = null;
       let currColConfigList = [];
@@ -160,7 +179,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
                 displayFields.forEach(displayField => {
                   displayFieldObj = {};
                   displayFieldObj["data"] = displayField;
-                  displayFieldObj["editor"] = false;
+                  // displayFieldObj["editor"] = false;
                   displayFieldObj["title"] = displayField;
                   currColConfigList.push(displayFieldObj);
                 });
@@ -179,7 +198,10 @@ function setColMetaData2(dataParam, columnConfigParam) {
           }
 
         }
-      } else { console.error("Column Config Param is null"); }
+      } else { 
+        // remove this later
+        console.log("Column Config Param is null"); 
+      }
 
       // if currColumnObject still null --> not in config param
       if (currColConfig == null) {
@@ -191,7 +213,7 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
     }
 
-  } else {
+  } else if (columnConfigParam != null && columnConfigParam.length != 0) {
     columnHeaderData2 = columnConfigParam;
     console.log("Query info null");
   }
@@ -200,47 +222,77 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
 }
 
+// change this to be an ordered list
+function setColumnIndexMap() {
+  colIdxMap = [];
+  // shouldnt ever be true bc of edge case handling
+  if (dataMap.length != 0) {
+    colIdxMap = Object.keys(dataMap[0]);
+    // add colName: col Index to map
+    // if (dataItem != null) {
+    //   for (let i = 0; i < dataItem.length; i++) {
+    //     colIdxMap[dataItem[i]] = i;
+    //   }
+    // }
+  }
+
+  return colIdxMap;
+}
+
+function updateColumnIndexMap(movedColumns, dropIndex) {
+  let newArr = [];
+  let movedColArr = colIdxMap.slice(movedColumns[0],  movedColumns[movedColumns.length - 1] + 1);
+
+  for (let i = 0; i < colIdxMap.length; i++) {
+    
+     if (i == dropIndex) {
+      // copy over moved columns
+      // newArr.push(...colIdxMap.slice(movedColumns[0], movedColumns[movedColumns.length - 1] + 1));
+      newArr.push(...movedColArr);
+    }
+    if (!(movedColumns.includes(i))) {
+      // copy unchanged columns
+      newArr.push(colIdxMap[i]);
+    }
+  }
+
+  colIdxMap = newArr;
+
+}
+
 function setGridHeight(dataParam, styleParam) {
 
   // default of 800
   let height = 800;
 
-  if (styleParam != null && dataParam != null)
-    {
-      if ('height' in styleParam) {
-          let heightValue = styleParam.height;
-          if (heightValue == "AUTO")
-            {
-              let calcHeight = 46 + (dataParam.length * 41);
+  if (dataParam == null || dataParam.length == 0) {
+    return 325;
+  } else if (styleParam != null && 'height' in styleParam) {
 
-              // max calculated height of 1200 px. Defaults to 800.
-              // min calculated height of 325 px
-              if (calcHeight < 1201) {
-                if (calcHeight > 325) {
-                  height = calcHeight;
-                } else {
-                  height = 325;
-                }
-              }
-          }
-          else
-          {
-            let intHeight = parseInt(heightValue);
-            if (!isNaN(intHeight))
-              {
-                height = intHeight;
-              }
+      let heightValue = styleParam.height;
+      if (heightValue == "AUTO")
+        {
+          let calcHeight = 46 + (dataParam.length * 41);
+
+          // max calculated height of 1200 px. Defaults to 800.
+          // min calculated height of 325 px
+          if (calcHeight < 1201) {
+            if (calcHeight > 325) {
+              height = calcHeight;
+            } else {
+              height = 325;
+            }
           }
       }
       else
       {
-        // empty grid
-        if (dataParam.length == 0) {
-          height = 200;
-        }
+        let intHeight = parseInt(heightValue);
+        if (!isNaN(intHeight))
+          {
+            height = intHeight;
+          }
       }
   }
-
   return height;
 }
 
@@ -270,7 +322,6 @@ async function getUserPermission(securityParam) {
 
   return userPermissionLevel;
 }
-
 
 // HANDLE CHANGES IN DATA
 function onChange(cellMeta, newValue, source)
@@ -309,8 +360,6 @@ function onChange(cellMeta, newValue, source)
   }
 
 }
-
-
 
 
 let hotGrid;
@@ -385,7 +434,14 @@ Appian.Component.onNewValue(newValues => {
     // set Grid Data
     // initial load or updating dataParam
     if (dataMap.length == 0) {
+      
       setGridData2(dataParam, changeObj);
+      
+      // only called on initial load
+      if (Object.keys(changeObj).length == 0) {
+        setColumnIndexMap();
+      }
+
     } else {
       setGridData2(dataMap, changeObj);
     }
@@ -393,7 +449,7 @@ Appian.Component.onNewValue(newValues => {
     // Empty changeObj - Either initial load of comp. or after "Save Change"
     if (changeDataParam != null && changeDataParam.length == 0) {
       changeObj = {};
-    } 
+    }
 
     // get permission level for current user
     getUserPermission(securityParam).catch(error => {
@@ -406,6 +462,12 @@ Appian.Component.onNewValue(newValues => {
         data: dataMap,
         columns: columnHeaderData2,
       })
+
+      // Clear validation message
+      Appian.Component.setValidations([]);
+
+    } else {
+      Appian.Component.setValidations(["No data to display. Please enter values for row or columnConfig parameters."]);
     }
   
     // update grid settings
@@ -415,7 +477,6 @@ Appian.Component.onNewValue(newValues => {
       height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
-      mergeCells: true,
       customBorders: true,
       copyPaste: {
         columnsLimit: 25,
@@ -477,18 +538,43 @@ Appian.Component.onNewValue(newValues => {
 
         if (newValue != oldValue && userPermissionLevel == "editor")
         {
-          let colIdx = colIdxMap[prop];
+          let colIdx = colIdxMap.indexOf(prop);
+          // let colIdx = colIdxMap[prop];
           let cellMeta;
-          if (colIdx != undefined) {
+          if (colIdx != -1) {
             cellMeta = hotGrid.getCellMeta(row, colIdx);
             onChange(cellMeta, newValue, [source]);
             Appian.Component.saveValue("changeData", Object.values(changeObj));
+          } else {
+            console.error("Prop not found in column index map");
           }
         } 
   
       });
   
     });
+
+    hotGrid.addHook(
+      "afterColumnMove",
+      (movedColumns, finalIndex, dropIndex, movePossible, orderChanged) => {
+
+        // uses movedColTracker to see if the hook has been triggered multiple times for the same move (a bug in HoT)
+        if (Object.keys(movedColTracker).length == 0 || !(arraysEqual(movedColTracker.movedColumns, movedColumns) && movedColTracker.dropIndex == dropIndex && movedColTracker.currProp == colIdxMap[finalIndex]) ) {
+          if (orderChanged) {
+            let currProp = colIdxMap[movedColumns[0]];
+
+            updateColumnIndexMap(movedColumns, dropIndex); 
+            movedColTracker['movedColumns'] = [...movedColumns];
+            movedColTracker['dropIndex'] = dropIndex;
+            movedColTracker['currProp'] = currProp;
+            console.log("colIdxMap changed");
+            console.log(colIdxMap);
+            console.log(movedColTracker);
+          }
+        }
+       
+      }
+    );
 
 
   } catch (error) {
