@@ -7,15 +7,17 @@ import {
 
 // GLOBAL VAR
 let dataMap = [];
-let gridMode = "auto";
 let colIdxMap = [];
 let movedColTracker = {};
 let changeObj = {};
 let userPermissionLevel;
-let primaryKeyName;
+let primaryKeyName = null;
 let recordUUID;
 let relatedRecords = {};
 let columnHeaderData2 = [];
+let gridHeight = 800;
+// let primarykeyFieldList = [];
+let hiddenCols = [];
 
 // CUSTOM CELL TYPES
 
@@ -151,6 +153,7 @@ function getQueryInfo(dataItem) {
 }
 
 function setColMetaData2(dataParam, columnConfigParam) {
+  // set column configuration data
   columnHeaderData2 = [];
   let queryInfo = null;
 
@@ -163,7 +166,6 @@ function setColMetaData2(dataParam, columnConfigParam) {
     for (let i = 0; i < queryInfo.length; i++) {
       let currDataField = queryInfo[i];
       let currColConfig = null;
-      let currColConfigList = [];
 
       // find if currDataField in columnConfigParam
       if (columnConfigParam != null) {
@@ -251,41 +253,58 @@ function updateColumnIndexMap(movedColumns, dropIndex) {
 // Returns grid height from component parameters
 // Accepts "AUTO" or an integer value
 // AUTO calculates a value based on num rows with a min of 325 and max of 800.
-function setGridHeight(dataParam, styleParam) {
+function getGridHeight(dataLen, heightParam) {
 
   // default
   let height = 800;
 
-  if (dataParam == null || dataParam.length == 0) {
+  // Grid Height Edge Cases
+    // Grid is empty
+  if (dataLen == null || dataLen == 0) {
     return 325;
-  } else if (styleParam != null && 'height' in styleParam) {
+  }
 
-      let heightValue = styleParam.height;
-      if (heightValue == "AUTO")
-        {
-          let calcHeight = 46 + (dataParam.length * 41);
+  // let heightValue = styleParam.height;
+  if (heightParam == "AUTO" || heightParam == undefined)
+    {
+      let calcHeight = 46 + (dataLen * 41);
 
-          // max calculated height of 1200 px. Defaults to 800.
-          // min calculated height of 325 px
-          if (calcHeight < 801) {
-            if (calcHeight > 325) {
-              height = calcHeight;
-            } else {
-              height = 325;
-            }
-          }
-      }
-      else
-      {
-        let intHeight = parseInt(heightValue);
-        if (!isNaN(intHeight))
-          {
-            height = intHeight;
-          }
+      // max calculated height of 1200 px. Defaults to 800.
+      // min calculated height of 325 px
+      if (calcHeight < 801) {
+        if (calcHeight > 325) {
+          height = calcHeight;
+        } else {
+          height = 325;
+        }
       }
   }
+  else
+  {
+    let intHeight = parseInt(heightParam);
+    if (!isNaN(intHeight))
+      {
+        height = intHeight;
+      }
+  }
+  
   return height;
 }
+
+// depends on colIdxMap - 
+function setStyle(styleParam, dataLen) {
+  // set global var gridHeight
+  gridHeight = getGridHeight(dataLen, styleParam.height);
+  
+  // Add primary key visual indeces to global hiddenCols var
+  if (styleParam.showPrimaryKeys == false && primaryKeyName != null ) {
+    let pkIndex = colIdxMap.indexOf(primaryKeyName);
+    hiddenCols.push(pkIndex);
+  }
+
+}
+
+
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel
 // Calls servlet to get permission of passed in group
@@ -445,6 +464,9 @@ Appian.Component.onNewValue(newValues => {
       console.error("Error fetching user security info:", error);
     });
 
+    // set style of grid - includes height and showPK?
+    setStyle(styleParam, dataParam.length);
+
     // if both dataMap and columnData are not null/empty
     if (!(dataMap.length == 0 && columnHeaderData2.length == 0)) {
       hotGrid.updateSettings({
@@ -463,7 +485,8 @@ Appian.Component.onNewValue(newValues => {
     hotGrid.updateSettings({
       // data: dataMap,
       // columns: columnHeaderData2,
-      height: setGridHeight(dataParam, styleParam),
+      height: gridHeight,
+      // height: setGridHeight(dataParam, styleParam),
       stretchH: 'all',
       multiColumnSorting: true,
       customBorders: true,
@@ -473,7 +496,9 @@ Appian.Component.onNewValue(newValues => {
       },
       dropdownMenu: columnMenu,
       hiddenColumns: {
-        indicators: true
+        indicators: false,
+        columns: hiddenCols,
+        copyPasteEnabled: false,
       },
       contextMenu: contextMenu,
       allowInsertColumn: false,
