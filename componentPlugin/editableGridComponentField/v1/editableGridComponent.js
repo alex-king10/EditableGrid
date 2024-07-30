@@ -18,12 +18,6 @@ let relatedRecords = {};
 let columnHeaderData2 = [];
 
 // CUSTOM CELL TYPES
-Handsontable.cellTypes.registerCellType('relatedRecord', {
-  type: "text",
-  className: 'cellStyle-appianObject',
-  readOnly: true,
-  displayFields: ["fieldName"]
-});
 
 async function doesRecordExist(recordUuid, id) {
   let result = await doesRecordExistServlet(recordUuid, id);
@@ -137,20 +131,36 @@ function setGridData2(rowsParam, changeObj)
   return dataMap;
 }
 
+// function to flatten the nested objects from first index of inputted data
+  // used to structure the column meta data
+  // *Note: depends on exemplary data in first row :/ not great
+function getQueryInfo(dataItem) {
+  let queryInfo = [];
+  for (let key in dataItem) {
+    if (dataItem.hasOwnProperty(key)) {
+      if (typeof dataItem[key] !== 'object' || dataItem[key] == null) {
+        queryInfo.push(key);
+      } else {
+        // adds keys of related data
+        queryInfo.push(...Object.keys(dataItem[key]));
+      }
+    }
+  }
+
+  return queryInfo;
+}
+
 function setColMetaData2(dataParam, columnConfigParam) {
   columnHeaderData2 = [];
   let queryInfo = null;
-  let displayFields;
 
   // get field names
   if (dataParam != null && dataParam.length != 0) {
-    queryInfo = Object.keys(dataParam[0]);
+    queryInfo = getQueryInfo(dataParam[0]);
   }
 
   if (queryInfo != null) {
     for (let i = 0; i < queryInfo.length; i++) {
-      // add colName: col Index to map
-      // colIdxMap[queryInfo[i]] = i;
       let currDataField = queryInfo[i];
       let currColConfig = null;
       let currColConfigList = [];
@@ -168,31 +178,13 @@ function setColMetaData2(dataParam, columnConfigParam) {
               currColConfig['title'] = currDataField;
             }
 
-            // if related record type, add to global var relatedRecords w/ displayFields
-            if ('type' in currColConfig && currColConfig.type == "relatedRecord") {
-              if ('displayFields' in currColConfig) {
-                displayFields = currColConfig.displayFields;
-                relatedRecords[currDataField] = displayFields;
-                // add new col object for each displayField - using fieldValues, fieldTitles (future) 
-                // currColConfigList.push(currColConfig);
-                let displayFieldObj;
-                displayFields.forEach(displayField => {
-                  displayFieldObj = {};
-                  displayFieldObj["data"] = displayField;
-                  // displayFieldObj["editor"] = false;
-                  displayFieldObj["title"] = displayField;
-                  currColConfigList.push(displayFieldObj);
-                });
+            if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
+              if (currColConfig.relationshipName in relatedRecords) {
+                relatedRecords[currColConfig.relationshipName].push(currColConfig.data);
+              } else {
+                relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
               }
-            } else {
-              // add single item to list [{data: "colName"}]
-              currColConfigList.push(currColConfig);
             }
-
-            
-
-            // add modified currColConfig to object
-            // currColumnObject = currColConfig;
 
             break;
           }
@@ -206,10 +198,9 @@ function setColMetaData2(dataParam, columnConfigParam) {
       // if currColumnObject still null --> not in config param
       if (currColConfig == null) {
         currColConfig = { title: currDataField, data: currDataField };
-        currColConfigList.push(currColConfig);
       }
 
-      columnHeaderData2.push(...currColConfigList);
+      columnHeaderData2.push(currColConfig);
 
     }
 
@@ -222,23 +213,21 @@ function setColMetaData2(dataParam, columnConfigParam) {
 
 }
 
-// change this to be an ordered list
+// Creates an ordered list of column headers to track their order
+// Used in onChange logic
 function setColumnIndexMap() {
   colIdxMap = [];
   // shouldnt ever be true bc of edge case handling
   if (dataMap.length != 0) {
     colIdxMap = Object.keys(dataMap[0]);
-    // add colName: col Index to map
-    // if (dataItem != null) {
-    //   for (let i = 0; i < dataItem.length; i++) {
-    //     colIdxMap[dataItem[i]] = i;
-    //   }
-    // }
   }
 
   return colIdxMap;
 }
 
+// Updates ordered list of columns for onChange logic
+// Called in 'afterColumnMove' hook
+// Return - void
 function updateColumnIndexMap(movedColumns, dropIndex) {
   let newArr = [];
   let movedColArr = colIdxMap.slice(movedColumns[0],  movedColumns[movedColumns.length - 1] + 1);
@@ -247,7 +236,6 @@ function updateColumnIndexMap(movedColumns, dropIndex) {
     
      if (i == dropIndex) {
       // copy over moved columns
-      // newArr.push(...colIdxMap.slice(movedColumns[0], movedColumns[movedColumns.length - 1] + 1));
       newArr.push(...movedColArr);
     }
     if (!(movedColumns.includes(i))) {
@@ -260,9 +248,12 @@ function updateColumnIndexMap(movedColumns, dropIndex) {
 
 }
 
+// Returns grid height from component parameters
+// Accepts "AUTO" or an integer value
+// AUTO calculates a value based on num rows with a min of 325 and max of 800.
 function setGridHeight(dataParam, styleParam) {
 
-  // default of 800
+  // default
   let height = 800;
 
   if (dataParam == null || dataParam.length == 0) {
@@ -276,7 +267,7 @@ function setGridHeight(dataParam, styleParam) {
 
           // max calculated height of 1200 px. Defaults to 800.
           // min calculated height of 325 px
-          if (calcHeight < 1201) {
+          if (calcHeight < 801) {
             if (calcHeight > 325) {
               height = calcHeight;
             } else {
@@ -296,6 +287,8 @@ function setGridHeight(dataParam, styleParam) {
   return height;
 }
 
+// Returns and sets userPermission levels to globalVar userPermissionLevel
+// Calls servlet to get permission of passed in group
 async function getUserPermission(securityParam) {
   let groups = {};
   if (securityParam != null) {
@@ -329,10 +322,6 @@ function onChange(cellMeta, newValue, source)
 
   if (cellMeta != null)
   {
-    // let dataItem = dataMap[cellMeta.row];
-    // console.log(dataItem);
-    // changeObj[cellMeta.row] = dataItem;
-
     let dataItem = {};
     let gridRow;
 
