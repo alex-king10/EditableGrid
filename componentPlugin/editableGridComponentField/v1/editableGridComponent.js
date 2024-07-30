@@ -16,7 +16,7 @@ let recordUUID;
 let relatedRecords = {};
 let columnHeaderData2 = [];
 let gridHeight = 800;
-// let primarykeyFieldList = [];
+let primaryKeyFieldList = [];
 let hiddenCols = [];
 
 // CUSTOM CELL TYPES
@@ -297,9 +297,12 @@ function setStyle(styleParam, dataLen) {
   gridHeight = getGridHeight(dataLen, styleParam.height);
   
   // Add primary key visual indeces to global hiddenCols var
-  if (styleParam.showPrimaryKeys == false && primaryKeyName != null ) {
-    let pkIndex = colIdxMap.indexOf(primaryKeyName);
-    hiddenCols.push(pkIndex);
+  if (styleParam.showPrimaryKeys == false && primaryKeyFieldList.length != 0 ) {
+    let pkIndex;
+    primaryKeyFieldList.forEach(pkField => {
+      pkIndex = colIdxMap.indexOf(pkField);
+      hiddenCols.push(pkIndex);
+    });
   }
 
 }
@@ -431,8 +434,14 @@ Appian.Component.onNewValue(newValues => {
       if ('recordTypeUUID' in recordTypeInfoParam) {
         recordUUID = recordTypeInfoParam.recordTypeUUID;
       }
+
       if ('primaryKeyField' in recordTypeInfoParam) {
         primaryKeyName = recordTypeInfoParam.primaryKeyField;
+        primaryKeyFieldList.push(primaryKeyName);
+      }
+
+      if ('relatedPKFields' in recordTypeInfoParam) {
+        primaryKeyFieldList.push(...recordTypeInfoParam.relatedPKFields);
       }
     }
 
