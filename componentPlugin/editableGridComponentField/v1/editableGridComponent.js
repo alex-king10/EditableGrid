@@ -1,7 +1,6 @@
 import { 
   getUserSecurityInfo, 
-  doesRecordExistServlet, 
-  getRecordFieldUUID 
+  doesRecordExistServlet,  
 } from "./constants.js";
 
 
@@ -301,13 +300,13 @@ function setStyle(styleParam, dataLen) {
     let pkIndex;
     primaryKeyFieldList.forEach(pkField => {
       pkIndex = colIdxMap.indexOf(pkField);
-      hiddenCols.push(pkIndex);
+      if (pkIndex != -1) {
+        hiddenCols.push(pkIndex);
+      }
     });
   }
 
 }
-
-
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel
 // Calls servlet to get permission of passed in group
@@ -357,11 +356,14 @@ function onChange(cellMeta, newValue, source)
       // add new change { name : 'test' }
       dataItem[cellMeta.prop] = newValue;
 
-      // primaryKeyName is a global var of the string value of the PK field
-      if (primaryKeyName in gridRow && primaryKeyName != cellMeta.prop) {
-        // pkItem[primaryKeyName] = gridRow.primaryKeyName;
-        // add pk { locationAccount: 2 }
-        dataItem[primaryKeyName] = gridRow[primaryKeyName];
+      // add primary keys (parent and related) to changeObj at this record
+        // only 0 if pkName not given in recordTypeInfo - shows a validation message
+      if (primaryKeyFieldList.length != 0) {
+        primaryKeyFieldList.forEach(pkField => {
+          if (pkField in gridRow && cellMeta.prop != pkField) {
+            dataItem[pkField] = gridRow[pkField];
+          }
+        })
       }
 
       changeObj[cellMeta.row] = dataItem;
@@ -438,6 +440,9 @@ Appian.Component.onNewValue(newValues => {
       if ('primaryKeyField' in recordTypeInfoParam) {
         primaryKeyName = recordTypeInfoParam.primaryKeyField;
         primaryKeyFieldList.push(primaryKeyName);
+      } else {
+        // Show error to user that primaryKey is required
+        Appian.Component.setValidations(["Please enter a valid primaryKeyField value in the recordTypeInfo component parameter."]);
       }
 
       if ('relatedPKFields' in recordTypeInfoParam) {
