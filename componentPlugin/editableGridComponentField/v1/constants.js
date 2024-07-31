@@ -43,3 +43,59 @@ export async function getUserSecurityInfo(groupObject) {
 
   return result;
 }
+
+// GRID CONFIG CONSTANTS
+export const CONTEXT_MENU = [
+  "row_above",
+  "row_below",
+  "---------",
+  "undo",
+  "redo",
+  "cut",
+  "copy",
+  "---------",
+  "borders",
+  "---------",
+  "hidden_columns_hide",
+  "hidden_columns_show",
+];
+
+export const COLUMN_MENU = [
+  "filter_by_condition",
+  "filter_by_condition2",
+  "filter_operators",
+  "filter_by_value",
+  "filter_action_bar"
+];
+
+// Returns an object of grid configuration options
+// param gridHeight - int calculated from user input
+// param hiddenCols - list of primary key field indices to hide
+export const getGridOptions = (gridHeight, hiddenCols) => {
+  return {
+    height: gridHeight,
+    stretchH: 'all',
+    multiColumnSorting: true,
+    customBorders: true,
+    copyPaste: {
+      columnsLimit: 25,
+      rowsLimit: 200,
+    },
+    dropdownMenu: COLUMN_MENU,
+    hiddenColumns: {
+      indicators: false,
+      columns: hiddenCols,
+      copyPasteEnabled: false,
+    },
+    contextMenu: CONTEXT_MENU,
+    allowInsertColumn: false,
+    filters: true,
+    allowInsertRow: true,
+    manualColumnMove: true,
+    manualColumnResize: true,
+    manualRowMove: false,
+    minSpareRows: 1,
+    rowHeights: 40,
+    className: "htMiddle",
+  };
+} 

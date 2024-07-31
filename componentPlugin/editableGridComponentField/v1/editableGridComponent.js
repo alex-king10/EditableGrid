@@ -1,5 +1,6 @@
 import { 
   getUserSecurityInfo, 
+  getGridOptions
 } from "./constants.js";
 
 import {
@@ -12,13 +13,31 @@ let colIdxMap = [];
 let movedColTracker = {};
 let changeObj = {};
 let userPermissionLevel;
-let primaryKeyName = null;
-let recordUUID;
 let relatedRecords = {};
 let columnHeaderData2 = [];
-let gridHeight = 800;
-let primaryKeyFieldList = [];
-let hiddenCols = [];
+// let hiddenCols = [];
+
+// process record type info
+function getRecordPKInfo(recordTypeInfoParam) {
+  let primaryKeyName = null;
+  let primaryKeyFieldList = [];
+
+  // find global var - record type UUID and primaryKey
+  if (recordTypeInfoParam != null) {
+    if ('primaryKeyField' in recordTypeInfoParam) {
+      primaryKeyName = recordTypeInfoParam.primaryKeyField;
+      primaryKeyFieldList.push(primaryKeyName);
+    } else {
+      // Show error to user that primaryKey is required
+      Appian.Component.setValidations(["Please enter a valid primaryKeyField value in the recordTypeInfo component parameter."]);
+    }
+    if ('relatedPKFields' in recordTypeInfoParam) {
+      primaryKeyFieldList.push(...recordTypeInfoParam.relatedPKFields);
+    }
+  }
+
+  return primaryKeyFieldList;
+}
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
   // depends on relatedRecords created in setColMetaData
@@ -215,7 +234,7 @@ function updateColumnIndexMap(movedColumns, dropIndex) {
 }
 
 // Returns grid height from component parameters
-// Accepts "AUTO" or an integer value
+// Accepts "AUTO", an integer value, or undefined (if not set)
 // AUTO calculates a value based on num rows with a min of 325 and max of 800.
 function getGridHeight(dataLen, heightParam) {
 
@@ -255,12 +274,16 @@ function getGridHeight(dataLen, heightParam) {
   return height;
 }
 
-// depends on colIdxMap - 
-function setStyle(styleParam, dataLen) {
+// Returns object of gridHeight and hiddenCols (list of column indices to hide)
+  // param styleParam - object from component config to define style of grid
+  // param dataLen - length of inputted data. Used to calculate grid height
+  // param primaryKeyFieldList - used to calc hiddenCols
+function getStyle(styleParam, dataLen, primaryKeyFieldList) {
   // set global var gridHeight
-  gridHeight = getGridHeight(dataLen, styleParam.height);
+  let gridHeight = getGridHeight(dataLen, styleParam.height);
   
   // Add primary key visual indeces to global hiddenCols var
+  let hiddenCols = [];
   if (styleParam.showPrimaryKeys == false && primaryKeyFieldList.length != 0 ) {
     let pkIndex;
     primaryKeyFieldList.forEach(pkField => {
@@ -270,6 +293,8 @@ function setStyle(styleParam, dataLen) {
       }
     });
   }
+
+  return { gridHeight, hiddenCols };
 
 }
 
@@ -303,7 +328,7 @@ async function getUserPermission(securityParam) {
 }
 
 // HANDLE CHANGES IN DATA
-function onChange(cellMeta, newValue, source)
+function onChange(primaryKeyFieldList, cellMeta, newValue)
 {
 
   if (cellMeta != null)
@@ -372,49 +397,8 @@ Appian.Component.onNewValue(newValues => {
       console.error(`Hot grid null or undefined: ${hotGrid}`);
     }
 
-    let contextMenu = [
-      "row_above",
-      "row_below",
-      "---------",
-      "undo",
-      "redo",
-      "cut",
-      "copy",
-      "---------",
-      "borders",
-      "---------",
-      "hidden_columns_hide",
-      "hidden_columns_show",
-
-    ];
-
-    let columnMenu = [
-      "filter_by_condition",
-      "filter_by_condition2",
-      "filter_operators",
-      "filter_by_value",
-      "filter_action_bar"
-    ];
-
-    // find global var - record type UUID and primaryKey
-    if (recordTypeInfoParam != null) {
-      if ('recordTypeUUID' in recordTypeInfoParam) {
-        recordUUID = recordTypeInfoParam.recordTypeUUID;
-      }
-
-      if ('primaryKeyField' in recordTypeInfoParam) {
-        primaryKeyName = recordTypeInfoParam.primaryKeyField;
-        primaryKeyFieldList.push(primaryKeyName);
-      } else {
-        // Show error to user that primaryKey is required
-        Appian.Component.setValidations(["Please enter a valid primaryKeyField value in the recordTypeInfo component parameter."]);
-      }
-
-      if ('relatedPKFields' in recordTypeInfoParam) {
-        primaryKeyFieldList.push(...recordTypeInfoParam.relatedPKFields);
-      }
-    }
-
+    let primaryKeyFieldList = getRecordPKInfo(recordTypeInfoParam);
+    
     // calculate column configurations
     setColMetaData(dataParam, configParam);
 
@@ -443,8 +427,8 @@ Appian.Component.onNewValue(newValues => {
       console.error("Error fetching user security info:", error);
     });
 
-    // set style of grid - includes height and showPK?
-    setStyle(styleParam, dataParam.length);
+    // set style of grid - includes height and showPK boolean
+    let { gridHeight, hiddenCols } = getStyle(styleParam, dataParam.length, primaryKeyFieldList);
 
     // if both dataMap and columnData are not null/empty
     if (!(dataMap.length == 0 && columnHeaderData2.length == 0)) {
@@ -459,38 +443,8 @@ Appian.Component.onNewValue(newValues => {
     } else {
       Appian.Component.setValidations(["No data to display. Please enter values for row or columnConfig parameters."]);
     }
-  
-    // update grid settings
-    hotGrid.updateSettings({
-      // data: dataMap,
-      // columns: columnHeaderData2,
-      height: gridHeight,
-      // height: setGridHeight(dataParam, styleParam),
-      stretchH: 'all',
-      multiColumnSorting: true,
-      customBorders: true,
-      copyPaste: {
-        columnsLimit: 25,
-        rowsLimit: 200,
-      },
-      dropdownMenu: columnMenu,
-      hiddenColumns: {
-        indicators: false,
-        columns: hiddenCols,
-        copyPasteEnabled: false,
-      },
-      contextMenu: contextMenu,
-      allowInsertColumn: false,
-      filters: true,
-      allowInsertRow: true,
-      manualColumnMove: true,
-      manualColumnResize: true,
-      manualRowMove: false,
-      minSpareRows: 1,
-      rowHeights: 40,
-      // comments: true,
-      className: "htMiddle",
-    });
+
+    hotGrid.updateSettings(getGridOptions(gridHeight, hiddenCols));
 
     if (gridOptionsParam != null)
     {   
@@ -526,7 +480,7 @@ Appian.Component.onNewValue(newValues => {
           let cellMeta;
           if (colIdx != -1) {
             cellMeta = hotGrid.getCellMeta(row, colIdx);
-            onChange(cellMeta, newValue, [source]);
+            onChange(primaryKeyFieldList, cellMeta, newValue);
             Appian.Component.saveValue("changeData", Object.values(changeObj));
           } else {
             console.error("Prop not found in column index map");
