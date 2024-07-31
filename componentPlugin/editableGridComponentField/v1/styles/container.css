@@ -1,23 +1,14 @@
-/* html, body, #myGrid { */
-/* html, body, #myGrid {
-  height: 800px;
-  margin: 0;
-  padding: 0;
-}  */
-
 #myGrid {
-  /* create color palette  */
+  /* color palette  */
   --header-color: color-mix(in srgb, #fff, #181d1f 3%);
   --border-color: color-mix(in srgb, #fff, #181d1f 15%);
   --highlighted-header-color: color-mix(in srgb, #fff, #181d1f 7%);
   --error-cell-color: #ffbe11;
-  /* --error-cell-color: #ffbeba; */
 
   height: 200px;
   width: 100%;
   margin: 0;
   padding: 0;
-  /* overflow: hidden; */
   overflow: auto !important;
   border-radius: 10px;
   border-right: 1px solid var(--border-color);
@@ -43,7 +34,6 @@
 .handsontable tbody td:not(.listbox),
 .handsontable thead th,
 .handsontable tbody th  {
-  /* height: 41px !important; */
   max-width: 700px;
   overflow: hidden;
   font-weight: 450;
@@ -82,18 +72,6 @@
 [role="row"] {
   border-left: 0px !important;
 }
-
-
-/* 
-.handsontable thead th {
-  text-align: left;
-  padding: 10px !important;
-  height: auto !important;
-  font-size: 14px;
-  font-weight: 450;
-} */
-
-
 
 /* span with text in header */
 .handsontable span.colHeader {
@@ -171,22 +149,6 @@ td:hover .htAutocompleteArrow {
   width: auto;
   z-index: 300;
 }
-
-/* removes bottom border from row - looks weird when not AUTO */
-/* 
-.handsontable tbody tr:last-child td,
-.handsontable tbody tr:last-child th {
-  border-bottom: 0px !important;
-} */
-
-/* .handsontable tr:last-child td:first-child {
-  border-bottom-left-radius: 10px
-}
-
-.handsontable tr:last-child td:last-child {
-  border-bottom-right-radius: 10px
-} */
-
 
 /* cell classes - styling */
 .cellStyle-appianObject {

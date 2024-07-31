@@ -1,8 +1,10 @@
 import { 
   getUserSecurityInfo, 
-  doesRecordExistServlet,  
 } from "./constants.js";
 
+import {
+  arraysEqual
+} from "./utils/utils.js";
 
 // GLOBAL VAR
 let dataMap = [];
@@ -18,46 +20,9 @@ let gridHeight = 800;
 let primaryKeyFieldList = [];
 let hiddenCols = [];
 
-// CUSTOM CELL TYPES
-
-async function doesRecordExist(recordUuid, id) {
-  let result = await doesRecordExistServlet(recordUuid, id);
-  if ('doesRecordExist?' in result) {
-    return result['doesRecordExist?'];
-  }
-
-  return result;
-}
-
-// CUSTOM VALIDATOR
-const pkValidator = (value, callback) => {
-
-  setTimeout(() => {
-    doesRecordExist(recordUUID, value).then( resultObj => {
-      if (resultObj) {
-        // prevent change
-        callback(false);
-      }  else {
-        callback(true);
-      }
-    })
-  }, 500);
-};
-
-// Register an alias
-Handsontable.validators.registerValidator('primaryKeyValidator', pkValidator);
-
-function arraysEqual(arr1, arr2) {
-  if (arr1.length !== arr2.length) return false;
-  for (let i = 0; i < arr1.length; i++) {
-      if (arr1[i] !== arr2[i]) return false;
-  }
-  return true;
-}
-
 // INSTANTIATE GRID W/ DATA AND COLUMN
   // depends on relatedRecords created in setColMetaData
-function setGridData2(rowsParam, changeObj)
+function setGridData(rowsParam, changeObj)
 {
 
   let currRowIdx;
@@ -151,7 +116,7 @@ function getQueryInfo(dataItem) {
   return queryInfo;
 }
 
-function setColMetaData2(dataParam, columnConfigParam) {
+function setColMetaData(dataParam, columnConfigParam) {
   // set column configuration data
   columnHeaderData2 = [];
   let queryInfo = null;
@@ -451,13 +416,13 @@ Appian.Component.onNewValue(newValues => {
     }
 
     // calculate column configurations
-    setColMetaData2(dataParam, configParam);
+    setColMetaData(dataParam, configParam);
 
     // set Grid Data
     // initial load or updating dataParam
     if (dataMap.length == 0) {
       
-      setGridData2(dataParam, changeObj);
+      setGridData(dataParam, changeObj);
       
       // only called on initial load
       if (Object.keys(changeObj).length == 0) {
@@ -465,7 +430,7 @@ Appian.Component.onNewValue(newValues => {
       }
 
     } else {
-      setGridData2(dataMap, changeObj);
+      setGridData(dataMap, changeObj);
     }
 
     // Empty changeObj - Either initial load of comp. or after "Save Change"
@@ -544,16 +509,6 @@ Appian.Component.onNewValue(newValues => {
         if (userPermissionLevel == "viewer") {
           change[3] = oldValue;
         } 
-        // checking if PK is unique
-        // else if (newValue != oldValue && userPermissionLevel == "editor") {
-        //   if (prop == primaryKeyName) {
-        //     doesRecordExist(recordUUID, newValue).then( resultObj => {
-        //       if (resultObj) {
-        //         change[3] = oldValue;
-        //       }
-        //     });
-        //   } 
-        // } 
       })
     });
 
