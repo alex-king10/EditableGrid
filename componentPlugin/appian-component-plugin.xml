@@ -11,13 +11,13 @@
     <sdk-version>2.0.0</sdk-version>
 
     <parameter>
-      <name>recordTypeInfo</name>
+      <name>rows</name>
       <category>input-only</category>
       <type>Variant</type>
     </parameter>
 
     <parameter>
-      <name>rows</name>
+      <name>primaryKeyFields</name>
       <category>input-only</category>
       <type>Variant</type>
     </parameter>

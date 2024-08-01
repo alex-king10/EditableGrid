@@ -15,25 +15,15 @@ let changeObj = {};
 let userPermissionLevel;
 let relatedRecords = {};
 let columnHeaderData2 = [];
-// let hiddenCols = [];
 
 // process record type info
-function getRecordPKInfo(recordTypeInfoParam) {
-  let primaryKeyName = null;
+function getPKList(primaryKeyFieldsParam) {
   let primaryKeyFieldList = [];
 
-  // find global var - record type UUID and primaryKey
-  if (recordTypeInfoParam != null) {
-    if ('primaryKeyField' in recordTypeInfoParam) {
-      primaryKeyName = recordTypeInfoParam.primaryKeyField;
-      primaryKeyFieldList.push(primaryKeyName);
-    } else {
-      // Show error to user that primaryKey is required
-      Appian.Component.setValidations(["Please enter a valid primaryKeyField value in the recordTypeInfo component parameter."]);
-    }
-    if ('relatedPKFields' in recordTypeInfoParam) {
-      primaryKeyFieldList.push(...recordTypeInfoParam.relatedPKFields);
-    }
+  if (primaryKeyFieldsParam != null) {
+    primaryKeyFieldList.push(...primaryKeyFieldsParam);
+  } else {
+    Appian.Component.setValidations(["Please enter the name of your record's primary key field if you would like to make changes to the record data."]);
   }
 
   return primaryKeyFieldList;
@@ -368,11 +358,12 @@ function onChange(primaryKeyFieldList, cellMeta, newValue)
 let hotGrid;
 try {
 
-// init grid
+  // init grid
   const container = document.getElementById("myGrid");
   hotGrid = new Handsontable(container, {
     licenseKey: "non-commercial-and-evaluation",
   });
+
 } catch (error) {
   console.error(`An error occurred ${error}`);
 }
@@ -386,7 +377,7 @@ Appian.Component.onNewValue(newValues => {
   let styleParam = newValues.style;
   let changeDataParam = newValues.changeData;
   let securityParam = newValues.securityGroups;
-  let recordTypeInfoParam = newValues.recordTypeInfo;
+  let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
   console.log("newValues");
   console.log(newValues);
@@ -397,7 +388,7 @@ Appian.Component.onNewValue(newValues => {
       console.error(`Hot grid null or undefined: ${hotGrid}`);
     }
 
-    let primaryKeyFieldList = getRecordPKInfo(recordTypeInfoParam);
+    let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
     
     // calculate column configurations
     setColMetaData(dataParam, configParam);
