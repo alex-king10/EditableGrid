@@ -274,7 +274,7 @@ function getStyle(styleParam, dataLen, primaryKeyFieldList) {
   
   // Add primary key visual indeces to global hiddenCols var
   let hiddenCols = [];
-  if (styleParam.showPrimaryKeys == false && primaryKeyFieldList.length != 0 ) {
+  if ((styleParam.showPrimaryKeys == false || styleParam.showPrimaryKeys == undefined)  && primaryKeyFieldList.length != 0 ) {
     let pkIndex;
     primaryKeyFieldList.forEach(pkField => {
       pkIndex = colIdxMap.indexOf(pkField);
@@ -419,7 +419,12 @@ Appian.Component.onNewValue(newValues => {
     });
 
     // set style of grid - includes height and showPK boolean
-    let { gridHeight, hiddenCols } = getStyle(styleParam, dataParam.length, primaryKeyFieldList);
+    let gridHeight, hiddenCols;
+    if (dataParam != null) {
+      ({ gridHeight, hiddenCols } = getStyle(styleParam, dataParam.length, primaryKeyFieldList));
+    } else {
+      ({ gridHeight, hiddenCols } = getStyle(styleParam, 0, primaryKeyFieldList));
+    }
 
     // if both dataMap and columnData are not null/empty
     if (!(dataMap.length == 0 && columnHeaderData2.length == 0)) {
