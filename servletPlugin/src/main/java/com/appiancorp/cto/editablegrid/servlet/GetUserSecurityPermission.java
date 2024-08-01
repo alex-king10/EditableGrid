@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
 
+import com.appiancorp.common.logging.ConfigureLog4j;
 import com.appiancorp.services.exceptions.ServiceException;
 import com.appiancorp.suiteapi.process.ProcessDesignService;
 import com.appiancorp.suiteapi.process.ProcessModel;
@@ -18,8 +19,13 @@ import com.appiancorp.suiteapi.process.security.ProcessModelPermissions;
 import com.appiancorp.suiteapi.servlet.AppianServlet;
 import com.appiancorp.suiteapi.type.TypedValue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class GetUserSecurityPermission extends AppianServlet {
      ProcessDesignService pds;
+    private static final Logger logger = LogManager.getLogger(GetUserSecurityPermission.class);
+
 
     //    dependency injection
     public GetUserSecurityPermission(ProcessDesignService pds) {
@@ -35,8 +41,10 @@ public class GetUserSecurityPermission extends AppianServlet {
 
             String viewerGroupStr = req.getParameter("viewer");
             String editorGroupStr = req.getParameter("editor");
+
             TypedValue username = pds.evaluateExpression("loggedInUser()");
             String usernameStr = username.getValue().toString();
+            usernameStr = req.getRemoteUser();
             result.put("Username", usernameStr);
 
             int viewerGroupID;
@@ -71,7 +79,7 @@ public class GetUserSecurityPermission extends AppianServlet {
             result.put("Service Exception Error: ", e.toString());
         }
         catch (Exception e) {
-            System.out.println(e);
+            logger.error("An error occurred", e);
             result.put("Error", e.toString());
         }
 
@@ -85,12 +93,5 @@ public class GetUserSecurityPermission extends AppianServlet {
         out.close();
 
 
-    }
-
-
-    private void sendResponse(PrintWriter printWriter, JSONObject message) {
-        printWriter.write(message.toString());
-        printWriter.flush();
-        printWriter.close();
     }
 }
