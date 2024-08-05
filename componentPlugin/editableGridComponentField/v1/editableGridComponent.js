@@ -106,6 +106,48 @@ function setGridData(rowsParam, changeObj)
   return dataMap;
 }
 
+// updates dataMap with changeObj
+function updateGridData(rowsParam, changeObj)
+{
+
+  let currRowIdx;
+  let currChangeItem;
+
+  if (rowsParam != null && rowsParam.length != 0) {
+    dataMap = rowsParam;
+    if (Object.keys(changeObj).length == 0) {
+    // no updates to make to data var
+      return dataMap;
+    } else {
+      //update changed indices in dataMap var
+      if (Object.keys(changeObj).length != 0) {
+        for (let i = 0; i < Object.keys(changeObj).length; i++) {
+          currRowIdx = Object.keys(changeObj)[i];
+          currChangeItem = Object.values(changeObj)[i];
+          // update row in data var with value from changeObj
+          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
+        }
+      }
+      
+    }
+    
+  } 
+  // else if (columnHeaderData2.length != 0) {
+  //   // if no data given, use colConfig as schema and set temp null values in cells
+  //   let tempRow = {};
+  //   columnHeaderData2?.forEach(colConfig => {
+  //     if ('data' in colConfig) {
+  //       tempRow[colConfig.data] = null;
+  //     }
+  //   });
+  //   dataMap.push(tempRow);
+  // }
+
+  // if they're both empty, handled in grid creation - no data or column value passed
+
+  return dataMap;
+}
+
 // function to flatten the nested objects from first index of inputted data
   // used to structure the column meta data
   // *Note: depends on exemplary data in first row :/ not great
@@ -405,7 +447,7 @@ Appian.Component.onNewValue(newValues => {
       }
 
     } else {
-      setGridData(dataMap, changeObj);
+      updateGridData(dataMap, changeObj);
     }
 
     // Empty changeObj - Either initial load of comp. or after "Save Change"
