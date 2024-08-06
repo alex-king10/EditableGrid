@@ -29,6 +29,28 @@ function getPKList(primaryKeyFieldsParam) {
   return primaryKeyFieldList;
 }
 
+
+// Returns a flattened row of data from a related record field
+// param currRow - reference to current row in grid data to be manipulated
+// param displayFields - list of related record fields to display
+// param recordField - name of 1_N record field
+function get1_NRecordData(recordField, displayFields, currRow) {
+  let dataList = currRow[recordField];
+
+  for (let i = 0; i < dataList.length; i++) {
+    let dataObj = dataList[i];
+    displayFields?.forEach(displayField => {
+      if (currRow[displayField] == undefined) {
+        currRow[displayField] = [ dataObj[displayField]];
+      } else {
+        currRow[displayField].push(dataObj[displayField]);
+      }
+    })
+  }
+
+  return currRow;
+}
+
 // INSTANTIATE GRID W/ DATA AND COLUMN
   // depends on relatedRecords created in setColMetaData
 function setGridData(rowsParam, changeObj)
@@ -67,17 +89,23 @@ function setGridData(rowsParam, changeObj)
              if (relField in currRow && currRow[relField] != null) {
               displayFields = relatedRecords[relField];
 
-              // index into object, add specified fields to dataMap as flat key:value pair
-              displayFields?.forEach(displayField => {
-                if (displayField in currRow[relField]) {
-                  currRow[displayField] = currRow[relField][displayField];
-                } else {
-                  console.log(`Display field: ${displayField} not in object at index ${j}`);
-                }
-              });
+              // check if relationship is 1:N
+              if (Array.isArray(currRow[relField])) {
+                currRow = get1_NRecordData(relField, displayFields, currRow);
 
-                // remove relField:{object} from data
-              if (typeof(currRow[relField]) == 'object') {
+              } else {
+                // index into object, add specified fields to dataMap as flat key:value pair
+                displayFields?.forEach(displayField => {
+                  if (displayField in currRow[relField]) {
+                    currRow[displayField] = currRow[relField][displayField];
+                  } else {
+                    console.log(`Display field: ${displayField} not in object at index ${j}`);
+                  }
+                });
+              }
+
+              // remove relField:{object} from data
+              if (typeof(currRow[relField]) == 'object' || Array.isArray(currRow[relField])) {
                 delete currRow[relField];
               }
 
@@ -155,11 +183,17 @@ function getQueryInfo(dataItem) {
   let queryInfo = [];
   for (let key in dataItem) {
     if (dataItem.hasOwnProperty(key)) {
-      if (typeof dataItem[key] !== 'object' || dataItem[key] == null) {
+      if (!(typeof dataItem[key] == 'object' || Array.isArray(dataItem[key])) || dataItem[key] == null) {
         queryInfo.push(key);
       } else {
-        // adds keys of related data
-        queryInfo.push(...Object.keys(dataItem[key]));
+        if (Array.isArray(dataItem[key]) && dataItem[key].length > 0) {
+          if (typeof dataItem[key][0] == 'object') {
+            queryInfo.push(...Object.keys(dataItem[key][0]));
+          }
+        } else {
+          // adds keys of related data
+          queryInfo.push(...Object.keys(dataItem[key]));
+        }
       }
     }
   }
@@ -212,6 +246,9 @@ function setColMetaData(dataParam, columnConfigParam) {
         console.log("Column Config Param is null"); 
       }
 
+      console.log(currColConfig);
+
+
       // if currColumnObject still null --> not in config param
       if (currColConfig == null) {
         currColConfig = { title: currDataField, data: currDataField };
@@ -237,6 +274,11 @@ function setColumnIndexMap() {
   // shouldnt ever be true bc of edge case handling
   if (dataMap.length != 0) {
     colIdxMap = Object.keys(dataMap[0]);
+  }
+
+  const index = colIdxMap.indexOf("__children");
+  if (index !== -1) {
+    colIdxMap.splice(index, 1);
   }
 
   return colIdxMap;
@@ -446,7 +488,8 @@ Appian.Component.onNewValue(newValues => {
         setColumnIndexMap();
       }
 
-    } else {
+    } 
+    else {
       updateGridData(dataMap, changeObj);
     }
 
@@ -482,7 +525,8 @@ Appian.Component.onNewValue(newValues => {
       Appian.Component.setValidations(["No data to display. Please enter values for row or columnConfig parameters."]);
     }
 
-    hotGrid.updateSettings(getGridOptions(gridHeight, hiddenCols));
+    let gridOptions = getGridOptions(gridHeight, hiddenCols);
+    hotGrid.updateSettings(gridOptions);
 
     if (gridOptionsParam != null)
     {   
