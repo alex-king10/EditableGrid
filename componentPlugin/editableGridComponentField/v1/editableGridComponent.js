@@ -235,6 +235,10 @@ function setColMetaData(dataParam, columnConfigParam) {
               } else {
                 relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
               }
+
+              // currColConfig['readOnly'] = true;
+              currColConfig['editor'] = false;
+              currColConfig['headerClassName'] = 'my-class header-readOnly';
             }
 
             break;
@@ -245,8 +249,6 @@ function setColMetaData(dataParam, columnConfigParam) {
         // remove this later
         console.log("Column Config Param is null"); 
       }
-
-      console.log(currColConfig);
 
 
       // if currColumnObject still null --> not in config param
@@ -595,6 +597,34 @@ Appian.Component.onNewValue(newValues => {
       }
     );
 
+    // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
+    //   // console.log({
+    //   //   'currentSortConfig': currentSortConfig,
+    //   //   'destinationSortConfigs': destinationSortConfigs
+    //   // });
+
+    //   if (destinationSortConfigs.length != 0) {
+    //     destinationSortConfigs.forEach(sortedColumn => {
+    //       let fieldName = colIdxMap[sortedColumn.column];
+    //       // need to iterate through columnHeaderData to get the config object
+    //         // if sortOrder == asc or desc
+    //         // then columnHeaderData2[index]['headerClassName].push(sortedColumn.sortOrder);
+    //       let colConfig = getColMetaDataByField(fieldName);
+    //       if (colConfig != null) {
+    //         if ('headerClassName' in colConfig) {
+    //           colConfig['headerClassName'] += `${sortedColumn.sortOrder}`;
+    //         } else {
+    //           // I don't think this will ever be true
+    //           colConfig['headerClassName'] = `my-class ${sortedColumn.sortOrder}`;
+    //         }
+    //       }
+    //     }
+
+    //     );
+
+    //     // check currentSortConfig to remove modifiers from prev sorted columns
+    //   }
+    // });
 
   } catch (error) {
     console.error("An error occured creating the grid:", error);

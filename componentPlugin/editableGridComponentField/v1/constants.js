@@ -87,6 +87,7 @@ export const getGridOptions = (gridHeight, hiddenCols) => {
       columns: hiddenCols,
       copyPasteEnabled: false,
     },
+    headerClassName: 'htLeft my-class',
     contextMenu: CONTEXT_MENU,
     allowInsertColumn: false,
     filters: true,

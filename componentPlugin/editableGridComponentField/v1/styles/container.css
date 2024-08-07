@@ -1,9 +1,11 @@
+/* palette definition and container overrides */
 #myGrid {
   /* color palette  */
   --header-color: color-mix(in srgb, #fff, #181d1f 3%);
   --border-color: color-mix(in srgb, #fff, #181d1f 15%);
-  --highlighted-header-color: color-mix(in srgb, #fff, #181d1f 7%);
+  --highlighted-header-color: color-mix(in srgb, #fff, #181d1f 9%);
   --error-cell-color: #ffbe11;
+  --text-color: #373737;
 
   height: 200px;
   width: 100%;
@@ -14,10 +16,9 @@
   border-right: 1px solid var(--border-color);
   border-left: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
-
 }
 
-
+/* all cell styling (not cells in pop up menus) */
 #myGrid .handsontable tbody td:not(.listbox) {
   padding-left: 15px;
   padding-right: 15px;
@@ -31,6 +32,7 @@
   white-space: nowrap;
 }
 
+/*  */
 .handsontable tbody td:not(.listbox),
 .handsontable thead th,
 .handsontable tbody th  {
@@ -40,60 +42,60 @@
   vertical-align: middle;
 }
 
-.handsontable thead [role="columnheader"],
-.handsontable thead th {
+/* Column header styling */
+
+.my-class {
+  display: flex;
+  flex-direction: row-reverse;
   text-align: left;
-  padding: 10px !important;
+  justify-content: flex-end !important;
+  align-items: center;
+}
+
+
+[role="columnheader"],
+thead th {
+  /* text-align: left; */
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  padding-left: 14px !important;
   height: 25px !important;
   font-size: 14px;
-  font-weight: 450;
+  font-weight: 500;
   background-color: var(--header-color);
   border-color: var(--border-color);
 }
 
-.handsontable thead [role="columnheader"].ht__highlight {
-  background-color: var(--highlighted-header-color) !important;
-}
-
-.handsontable tbody [role="rowheader"] {
-  height: 41px !important;
-  border-left: 0px !important;
-  background-color: var(--header-color);
-  border-bottom: 1px solid var(--border-color) !important;
-}
-
-.handsontable tbody [role="rowheader"].ht__highlight {
-  background-color: var(--highlighted-header-color) !important;
-}
-
-/* row and col header styling */
-
-
-[role="row"] {
-  border-left: 0px !important;
-}
-
 /* span with text in header */
-.handsontable span.colHeader {
-    display: block !important;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.my-class .colHeader {
+  /* display: inline !important; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 5px;
 }
 
-/* sorting arrow indicator */
-.handsontable span.colHeader.columnSorting:before {
-  background-position-x: right;
-  padding-left: 0px;
+/* sorting arrow indicator - removing it */
+.my-class .sortAction::before {
+  /* background-position-x: right; */
+  padding-left: 10px;
+  padding-right: 10px;
   position: absolute !important;
-  right: 0px !important;
+  /* right: 5px !important; */
 }
 
+.my-class .asc::before {
+  background-color: red !important;
+}
 
+.my-class .desc::before {
+  background-color: blue !important;
+}
 
 /* button in header */
-.handsontable thead th .changeType  {
+.handsontable .my-class .changeType {
   /* display: block; */
   margin: 0px;
+  margin-right: 4px;
   background-color: inherit;
   content: "";
   background-image: url('./icons/chevron-down.svg');
@@ -113,12 +115,46 @@
   /* margin: 0px; */
 }
 
-
 .handsontable .changeType:before{
   content: "" !important;
 }
 
-/* dropdown menu icon */
+
+.header-readOnly::after {
+  content: "";
+  display: inline-block; /* Ensure the pseudo-element is displayed */
+  vertical-align: middle; /* Align the icon vertically with the text */
+  background-color: inherit;
+  width: 16px;
+  height: 16px;
+  background-image: url("./icons/locked.svg");
+  background-size: contain; /* Ensure the background image is fully visible */
+  background-repeat: no-repeat; /* Prevent the background image from repeating */
+  margin-right: 4px;
+}
+
+[role="columnheader"].ht__highlight {
+  background-color: var(--highlighted-header-color) !important;
+}
+
+/* Row Header Styling */
+.handsontable tbody [role="rowheader"] {
+  height: 41px !important;
+  border-left: 0px !important;
+  background-color: var(--header-color);
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.handsontable tbody [role="rowheader"].ht__highlight {
+  background-color: var(--highlighted-header-color) !important;
+}
+
+/* Row styling */
+[role="row"] {
+  border-left: 0px !important;
+}
+
+/* dropdown icon in cell editors (date, autocomplete) */
 .htAutocompleteArrow {
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -153,7 +189,7 @@ td:hover .htAutocompleteArrow {
 /* cell classes - styling */
 .cellStyle-appianObject {
   vertical-align: middle !important;
-  color: #777;
+  color: var(--text-color);
 }
 
 .cellStyle-longText {
