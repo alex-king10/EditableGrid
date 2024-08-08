@@ -31,6 +31,11 @@ function getPKList(primaryKeyFieldsParam) {
   return primaryKeyFieldList;
 }
 
+function getEditablePKList(primaryKeyFieldList, relatedRecords) {
+  let relatedRecordFields = Object.values(relatedRecords).flat();
+  const editablePKList = primaryKeyFieldList.filter(x => !relatedRecordFields.includes(x));
+  return editablePKList;
+}
 
 // Returns a flattened row of data from a related record field
 // param currRow - reference to current row in grid data to be manipulated
@@ -509,6 +514,8 @@ Appian.Component.onNewValue(newValues => {
     // calculate column configurations
     setColMetaData(dataParam, configParam);
 
+    let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
+
     // set Grid Data
     // initial load or updating dataParam
     if (dataMap.length == 0) {
@@ -570,13 +577,9 @@ Appian.Component.onNewValue(newValues => {
     // handle column header formatting on sort
     hotGrid.updateSettings({
       afterGetColHeader: function(column, TH) {
-        if (column > -1) {
-          formatColumnHeader(TH);
-        } 
+        if (column > -1) { formatColumnHeader(TH); } 
       }
-    }
-      
-    )
+    });
 
     // Handles and reverts invalid changes made to the grid
       // If user permission is viewer and not edit
@@ -605,7 +608,7 @@ Appian.Component.onNewValue(newValues => {
           let cellMeta;
           if (colIdx != -1) {
             cellMeta = hotGrid.getCellMeta(row, colIdx);
-            onChange(primaryKeyFieldList, cellMeta, newValue);
+            onChange(editablePKFieldList, cellMeta, newValue);
             Appian.Component.saveValue("changeData", Object.values(changeObj));
           } else {
             console.error("Prop not found in column index map");
@@ -637,8 +640,9 @@ Appian.Component.onNewValue(newValues => {
        
       }
     );
+  }
 
-  } catch (error) {
+   catch (error) {
     console.error("An error occured creating the grid:", error);
   }
 
