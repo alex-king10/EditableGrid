@@ -50,6 +50,7 @@
   text-align: left;
   justify-content: flex-end !important;
   align-items: center;
+  padding-left: 0px;
 }
 
 
@@ -74,21 +75,17 @@ thead th {
   margin-right: 5px;
 }
 
-/* sorting arrow indicator - removing it */
-.my-class .sortAction::before {
-  /* background-position-x: right; */
-  padding-left: 10px;
-  padding-right: 10px;
-  position: absolute !important;
-  /* right: 5px !important; */
+
+.newSortIcon {
+  margin: 0px !important;
+  margin-top: 2px;
+  height: 12px;
+  
 }
 
-.my-class .asc::before {
-  background-color: red !important;
-}
-
-.my-class .desc::before {
-  background-color: blue !important;
+.newSortIcon img {
+  /* height: 10px; */
+  background-size: contain;
 }
 
 /* button in header */
@@ -99,6 +96,7 @@ thead th {
   background-color: inherit;
   content: "";
   background-image: url('./icons/chevron-down.svg');
+  background-repeat: no-repeat;
   width: 16px; 
   height: 16px;
   border: none;
@@ -130,7 +128,7 @@ thead th {
   background-image: url("./icons/locked.svg");
   background-size: contain; /* Ensure the background image is fully visible */
   background-repeat: no-repeat; /* Prevent the background image from repeating */
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
 [role="columnheader"].ht__highlight {

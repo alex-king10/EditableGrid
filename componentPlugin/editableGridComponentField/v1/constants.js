@@ -68,6 +68,9 @@ export const COLUMN_MENU = [
   "filter_action_bar"
 ];
 
+export const ASCENDING_ICON_URL = "./styles/icons/long-arrow-up.svg";
+export const DESCENDING_ICON_URL = "./styles/icons/long-arrow-down.svg";
+
 // Returns an object of grid configuration options
 // param gridHeight - int calculated from user input
 // param hiddenCols - list of primary key field indices to hide

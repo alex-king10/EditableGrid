@@ -1,6 +1,8 @@
 import { 
   getUserSecurityInfo, 
-  getGridOptions
+  getGridOptions,
+  ASCENDING_ICON_URL,
+  DESCENDING_ICON_URL
 } from "./constants.js";
 
 import {
@@ -440,6 +442,34 @@ function onChange(primaryKeyFieldList, cellMeta, newValue)
 
 }
 
+function formatColumnHeader(TH) {
+  let sort = TH.getAttribute("aria-sort");
+  let img = TH.querySelector('.relative .newSortIcon');
+  const divContainer = TH.querySelector('.relative');
+
+  if (img) {
+    img.remove();
+  }
+
+  if (sort != "none") {
+    img = document.createElement('img');
+    img.src = sort == "ascending" ? ASCENDING_ICON_URL: (sort == "descending"? DESCENDING_ICON_URL: ""); // Path to your SVG file
+    img.className = 'newSortIcon';
+    img.style.width = '16px';
+    img.style.height = '15px';
+
+    const span = document.createElement('span');
+    span.className = 'newSortIcon';
+    span.appendChild(img);
+
+    if (divContainer) {
+      divContainer.appendChild(span);
+    } else {
+      console.error("Div Container null");
+    }
+  } 
+}
+
 
 let hotGrid;
 try {
@@ -537,6 +567,17 @@ Appian.Component.onNewValue(newValues => {
       console.log("gridOptions param is null");
     }
 
+    // handle column header formatting on sort
+    hotGrid.updateSettings({
+      afterGetColHeader: function(column, TH) {
+        if (column > -1) {
+          formatColumnHeader(TH);
+        } 
+      }
+    }
+      
+    )
+
     // Handles and reverts invalid changes made to the grid
       // If user permission is viewer and not edit
       // If a PK is changed to a non-unique value (makes a servlet request)
@@ -596,35 +637,6 @@ Appian.Component.onNewValue(newValues => {
        
       }
     );
-
-    // hotGrid.addHook('afterColumnSort', (currentSortConfig, destinationSortConfigs) => {
-    //   // console.log({
-    //   //   'currentSortConfig': currentSortConfig,
-    //   //   'destinationSortConfigs': destinationSortConfigs
-    //   // });
-
-    //   if (destinationSortConfigs.length != 0) {
-    //     destinationSortConfigs.forEach(sortedColumn => {
-    //       let fieldName = colIdxMap[sortedColumn.column];
-    //       // need to iterate through columnHeaderData to get the config object
-    //         // if sortOrder == asc or desc
-    //         // then columnHeaderData2[index]['headerClassName].push(sortedColumn.sortOrder);
-    //       let colConfig = getColMetaDataByField(fieldName);
-    //       if (colConfig != null) {
-    //         if ('headerClassName' in colConfig) {
-    //           colConfig['headerClassName'] += `${sortedColumn.sortOrder}`;
-    //         } else {
-    //           // I don't think this will ever be true
-    //           colConfig['headerClassName'] = `my-class ${sortedColumn.sortOrder}`;
-    //         }
-    //       }
-    //     }
-
-    //     );
-
-    //     // check currentSortConfig to remove modifiers from prev sorted columns
-    //   }
-    // });
 
   } catch (error) {
     console.error("An error occured creating the grid:", error);
