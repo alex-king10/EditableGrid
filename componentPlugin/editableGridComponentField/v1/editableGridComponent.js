@@ -5,14 +5,8 @@ import {
   DESCENDING_ICON_URL
 } from "./constants.js";
 
-import {
-  arraysEqual
-} from "./utils/utils.js";
-
 // GLOBAL VAR
 let dataMap = [];
-let colIdxMap = [];
-let movedColTracker = {};
 let changeObj = {};
 let userPermissionLevel;
 let relatedRecords = {};
@@ -208,15 +202,15 @@ function getQueryInfo(dataItem) {
   return queryInfo;
 }
 
-function setColMetaData(dataParam, columnConfigParam) {
+function setColMetaData(queryInfo, columnConfigParam) {
   // set column configuration data
   columnHeaderData2 = [];
-  let queryInfo = null;
+  // let queryInfo = null;
 
   // get field names
-  if (dataParam != null && dataParam.length != 0) {
-    queryInfo = getQueryInfo(dataParam[0]);
-  }
+  // if (dataParam != null && dataParam.length != 0) {
+  //   queryInfo = getQueryInfo(dataParam[0]);
+  // }
 
   if (queryInfo != null) {
     for (let i = 0; i < queryInfo.length; i++) {
@@ -276,46 +270,6 @@ function setColMetaData(dataParam, columnConfigParam) {
 
 }
 
-// Creates an ordered list of column headers to track their order
-// Used in onChange logic
-function setColumnIndexMap() {
-  colIdxMap = [];
-  // shouldnt ever be true bc of edge case handling
-  if (dataMap.length != 0) {
-    colIdxMap = Object.keys(dataMap[0]);
-  }
-
-  const index = colIdxMap.indexOf("__children");
-  if (index !== -1) {
-    colIdxMap.splice(index, 1);
-  }
-
-  return colIdxMap;
-}
-
-// Updates ordered list of columns for onChange logic
-// Called in 'afterColumnMove' hook
-// Return - void
-function updateColumnIndexMap(movedColumns, dropIndex) {
-  let newArr = [];
-  let movedColArr = colIdxMap.slice(movedColumns[0],  movedColumns[movedColumns.length - 1] + 1);
-
-  for (let i = 0; i < colIdxMap.length; i++) {
-    
-     if (i == dropIndex) {
-      // copy over moved columns
-      newArr.push(...movedColArr);
-    }
-    if (!(movedColumns.includes(i))) {
-      // copy unchanged columns
-      newArr.push(colIdxMap[i]);
-    }
-  }
-
-  colIdxMap = newArr;
-
-}
-
 // Returns grid height from component parameters
 // Accepts "AUTO", an integer value, or undefined (if not set)
 // AUTO calculates a value based on num rows with a min of 325 and max of 800.
@@ -361,7 +315,7 @@ function getGridHeight(dataLen, heightParam) {
   // param styleParam - object from component config to define style of grid
   // param dataLen - length of inputted data. Used to calculate grid height
   // param primaryKeyFieldList - used to calc hiddenCols
-function getStyle(styleParam, dataLen, primaryKeyFieldList) {
+function getStyle(queryInfo, styleParam, dataLen, primaryKeyFieldList) {
   // set global var gridHeight
   let gridHeight = getGridHeight(dataLen, styleParam.height);
   
@@ -370,7 +324,7 @@ function getStyle(styleParam, dataLen, primaryKeyFieldList) {
   if ((styleParam.showPrimaryKeys == false || styleParam.showPrimaryKeys == undefined)  && primaryKeyFieldList.length != 0 ) {
     let pkIndex;
     primaryKeyFieldList.forEach(pkField => {
-      pkIndex = colIdxMap.indexOf(pkField);
+      pkIndex = queryInfo.indexOf(pkField);
       if (pkIndex != -1) {
         hiddenCols.push(pkIndex);
       }
@@ -510,9 +464,14 @@ Appian.Component.onNewValue(newValues => {
     }
 
     let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
+
+    let queryInfo;
+    if (dataParam != null && dataParam.length != 0) {
+       queryInfo = getQueryInfo(dataParam[0]);
+    }
     
     // calculate column configurations
-    setColMetaData(dataParam, configParam);
+    setColMetaData(queryInfo, configParam);
 
     let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
 
@@ -521,11 +480,6 @@ Appian.Component.onNewValue(newValues => {
     if (dataMap.length == 0) {
       
       setGridData(dataParam, changeObj);
-      
-      // only called on initial load
-      if (Object.keys(changeObj).length == 0) {
-        setColumnIndexMap();
-      }
 
     } 
     else {
@@ -542,14 +496,6 @@ Appian.Component.onNewValue(newValues => {
       console.error("Error fetching user security info:", error);
     });
 
-    // set style of grid - includes height and showPK boolean
-    let gridHeight, hiddenCols;
-    if (dataParam != null) {
-      ({ gridHeight, hiddenCols } = getStyle(styleParam, dataParam.length, primaryKeyFieldList));
-    } else {
-      ({ gridHeight, hiddenCols } = getStyle(styleParam, 0, primaryKeyFieldList));
-    }
-
     // if both dataMap and columnData are not null/empty
     if (!(dataMap.length == 0 && columnHeaderData2.length == 0)) {
       hotGrid.updateSettings({
@@ -562,6 +508,14 @@ Appian.Component.onNewValue(newValues => {
 
     } else {
       Appian.Component.setValidations(["No data to display. Please enter values for row or columnConfig parameters."]);
+    }
+
+    // set style of grid - includes height and showPK boolean
+    let gridHeight, hiddenCols;
+    if (dataParam != null) {
+      ({ gridHeight, hiddenCols } = getStyle(queryInfo, styleParam, dataParam.length, primaryKeyFieldList));
+    } else {
+      ({ gridHeight, hiddenCols } = getStyle(queryInfo, styleParam, 0, primaryKeyFieldList));
     }
 
     let gridOptions = getGridOptions(gridHeight, hiddenCols);
@@ -603,8 +557,7 @@ Appian.Component.onNewValue(newValues => {
 
         if (newValue != oldValue && userPermissionLevel == "editor")
         {
-          let colIdx = colIdxMap.indexOf(prop);
-          // let colIdx = colIdxMap[prop];
+          let colIdx = hotGrid.propToCol(prop);
           let cellMeta;
           if (colIdx != -1) {
             cellMeta = hotGrid.getCellMeta(row, colIdx);
@@ -619,27 +572,6 @@ Appian.Component.onNewValue(newValues => {
   
     });
 
-    hotGrid.addHook(
-      "afterColumnMove",
-      (movedColumns, finalIndex, dropIndex, movePossible, orderChanged) => {
-
-        // uses movedColTracker to see if the hook has been triggered multiple times for the same move (a bug in HoT)
-        if (Object.keys(movedColTracker).length == 0 || !(arraysEqual(movedColTracker.movedColumns, movedColumns) && movedColTracker.dropIndex == dropIndex && movedColTracker.currProp == colIdxMap[finalIndex]) ) {
-          if (orderChanged) {
-            let currProp = colIdxMap[movedColumns[0]];
-
-            updateColumnIndexMap(movedColumns, dropIndex); 
-            movedColTracker['movedColumns'] = [...movedColumns];
-            movedColTracker['dropIndex'] = dropIndex;
-            movedColTracker['currProp'] = currProp;
-            console.log("colIdxMap changed");
-            console.log(colIdxMap);
-            console.log(movedColTracker);
-          }
-        }
-       
-      }
-    );
   }
 
    catch (error) {
