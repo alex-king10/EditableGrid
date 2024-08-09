@@ -248,7 +248,7 @@ function setColMetaData(queryInfo, columnConfigParam) {
         }
       } else { 
         // remove this later
-        console.log("Column Config Param is null"); 
+        // console.log("Column Config Param is null"); 
       }
 
 
@@ -263,7 +263,7 @@ function setColMetaData(queryInfo, columnConfigParam) {
 
   } else if (columnConfigParam != null && columnConfigParam.length != 0) {
     columnHeaderData2 = columnConfigParam;
-    console.log("Query info null");
+    // console.log("Query info null");
   }
 
   return columnHeaderData2;
@@ -454,8 +454,8 @@ Appian.Component.onNewValue(newValues => {
   let securityParam = newValues.securityGroups;
   let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
-  console.log("newValues");
-  console.log(newValues);
+  // console.log("newValues");
+  // console.log(newValues);
 
   try {
 
@@ -525,7 +525,7 @@ Appian.Component.onNewValue(newValues => {
     {   
       hotGrid.updateSettings(gridOptionsParam);
     } else {
-      console.log("gridOptions param is null");
+      // console.log("gridOptions param is null");
     }
 
     // handle column header formatting on sort
@@ -571,6 +571,18 @@ Appian.Component.onNewValue(newValues => {
       });
   
     });
+
+    hotGrid.addHook('afterHideColumns', (currentHideConfig, destinationHideConfig, actionPossible, stateChanged) => {
+      if (actionPossible) {
+        // updates local var so when component reloads, previously hidden columns are still hidden
+        destinationHideConfig.forEach(col => {
+          if (!hiddenCols.includes(col)) {
+            hiddenCols.push(col);
+          }
+        });
+      }
+    });
+
 
   }
 
