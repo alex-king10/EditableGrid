@@ -454,9 +454,6 @@ Appian.Component.onNewValue(newValues => {
   let securityParam = newValues.securityGroups;
   let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
-  // console.log("newValues");
-  // console.log(newValues);
-
   try {
 
     if (hotGrid == null || hotGrid == undefined) {
