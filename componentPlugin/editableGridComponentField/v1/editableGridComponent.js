@@ -78,7 +78,7 @@ function setGridData(rowsParam, changeObj)
           dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
         }
       }
-          
+
       // process related records 
       if (Object.keys(relatedRecords).length > 0) {
         // loop over data
@@ -161,42 +161,41 @@ function updateGridData(rowsParam, changeObj)
     }
     
   } 
-  // else if (columnHeaderData2.length != 0) {
-  //   // if no data given, use colConfig as schema and set temp null values in cells
-  //   let tempRow = {};
-  //   columnHeaderData2?.forEach(colConfig => {
-  //     if ('data' in colConfig) {
-  //       tempRow[colConfig.data] = null;
-  //     }
-  //   });
-  //   dataMap.push(tempRow);
-  // }
 
   // if they're both empty, handled in grid creation - no data or column value passed
-
   return dataMap;
 }
 
 // function to flatten the nested objects from first index of inputted data
   // used to structure the column meta data
+  // param dataSourceType - string value either dataParam or colConfigParam
   // *Note: depends on exemplary data in first row :/ not great
-function getQueryInfo(dataItem) {
+function getQueryInfo(dataItem, dataSourceType) {
   let queryInfo = [];
-  for (let key in dataItem) {
-    if (dataItem.hasOwnProperty(key)) {
-      if (!(typeof dataItem[key] == 'object' || Array.isArray(dataItem[key])) || dataItem[key] == null) {
-        queryInfo.push(key);
-      } else {
-        if (Array.isArray(dataItem[key]) && dataItem[key].length > 0) {
-          if (typeof dataItem[key][0] == 'object') {
-            queryInfo.push(...Object.keys(dataItem[key][0]));
-          }
+
+  if (dataSourceType == "dataParam") {
+    for (let key in dataItem) {
+      if (dataItem.hasOwnProperty(key)) {
+        if (!(typeof dataItem[key] == 'object' || Array.isArray(dataItem[key])) || dataItem[key] == null) {
+          queryInfo.push(key);
         } else {
-          // adds keys of related data
-          queryInfo.push(...Object.keys(dataItem[key]));
+          if (Array.isArray(dataItem[key]) && dataItem[key].length > 0) {
+            if (typeof dataItem[key][0] == 'object') {
+              queryInfo.push(...Object.keys(dataItem[key][0]));
+            }
+          } else {
+            // adds keys of related data
+            queryInfo.push(...Object.keys(dataItem[key]));
+          }
         }
       }
     }
+  } else if (dataSourceType == "colConfigParam") {
+    dataItem.forEach(colConfig => {
+      if ("data" in colConfig) {
+        queryInfo.push(colConfig["data"]);
+      }
+    })
   }
 
   return queryInfo;
@@ -323,12 +322,14 @@ function getStyle(queryInfo, styleParam, dataLen, primaryKeyFieldList) {
   let hiddenCols = [];
   if ((styleParam.showPrimaryKeys == false || styleParam.showPrimaryKeys == undefined)  && primaryKeyFieldList.length != 0 ) {
     let pkIndex;
-    primaryKeyFieldList.forEach(pkField => {
-      pkIndex = queryInfo.indexOf(pkField);
-      if (pkIndex != -1) {
-        hiddenCols.push(pkIndex);
-      }
-    });
+    if (queryInfo != null) {
+      primaryKeyFieldList.forEach(pkField => {
+        pkIndex = queryInfo.indexOf(pkField);
+        if (pkIndex != -1) {
+          hiddenCols.push(pkIndex);
+        }
+      });
+    }
   }
 
   return { gridHeight, hiddenCols };
@@ -462,9 +463,11 @@ Appian.Component.onNewValue(newValues => {
 
     let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
 
-    let queryInfo;
+    let queryInfo = null;
     if (dataParam != null && dataParam.length != 0) {
-       queryInfo = getQueryInfo(dataParam[0]);
+       queryInfo = getQueryInfo(dataParam[0], "dataParam");
+    } else {
+      queryInfo = getQueryInfo(configParam, "colConfigParam");
     }
     
     // calculate column configurations
