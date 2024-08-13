@@ -11,6 +11,7 @@ let changeObj = {};
 let userPermissionLevel;
 let relatedRecords = {};
 let columnHeaderData2 = [];
+let editablePKFieldList = [];
 
 // process record type info
 function getPKList(primaryKeyFieldsParam) {
@@ -143,6 +144,7 @@ function updateGridData(rowsParam, changeObj)
   let currChangeItem;
 
   if (rowsParam != null && rowsParam.length != 0) {
+    // redundant?
     dataMap = rowsParam;
     if (Object.keys(changeObj).length == 0) {
     // no updates to make to data var
@@ -473,7 +475,6 @@ Appian.Component.onNewValue(newValues => {
     // calculate column configurations
     setColMetaData(queryInfo, configParam);
 
-    let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
 
     // set Grid Data
     // initial load or updating dataParam
@@ -535,9 +536,9 @@ Appian.Component.onNewValue(newValues => {
       }
     });
 
-    // Handles and reverts invalid changes made to the grid
-      // If user permission is viewer and not edit
-      // If a PK is changed to a non-unique value (makes a servlet request)
+      // Handles and reverts invalid changes made to the grid
+    // If user permission is viewer and not edit
+    // If a PK is changed to a non-unique value (makes a servlet request)
     hotGrid.addHook('beforeChange', (changes, source) => {
       changes?.forEach(change => {
         const [row, prop, oldValue, newValue] = change;
@@ -551,6 +552,8 @@ Appian.Component.onNewValue(newValues => {
     // Handles saving changes made to the grid by calling onChange and updating changeObj
       // Sends changeObj to Appian local var in changeData param
     hotGrid.addHook('afterChange', (changes, [source]) => {
+      editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
+
       // call handle change function
       changes?.forEach(change => {
         const [row, prop, oldValue, newValue] = change;
@@ -584,6 +587,7 @@ Appian.Component.onNewValue(newValues => {
     });
 
 
+
   }
 
    catch (error) {
@@ -592,3 +596,6 @@ Appian.Component.onNewValue(newValues => {
 
 
 });
+
+
+
