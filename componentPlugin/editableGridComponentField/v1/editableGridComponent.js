@@ -17,9 +17,8 @@ import GridComponent from "./components/GridComponent.js";
 
 // Processes all values passed from component parameters
 // param newValues - object of parameter values from component
-// param grid - Grid instance reference if grid exists already (in case of page refresh)
 // returns Object of processed parameter data. Used to create or update grid instance
-function prepareGridParams(newValues, grid) {
+function prepareGridParams(newValues) {
     // component parameters
     let dataParam = newValues.rows;
     let configParam = newValues.columnConfigs;
@@ -29,8 +28,6 @@ function prepareGridParams(newValues, grid) {
     let securityParam = newValues.securityGroups;
     let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
-    // only included bc getGD depends on it. Not manipulated here only read
-    let changeObj = changeDataParam;
     let data = [];
     let queryInfo = null;
 
@@ -45,12 +42,7 @@ function prepareGridParams(newValues, grid) {
     // calculate column configurations 
     let { columnConfigs, relatedRecords } = getColMetaData(queryInfo, configParam);
 
-
-    if (grid == undefined) {
-      data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
-    } else {
-      grid.updateData();
-    }
+    data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
     
     // set style of grid - includes height and showPK boolean
     let gridHeight, hiddenCols;
@@ -77,7 +69,7 @@ function prepareGridParams(newValues, grid) {
     
 
     // values needed for grid instantiation
-    return { data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList };
+    return { data, columnConfigs, gridOptions, userPermissionLevel, editablePKFieldList };
 }
 
 let grid;
@@ -85,23 +77,24 @@ let grid;
 function main() {
 
 
-  let data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList;
+  let data, columnConfigs, gridOptions, userPermissionLevel, editablePKFieldList;
 
   try {
     
     Appian.Component.onNewValue(newValues => {
 
-      // move this to only when grid == undefined?
-      ({ data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList } = prepareGridParams(newValues, grid));
-
+      let changeObj = newValues.changeData;
       // grid exists already - reload of screen
       if (grid != undefined) {
+        grid.updateData();
         // on save in appian, change object is emptied
         if (changeObj != null && changeObj.length == 0) {
           grid.changeObj = {};
         }
       } else {
-        // init grid
+        // process parameters from component
+        ({ data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList } = prepareGridParams(newValues, grid));
+        // init and render grid
         grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, {}, userPermissionLevel, editablePKFieldList);
         grid.initGrid();
       }
