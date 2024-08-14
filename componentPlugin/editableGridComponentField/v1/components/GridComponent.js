@@ -1,3 +1,7 @@
+import {
+    formatColumnHeader
+} from "../services/parameters.js"
+
 class GridComponent {
 
     // init grid component instance
@@ -28,7 +32,7 @@ class GridComponent {
             columns: this.columnConfigs,
         });
 
-        this.hotInstance.updateSettings(this.gridOptions);
+        this.setGridOptions(this.gridOptions);
 
         this.addListeners();
     }
@@ -48,10 +52,6 @@ class GridComponent {
         });
     }
 
-    setGridOptions(gridOptions) {
-        this.gridOptions = gridOptions;
-        this.hotInstance.updateSettings(this.gridOptions);
-    }
 
     // not sure if this function logic should go here?
     updateData() {
@@ -76,7 +76,17 @@ class GridComponent {
     }
 
     setGridOptions(gridOptions) {
-        this.hotInstance.updateSettings(gridOptions);
+
+        this.gridOptions = gridOptions;
+
+        this.hotInstance.updateSettings(this.gridOptions);
+
+        // handle column header formatting on sort
+        this.hotInstance.updateSettings({
+            afterGetColHeader: function(column, TH) {
+                if (column > -1) { formatColumnHeader(TH); } 
+            }
+        });
     }
 
     getGridOptions() {

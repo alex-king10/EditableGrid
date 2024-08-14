@@ -228,40 +228,6 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
   return dataMap;
 }
 
-// updates dataMap with changeObj
-export function updateGridData(dataMap, changeObj)
-{
-
-  let currRowIdx;
-  let currChangeItem;
-
-  if (dataMap != null && dataMap.length != 0) {
-    // redundant?
-    // dataMap = rowsParam;
-    if (Object.keys(changeObj).length == 0) {
-    // no updates to make to data var
-      return dataMap;
-    } else {
-      //update changed indices in dataMap var
-      if (Object.keys(changeObj).length != 0) {
-        for (let i = 0; i < Object.keys(changeObj).length; i++) {
-          currRowIdx = Object.keys(changeObj)[i];
-          currChangeItem = Object.values(changeObj)[i];
-          // update row in data var with value from changeObj
-          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
-        }
-      }
-      
-    }
-    
-  } 
-
-  // if they're both empty, handled in grid creation - no data or column value passed
-  return dataMap;
-}
-
-
-
 // Returns and sets userPermission levels to globalVar userPermissionLevel
 // Calls servlet to get permission of passed in group
 export async function getUserPermission(securityParam) {
@@ -420,10 +386,6 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
     minSpareRows: 1,
     rowHeights: 40,
     className: "htMiddle",
-    afterGetColHeader: function(column, TH) {
-      if (column > -1) { formatColumnHeader(TH); } 
-    }
-    
   };
 
   if (gridOptionsParam != null) {
@@ -431,7 +393,6 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
   }
 
   return options;
-
 
 } 
 
