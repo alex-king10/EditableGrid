@@ -30,26 +30,36 @@ export function getPKList(primaryKeyFieldsParam) {
 // param dataItem - rowsParam[0]
 // returns flattened list of keys in data
 // *Note: depends on exemplary data in first row
-export function getQueryInfo(dataItem) {
-let queryInfo = [];
-    for (let key in dataItem) {
-        if (dataItem.hasOwnProperty(key)) {
-        if (!(typeof dataItem[key] == 'object' || Array.isArray(dataItem[key])) || dataItem[key] == null) {
-            queryInfo.push(key);
-        } else {
-            if (Array.isArray(dataItem[key]) && dataItem[key].length > 0) {
+export function getQueryInfoFromData(dataItem) {
+  let queryInfo = [];
+  for (let key in dataItem) {
+    if (dataItem.hasOwnProperty(key)) {
+      if (!(typeof dataItem[key] == 'object' || Array.isArray(dataItem[key])) || dataItem[key] == null) {
+          queryInfo.push(key);
+      } else {
+          if (Array.isArray(dataItem[key]) && dataItem[key].length > 0) {
             if (typeof dataItem[key][0] == 'object') {
                 queryInfo.push(...Object.keys(dataItem[key][0]));
             }
-            } else {
-            // adds keys of related data
-            queryInfo.push(...Object.keys(dataItem[key]));
-            }
-        }
-        }   
-    }
+          } else {
+          // adds keys of related data
+          queryInfo.push(...Object.keys(dataItem[key]));
+          }
+      }
+    }   
+  }
+  return queryInfo;
+}
 
-    return queryInfo;
+export function getQueryInfoFromColConfig(colConfig) {
+  let queryInfo = [];
+  for (let i = 0; i < colConfig.length; i++) {
+    let currConfig = colConfig[i];
+    if ('data' in currConfig && currConfig['data'] != null) {
+      queryInfo.push(currConfig['data']);
+    }
+  }
+  return queryInfo;
 }
 
 

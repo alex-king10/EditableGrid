@@ -3,14 +3,15 @@ import {
 } from "./constants.js";
 
 import {
-  getPKList, 
-  getQueryInfo, 
+  getPKList,  
   getColMetaData,
   getGridData,
   getGridOptions,
   getStyle,
   getUserPermission,
-  getEditablePKList
+  getEditablePKList,
+  getQueryInfoFromData,
+  getQueryInfoFromColConfig
 } from "./services/parameters.js"
 
 import GridComponent from "./components/GridComponent.js";
@@ -24,7 +25,6 @@ function prepareGridParams(newValues) {
     let configParam = newValues.columnConfigs;
     let gridOptionsParam = newValues.gridOptions;
     let styleParam = newValues.style;
-    let changeDataParam = newValues.changeData;
     let securityParam = newValues.securityGroups;
     let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
@@ -34,9 +34,9 @@ function prepareGridParams(newValues) {
     let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
 
     if (dataParam != null && dataParam.length != 0) {
-      queryInfo = getQueryInfo(dataParam[0], "dataParam");
+      queryInfo = getQueryInfoFromData(dataParam[0]);
     } else {
-      queryInfo = getQueryInfo(configParam, "colConfigParam");
+      queryInfo = getQueryInfoFromColConfig(configParam);
     }
     
     // calculate column configurations 
