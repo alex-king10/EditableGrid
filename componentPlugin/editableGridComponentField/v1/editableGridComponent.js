@@ -1,7 +1,4 @@
 import { 
-
-  ASCENDING_ICON_URL,
-  DESCENDING_ICON_URL,
   CONTAINER_ID
 } from "./constants.js";
 
@@ -12,17 +9,18 @@ import {
   getGridData,
   getGridOptions,
   getStyle,
-  getUserPermission
+  getUserPermission,
+  getEditablePKList
 } from "./services/parameters.js"
 
 import GridComponent from "./components/GridComponent.js";
 
 
-function getEditablePKList(primaryKeyFieldList, relatedRecords) {
-  let relatedRecordFields = Object.values(relatedRecords).flat();
-  const editablePKList = primaryKeyFieldList.filter(x => !relatedRecordFields.includes(x));
-  return editablePKList;
-}
+// function getEditablePKList(primaryKeyFieldList, relatedRecords) {
+//   let relatedRecordFields = Object.values(relatedRecords).flat();
+//   const editablePKList = primaryKeyFieldList.filter(x => !relatedRecordFields.includes(x));
+//   return editablePKList;
+// }
 
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
@@ -178,38 +176,11 @@ function getEditablePKList(primaryKeyFieldList, relatedRecords) {
 
 // }
 
-// function formatColumnHeader(TH) {
-//   let sort = TH.getAttribute("aria-sort");
-//   let img = TH.querySelector('.relative .newSortIcon');
-//   const divContainer = TH.querySelector('.relative');
-
-//   if (img) {
-//     img.remove();
-//   }
-
-//   if (sort != "none") {
-//     img = document.createElement('img');
-//     img.src = sort == "ascending" ? ASCENDING_ICON_URL: (sort == "descending"? DESCENDING_ICON_URL: ""); // Path to your SVG file
-//     img.className = 'newSortIcon';
-//     img.style.width = '16px';
-//     img.style.height = '15px';
-
-//     const span = document.createElement('span');
-//     span.className = 'newSortIcon';
-//     span.appendChild(img);
-
-//     if (divContainer) {
-//       divContainer.appendChild(span);
-//     } else {
-//       console.error("Div Container null");
-//     }
-//   } 
-// }
 
 
 // new code
 
-function prepareGridParams(newValues) {
+function prepareGridParams(newValues, grid) {
     // component parameters
     let dataParam = newValues.rows;
     let configParam = newValues.columnConfigs;
@@ -219,8 +190,8 @@ function prepareGridParams(newValues) {
     let securityParam = newValues.securityGroups;
     let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
-    // temporary - implementing initial load only now. will add logic to check if later load
-    let changeObj = {};
+    // only included bc getGD depends on it. Not manipulated here only read
+    let changeObj = changeDataParam;
     let data = [];
     let queryInfo = null;
 
@@ -232,17 +203,14 @@ function prepareGridParams(newValues) {
       queryInfo = getQueryInfo(configParam, "colConfigParam");
     }
     
-    // calculate column configurations
+    // calculate column configurations 
     let { columnConfigs, relatedRecords } = getColMetaData(queryInfo, configParam);
 
-    // set Grid Data
-    // initial load or updating dataParam --> change this to be gridObject.initData(dataParam, relatedObject);
-      // move all init and update data logic to grid class?
-    data = getGridData(dataParam, changeObj, relatedRecords, columnConfigs);
 
-    // Empty changeObj - Either initial load of comp. or after "Save Change"
-    if (changeDataParam != null && changeDataParam.length == 0) {
-      changeObj = {};
+    if (grid == undefined) {
+      data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
+    } else {
+      grid.updateData();
     }
     
     // set style of grid - includes height and showPK boolean
@@ -256,7 +224,7 @@ function prepareGridParams(newValues) {
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);
 
     // let userPermissionLevel = getUserPermission(securityParam);
-    let userPermissionLevel;
+    let userPermissionLevel = "editor";
 
     // get permission level for current user
     getUserPermission(securityParam).then(result => {
@@ -273,30 +241,40 @@ function prepareGridParams(newValues) {
     return { data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList };
 }
 
+let grid;
 
 function main() {
 
-  let grid;
+
   let data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList;
 
   try {
     
     Appian.Component.onNewValue(newValues => {
 
-      console.log(newValues);
       // check if grid.data exists already before calling. Otherwise use existing grid object and call update?
         // update will just be a more specific calculation of parameters
-      ({ data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList } = prepareGridParams(newValues));
-  
-      grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList);
-      grid.initGrid();
-      grid.addListeners();
+      ({ data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList } = prepareGridParams(newValues, grid));
+
+      // grid exists already - reload of screen
+      if (grid != undefined) {
+        // on save in appian, change object is emptied
+        if (changeObj != null && changeObj.length == 0) {
+          grid.changeObj = {};
+        }
+      } else {
+        // init grid
+        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, {}, userPermissionLevel, editablePKFieldList);
+        grid.initGrid();
+      }
+      
   
     });
 
+    // never triggered - can try adding an event listener to see if the onNewValue function is finished
     // if (grid != undefined)  {
-      
-    //   grid.addListeners();
+    //   console.log("Save EGC");
+    //   Appian.Component.saveValue("changeData", Object.values(grid.changeObj));
     // }
     
   

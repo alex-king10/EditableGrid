@@ -1,7 +1,9 @@
 import {
   getUserSecurityInfo, 
   COLUMN_MENU,
-  CONTEXT_MENU
+  CONTEXT_MENU,
+  ASCENDING_ICON_URL,
+  DESCENDING_ICON_URL,
 } from "../constants.js";
 
 // Functions to handle and process parameter data from component configuration
@@ -226,6 +228,39 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
   return dataMap;
 }
 
+// updates dataMap with changeObj
+export function updateGridData(dataMap, changeObj)
+{
+
+  let currRowIdx;
+  let currChangeItem;
+
+  if (dataMap != null && dataMap.length != 0) {
+    // redundant?
+    // dataMap = rowsParam;
+    if (Object.keys(changeObj).length == 0) {
+    // no updates to make to data var
+      return dataMap;
+    } else {
+      //update changed indices in dataMap var
+      if (Object.keys(changeObj).length != 0) {
+        for (let i = 0; i < Object.keys(changeObj).length; i++) {
+          currRowIdx = Object.keys(changeObj)[i];
+          currChangeItem = Object.values(changeObj)[i];
+          // update row in data var with value from changeObj
+          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
+        }
+      }
+      
+    }
+    
+  } 
+
+  // if they're both empty, handled in grid creation - no data or column value passed
+  return dataMap;
+}
+
+
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel
 // Calls servlet to get permission of passed in group
@@ -298,6 +333,35 @@ function getGridHeight(dataLen, heightParam) {
   return height;
 }
 
+export function formatColumnHeader(TH) {
+  let sort = TH.getAttribute("aria-sort");
+  let img = TH.querySelector('.relative .newSortIcon');
+  const divContainer = TH.querySelector('.relative');
+
+  if (img) {
+    img.remove();
+  }
+
+  if (sort != "none") {
+    img = document.createElement('img');
+    img.src = sort == "ascending" ? ASCENDING_ICON_URL: (sort == "descending"? DESCENDING_ICON_URL: ""); // Path to your SVG file
+    img.className = 'newSortIcon';
+    img.style.width = '16px';
+    img.style.height = '15px';
+
+    const span = document.createElement('span');
+    span.className = 'newSortIcon';
+    span.appendChild(img);
+
+    if (divContainer) {
+      divContainer.appendChild(span);
+    } else {
+      console.error("Div Container null");
+    }
+  } 
+}
+
+
 
 // Returns object of gridHeight and hiddenCols (list of column indices to hide)
 // param styleParam - object from component config to define style of grid
@@ -356,6 +420,10 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
     minSpareRows: 1,
     rowHeights: 40,
     className: "htMiddle",
+    afterGetColHeader: function(column, TH) {
+      if (column > -1) { formatColumnHeader(TH); } 
+    }
+    
   };
 
   if (gridOptionsParam != null) {

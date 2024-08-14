@@ -1,7 +1,7 @@
 class GridComponent {
 
     // init grid component instance
-    constructor(containerId, data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList) {
+    constructor(containerId, data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList, hotInstance) {
         this.containerId = containerId;
         this.data = data;
         this.columnConfigs = columnConfigs;
@@ -9,7 +9,7 @@ class GridComponent {
         this.changeObj = changeObj;
         this.userPermissionLevel = userPermissionLevel;
         this.editablePKFieldList = editablePKFieldList;
-        this.hotInstance = null;
+        this.hotInstance = hotInstance;
     }
 
     // initialize grid instance
@@ -29,10 +29,8 @@ class GridComponent {
         });
 
         this.hotInstance.updateSettings(this.gridOptions);
-    }
 
-    setEditablePKFieldList() {
-
+        this.addListeners();
     }
 
     setData(data) {
@@ -56,20 +54,22 @@ class GridComponent {
     }
 
     // not sure if this function logic should go here?
-    updateData(changeObj) {
+    updateData() {
         let currRowIdx;
         let currChangeItem;
 
+        // console.log("Updating data");
+
         if (this.data != null && this.data.length != 0) {
-            if (Object.keys(changeObj).length == 0) {
+            if (Object.keys(this.changeObj).length == 0) {
                 // no updates to make to data var
                 return this.data;
             } else {
-                for (let i = 0; i < Object.keys(changeObj).length; i++) {
-                    currsRowIdx = Object.keys(changeObj)[i];
-                    currChangeItem = Object.values(changeObj)[i];
+                for (let i = 0; i < Object.keys(this.changeObj).length; i++) {
+                    currRowIdx = Object.keys(this.changeObj)[i];
+                    currChangeItem = Object.values(this.changeObj)[i];
                     // update row in data var with value from changeObj
-                    this.data[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
+                    this.data[currRowIdx] = Object.assign(this.data[currRowIdx], currChangeItem);
                 }
             }
         }
@@ -83,10 +83,13 @@ class GridComponent {
         return this.gridOptions;
     }
 
+    setChangeObj(changeObj) {
+        this.changeObj = changeObj;
+    }
+
     // Handles changes made to the grid by modifying this.changeObj
     // Called by addListeners in 'afterChange' hook
-    onChange(primaryKeyFieldList, cellMeta, newValue) {
-        console.log("on change");
+    onChange(cellMeta, newValue) {
         if (cellMeta != null) {
             let dataItem = {};
             let gridRow;
@@ -103,8 +106,8 @@ class GridComponent {
 
                 // add primary keys (parent and related) to changeObj at this record
                 // only 0 if pkName not given in recordTypeInfo - shows a validation message
-                if (primaryKeyFieldList.length != 0) {
-                    primaryKeyFieldList.forEach(pkField => {
+                if (this.editablePKFieldList.length != 0) {
+                    this.editablePKFieldList.forEach(pkField => {
                     if (pkField in gridRow && cellMeta.prop != pkField) {
                         dataItem[pkField] = gridRow[pkField];
                     }
@@ -134,21 +137,18 @@ class GridComponent {
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
             this.hotInstance.addHook('afterChange', (changes, [source]) => {
-                console.log('changes');
-                console.log(changes);
                 // call handle change function
                 changes?.forEach(change => {
                     const [row, prop, oldValue, newValue] = change;
-            
                     if (newValue != oldValue && this.userPermissionLevel == "editor")
                     {
                         let colIdx = this.hotInstance.propToCol(prop);
                         let cellMeta;
                         if (colIdx != -1) {
                             cellMeta = this.hotInstance.getCellMeta(row, colIdx);
-                            this.onChange(this.editablePKFieldList, cellMeta, newValue);
-                            // TO DO: add this back later
-                            // Appian.Component.saveValue("changeData", Object.values(this.changeObj));
+                            this.onChange(cellMeta, newValue);
+                            console.log("Save GC");
+                            Appian.Component.saveValue("changeData", Object.values(this.changeObj));
                         } else {
                             console.error("Prop not found in column index map");
                         }
