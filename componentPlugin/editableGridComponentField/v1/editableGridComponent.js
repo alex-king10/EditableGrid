@@ -7,7 +7,6 @@ import {
   getColMetaData,
   getGridData,
   getGridOptions,
-  // getStyle,
   getUserPermission,
   getEditablePKList,
   getQueryInfoFromData,
@@ -28,8 +27,6 @@ function prepareGridParams(newValues) {
     let gridOptionsParam = newValues.gridOptions;
     let showPrimaryKeysParam = newValues.showPrimaryKeys;
     let heightParam = newValues.height;
-    // let styleParam = newValues.style;
-    let securityParam = newValues.securityGroups;
     let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
     let data = [];
@@ -60,22 +57,10 @@ function prepareGridParams(newValues) {
 
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);
 
-    // let userPermissionLevel = getUserPermission(securityParam);
-    let userPermissionLevel = "editor";
-
-    // get permission level for current user
-    getUserPermission(securityParam).then(result => {
-      userPermissionLevel = result;
-    })
-    .catch(error => {
-      console.error("Error fetching user security info:", error);
-    });
-
     let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
     
-
     // values needed for grid instantiation
-    return { data, columnConfigs, gridOptions, userPermissionLevel, editablePKFieldList };
+    return { data, columnConfigs, gridOptions, editablePKFieldList };
 }
 
 let grid;
@@ -83,13 +68,14 @@ let grid;
 function main() {
 
 
-  let data, columnConfigs, gridOptions, userPermissionLevel, editablePKFieldList;
+  let data, columnConfigs, gridOptions, editablePKFieldList;
 
   try {
     
     Appian.Component.onNewValue(newValues => {
 
       let changeObj = newValues.changeData;
+
       // grid exists already - reload of screen
       if (grid != undefined) {
         grid.updateData();
@@ -99,9 +85,18 @@ function main() {
         }
       } else {
         // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList } = prepareGridParams(newValues, grid));
+        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList } = prepareGridParams(newValues, grid));
         // init and render grid
-        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, {}, userPermissionLevel, editablePKFieldList);
+        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
+        
+        // servlet request to get user security permission levels
+        getUserPermission(newValues.securityGroups).then(result => {
+          grid.setUserPermissionLevel(result);
+        }).catch(error => {
+          console.error(`Error fetching user security info: ${error}`);
+        });
+
+
         grid.initGrid();
       }
       
