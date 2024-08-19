@@ -71,13 +71,6 @@ export function getColMetaData(queryInfo, columnConfigParam) {
     // set column configuration data
     let columnConfigs = [];
     let relatedRecords = {};
-
-    // let queryInfo = null;
-  
-    // get field names
-    // if (dataParam != null && dataParam.length != 0) {
-    //   queryInfo = getQueryInfo(dataParam[0]);
-    // }
   
     if (queryInfo != null) {
       for (let i = 0; i < queryInfo.length; i++) {
@@ -91,7 +84,6 @@ export function getColMetaData(queryInfo, columnConfigParam) {
   
             // if currDataField is in config param
             if (currColConfig.data == currDataField) {
-  
               // if no title specified, use field name
               if (currColConfig.title == undefined) {
                 currColConfig['title'] = currDataField;
@@ -110,6 +102,8 @@ export function getColMetaData(queryInfo, columnConfigParam) {
               }
   
               break;
+            } else {
+              currColConfig = null;
             }
   
           }
