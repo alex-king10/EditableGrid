@@ -5,15 +5,16 @@ import {
 class GridComponent {
 
     // init grid component instance
-    constructor(containerId, data, columnConfigs, gridOptions, changeObj, userPermissionLevel, editablePKFieldList, hotInstance) {
+    constructor(containerId, data, columnConfigs, gridOptions, editablePKFieldList, hotInstance, userPermissionLevel) {
         this.containerId = containerId;
         this.data = data;
         this.columnConfigs = columnConfigs;
         this.gridOptions = gridOptions;
-        this.changeObj = changeObj;
-        this.userPermissionLevel = userPermissionLevel;
         this.editablePKFieldList = editablePKFieldList;
+        this.changeObj = {};
+        // typically not set on instantiation of object
         this.hotInstance = hotInstance;
+        this.userPermissionLevel = userPermissionLevel;
     }
 
     // initialize grid instance
@@ -97,6 +98,14 @@ class GridComponent {
         this.changeObj = changeObj;
     }
 
+    getUserPermissionLevel() {
+        return this.userPermissionLevel;
+    }
+
+    setUserPermissionLevel(userPermissionLevel) {
+        this.userPermissionLevel = userPermissionLevel;
+    }
+
     // Handles changes made to the grid by modifying this.changeObj
     // Called by addListeners in 'afterChange' hook
     onChange(cellMeta, newValue) {
@@ -137,8 +146,7 @@ class GridComponent {
             this.hotInstance.addHook('beforeChange', (changes, source) => {
                 changes?.forEach(change => {
                   const [row, prop, oldValue, newValue] = change;
-                  
-                  if (this.userPermissionLevel == "viewer") {
+                  if (this.userPermissionLevel === "viewer" ||  this.userPermissionLevel === undefined) {
                     change[3] = oldValue;
                   } 
                 })
