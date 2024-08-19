@@ -1,9 +1,7 @@
-import { 
-  CONTAINER_ID
-} from "./constants.js";
+import { CONTAINER_ID } from "./constants.js";
 
 import {
-  getPKList,  
+  getPKList,
   getColMetaData,
   getGridData,
   getGridOptions,
@@ -29,19 +27,22 @@ function prepareGridParams(newValues) {
     let heightParam = newValues.height;
     let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
-    let data = [];
-    let queryInfo = null;
+  let data = [];
+  let queryInfo = null;
 
-    let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
+  let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
 
-    if (dataParam != null && dataParam.length != 0) {
-      queryInfo = getQueryInfoFromData(dataParam[0]);
-    } else {
-      queryInfo = getQueryInfoFromColConfig(configParam);
-    }
-    
-    // calculate column configurations 
-    let { columnConfigs, relatedRecords } = getColMetaData(queryInfo, configParam);
+  if (dataParam != null && dataParam.length != 0) {
+    queryInfo = getQueryInfoFromData(dataParam[0]);
+  } else {
+    queryInfo = getQueryInfoFromColConfig(configParam);
+  }
+
+  // calculate column configurations
+  let { columnConfigs, relatedRecords } = getColMetaData(
+    queryInfo,
+    configParam
+  );
 
     data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
     
@@ -71,9 +72,7 @@ function main() {
   let data, columnConfigs, gridOptions, editablePKFieldList;
 
   try {
-    
-    Appian.Component.onNewValue(newValues => {
-
+    Appian.Component.onNewValue((newValues) => {
       let changeObj = newValues.changeData;
 
       // grid exists already - reload of screen
@@ -83,6 +82,8 @@ function main() {
         if (changeObj != null && changeObj.length == 0) {
           grid.changeObj = {};
         }
+
+        grid.validateColumns(columnsToValidate);
       } else {
         // process parameters from component
         ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList } = prepareGridParams(newValues, grid));
@@ -98,9 +99,10 @@ function main() {
 
 
         grid.initGrid();
+
+        // This will highlight red any cells that fail validation on render
+        grid.validateColumns(columnsToValidate);
       }
-      
-  
     });
 
     // never triggered - can try adding an event listener to see if the onNewValue function is finished
@@ -108,8 +110,6 @@ function main() {
     //   console.log("Save EGC");
     //   Appian.Component.saveValue("changeData", Object.values(grid.changeObj));
     // }
-    
-  
   } catch (error) {
     console.error(error);
   }

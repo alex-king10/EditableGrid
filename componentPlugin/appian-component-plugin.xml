@@ -3,7 +3,7 @@
   <plugin-info>
     <description>Editable grid component field</description>
     <vendor name="Appian" url="www.appian.com"/>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <support supported="true" email="support@example.com" url="https://community.appian.com"/>
   </plugin-info>
 

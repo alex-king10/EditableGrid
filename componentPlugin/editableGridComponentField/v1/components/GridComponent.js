@@ -1,6 +1,4 @@
-import {
-    formatColumnHeader
-} from "../services/parameters.js"
+import { formatColumnHeader } from "../services/parameters.js";
 
 class GridComponent {
 
@@ -17,82 +15,136 @@ class GridComponent {
         this.userPermissionLevel = userPermissionLevel;
     }
 
-    // initialize grid instance
-    initGrid() {
-        const container = document.getElementById(this.containerId);
-        if (!container) {
-            console.error('Grid container does not exist');
+  // initialize grid instance
+  initGrid() {
+    const container = document.getElementById(this.containerId);
+    if (!container) {
+      console.error("Grid container does not exist");
+    }
+
+    this.hotInstance = new Handsontable(container, {
+      licenseKey: "non-commercial-and-evaluation",
+    });
+
+    const testValidator = (query, callback) => {
+      let isValid = false;
+
+      isValid = query === "UNATTENDED";
+
+      callback(isValid);
+    };
+
+    this.columnConfigs.forEach((colConfig, index) => {
+      if (colConfig.validator) {
+        const { name, operator, value } = colConfig.validator;
+
+        const customValidator = (query, callback) => {
+          let isValid = false;
+
+          switch (operator) {
+            case 'equals':
+              isValid = query === value;
+              break;
+            case 'greaterThan':
+              isValid = query > value;
+              break;
+            case 'lessThan':
+              isValid = query < value;
+              break;
+            // Add more operators as needed
+            default:
+              console.error('Unknown operator:', operator);
+          }
+
+          callback(isValid);
+        };
+
+        // Register the custom validator
+        Handsontable.validators.registerValidator(name, customValidator);
+
+        // Set the validator for the column
+        colConfig.validator = name;
+      }
+    });
+
+    this.hotInstance.updateSettings({
+      data: this.data,
+      columns: this.columnConfigs,
+    });
+
+    this.setGridOptions(this.gridOptions);
+
+    this.addListeners();
+  }
+
+  setData(data) {
+    // write this logic
+    this.data = data;
+    this.hotInstance.updateSettings({
+      data: this.data,
+    });
+  }
+
+  setColumnConfigs(columnConfigs) {
+    this.columnConfigs = columnConfigs;
+
+    this.columnConfigs.forEach((colConfig, index) => {
+      if (index === 0) {
+        colConfig.validator = "test";
+      }
+    });
+  }
+
+  // TODO
+  validateColumns (columnsToValidate) {
+    this.hotInstance.validateColumns(columnsToValidate, (valid) => {
+      console.log(valid);
+    })
+  }
+
+  // not sure if this function logic should go here?
+  updateData() {
+    let currRowIdx;
+    let currChangeItem;
+
+    // console.log("Updating data");
+
+    if (this.data != null && this.data.length != 0) {
+      if (Object.keys(this.changeObj).length == 0) {
+        // no updates to make to data var
+        return this.data;
+      } else {
+        for (let i = 0; i < Object.keys(this.changeObj).length; i++) {
+          currRowIdx = Object.keys(this.changeObj)[i];
+          currChangeItem = Object.values(this.changeObj)[i];
+          // update row in data var with value from changeObj
+          this.data[currRowIdx] = Object.assign(
+            this.data[currRowIdx],
+            currChangeItem
+          );
         }
-
-        this.hotInstance = new Handsontable(container, {
-            licenseKey: "non-commercial-and-evaluation",
-          });
-        
-        this.hotInstance.updateSettings({
-            data: this.data,
-            columns: this.columnConfigs,
-        });
-
-        this.setGridOptions(this.gridOptions);
-
-        this.addListeners();
+      }
     }
+  }
 
-    setData(data) {
-        // write this logic
-        this.data = data;
-        this.hotInstance.updateSettings({
-            data: this.data,
-        });
-    }
+  setGridOptions(gridOptions) {
+    this.gridOptions = gridOptions;
 
-    setColumnConfigs(columnConfigs) {
-        this.columnConfigs = columnConfigs;
-        this.hotInstance.updateSettings({
-            columns: this.columnConfigs,
-        });
-    }
+    this.hotInstance.updateSettings(this.gridOptions);
 
-
-    // not sure if this function logic should go here?
-    updateData() {
-        let currRowIdx;
-        let currChangeItem;
-
-        // console.log("Updating data");
-
-        if (this.data != null && this.data.length != 0) {
-            if (Object.keys(this.changeObj).length == 0) {
-                // no updates to make to data var
-                return this.data;
-            } else {
-                for (let i = 0; i < Object.keys(this.changeObj).length; i++) {
-                    currRowIdx = Object.keys(this.changeObj)[i];
-                    currChangeItem = Object.values(this.changeObj)[i];
-                    // update row in data var with value from changeObj
-                    this.data[currRowIdx] = Object.assign(this.data[currRowIdx], currChangeItem);
-                }
-            }
+    // handle column header formatting on sort
+    this.hotInstance.updateSettings({
+      afterGetColHeader: function (column, TH) {
+        if (column > -1) {
+          formatColumnHeader(TH);
         }
-    }
+      },
+    });
+  }
 
-    setGridOptions(gridOptions) {
-
-        this.gridOptions = gridOptions;
-
-        this.hotInstance.updateSettings(this.gridOptions);
-
-        // handle column header formatting on sort
-        this.hotInstance.updateSettings({
-            afterGetColHeader: function(column, TH) {
-                if (column > -1) { formatColumnHeader(TH); } 
-            }
-        });
-    }
-
-    getGridOptions() {
-        return this.gridOptions;
-    }
+  getGridOptions() {
+    return this.gridOptions;
+  }
 
     setChangeObj(changeObj) {
         this.changeObj = changeObj;
@@ -113,33 +165,30 @@ class GridComponent {
             let dataItem = {};
             let gridRow;
 
-            if (cellMeta.row in this.changeObj) {
-                this.changeObj[cellMeta.row][cellMeta.prop] = newValue;
-            } else {
-                // add PK if exists
-                // access data at modified row
-                gridRow = this.data[cellMeta.row];
+      if (cellMeta.row in this.changeObj) {
+        this.changeObj[cellMeta.row][cellMeta.prop] = newValue;
+      } else {
+        // add PK if exists
+        // access data at modified row
+        gridRow = this.data[cellMeta.row];
 
-                // add new change { name : 'test' }
-                dataItem[cellMeta.prop] = newValue;
+        // add new change { name : 'test' }
+        dataItem[cellMeta.prop] = newValue;
 
-                // add primary keys (parent and related) to changeObj at this record
-                // only 0 if pkName not given in recordTypeInfo - shows a validation message
-                if (this.editablePKFieldList.length != 0) {
-                    this.editablePKFieldList.forEach(pkField => {
-                    if (pkField in gridRow && cellMeta.prop != pkField) {
-                        dataItem[pkField] = gridRow[pkField];
-                    }
-                    })
-                }
-
-                this.changeObj[cellMeta.row] = dataItem;
-            
+        // add primary keys (parent and related) to changeObj at this record
+        // only 0 if pkName not given in recordTypeInfo - shows a validation message
+        if (this.editablePKFieldList.length != 0) {
+          this.editablePKFieldList.forEach((pkField) => {
+            if (pkField in gridRow && cellMeta.prop != pkField) {
+              dataItem[pkField] = gridRow[pkField];
             }
-
+          });
         }
 
+        this.changeObj[cellMeta.row] = dataItem;
+      }
     }
+  }
 
     addListeners() {
         if (this.hotInstance != null) {
