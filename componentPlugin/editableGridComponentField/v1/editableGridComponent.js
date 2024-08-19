@@ -7,11 +7,13 @@ import {
   getColMetaData,
   getGridData,
   getGridOptions,
-  getStyle,
+  // getStyle,
   getUserPermission,
   getEditablePKList,
   getQueryInfoFromData,
-  getQueryInfoFromColConfig
+  getQueryInfoFromColConfig,
+  getHiddenColumns,
+  getGridHeight
 } from "./services/parameters.js"
 
 import GridComponent from "./components/GridComponent.js";
@@ -24,7 +26,9 @@ function prepareGridParams(newValues) {
     let dataParam = newValues.rows;
     let configParam = newValues.columnConfigs;
     let gridOptionsParam = newValues.gridOptions;
-    let styleParam = newValues.style;
+    let showPrimaryKeysParam = newValues.showPrimaryKeys;
+    let heightParam = newValues.height;
+    // let styleParam = newValues.style;
     let securityParam = newValues.securityGroups;
     let primaryKeyFieldsParam = newValues.primaryKeyFields;
 
@@ -44,12 +48,14 @@ function prepareGridParams(newValues) {
 
     data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
     
-    // set style of grid - includes height and showPK boolean
-    let gridHeight, hiddenCols;
+    // find indices of primary keys. Pass them as hiddenColumn list to grid definition.
+    let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList);
+
+    let gridHeight;
     if (dataParam != null) {
-      ({ gridHeight, hiddenCols } = getStyle(queryInfo, styleParam, dataParam.length, primaryKeyFieldList));
+      gridHeight = getGridHeight(dataParam.length, heightParam);
     } else {
-      ({ gridHeight, hiddenCols } = getStyle(queryInfo, styleParam, 0, primaryKeyFieldList));
+      gridHeight = getGridHeight(0, heightParam);
     }
 
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);

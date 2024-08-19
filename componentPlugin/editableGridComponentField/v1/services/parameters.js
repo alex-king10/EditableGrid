@@ -268,47 +268,6 @@ export async function getUserPermission(securityParam) {
   return userPermissionLevel;
 }
 
-// Returns grid height from component parameters
-// Accepts "AUTO", an integer value, or undefined (if not set)
-// AUTO calculates a value based on num rows with a min of 325 and max of 800.
-function getGridHeight(dataLen, heightParam) {
-
-  // default
-  let height = 800;
-
-  // Grid Height Edge Cases
-    // Grid is empty
-  if (dataLen == null || dataLen == 0) {
-    return 325;
-  }
-
-  // let heightValue = styleParam.height;
-  if (heightParam == "AUTO" || heightParam == undefined)
-    {
-      let calcHeight = 46 + (dataLen * 41);
-
-      // max calculated height of 1200 px. Defaults to 800.
-      // min calculated height of 325 px
-      if (calcHeight < 801) {
-        if (calcHeight > 325) {
-          height = calcHeight;
-        } else {
-          height = 325;
-        }
-      }
-  }
-  else
-  {
-    let intHeight = parseInt(heightParam);
-    if (!isNaN(intHeight))
-      {
-        height = intHeight;
-      }
-  }
-  
-  return height;
-}
-
 export function formatColumnHeader(TH) {
   let sort = TH.getAttribute("aria-sort");
   let img = TH.querySelector('.relative .newSortIcon');
@@ -337,19 +296,10 @@ export function formatColumnHeader(TH) {
   } 
 }
 
-
-
-// Returns object of gridHeight and hiddenCols (list of column indices to hide)
-// param styleParam - object from component config to define style of grid
-// param dataLen - length of inputted data. Used to calculate grid height
-// param primaryKeyFieldList - used to calc hiddenCols
-export function getStyle(queryInfo, styleParam, dataLen, primaryKeyFieldList) {
-  // set global var gridHeight
-  let gridHeight = getGridHeight(dataLen, styleParam.height);
-  
+export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList) {
   // Add primary key visual indeces to global hiddenCols var
   let hiddenCols = [];
-  if ((styleParam.showPrimaryKeys == false || styleParam.showPrimaryKeys == undefined)  && primaryKeyFieldList.length != 0 ) {
+  if ((showPrimaryKeysParam == false || showPrimaryKeysParam == undefined)  && primaryKeyFieldList.length != 0 ) {
     let pkIndex;
     if (queryInfo != null) {
       primaryKeyFieldList.forEach(pkField => {
@@ -361,10 +311,65 @@ export function getStyle(queryInfo, styleParam, dataLen, primaryKeyFieldList) {
     }
   }
 
-  return { gridHeight, hiddenCols };
-
+  return hiddenCols;
 }
 
+// Returns grid height from component parameters
+// Accepts "AUTO", an integer value, or undefined (if not set)
+// AUTO calculates a value based on num rows with a min of 325 and max of 800.
+function getAutoGridHeightHelper(dataLen, heightParam) {
+
+  // default
+  let height = 800;
+
+  // Grid Height Edge Cases
+    // Grid is empty
+  if (dataLen == null || dataLen == 0) {
+    return 325;
+  }
+
+  // let heightValue = styleParam.height;
+  if (heightParam == "auto" || heightParam == undefined)
+    {
+      let calcHeight = 46 + (dataLen * 41);
+
+      // max calculated height of 1200 px. Defaults to 800.
+      // min calculated height of 325 px
+      if (calcHeight < 801) {
+        if (calcHeight > 325) {
+          height = calcHeight;
+        } else {
+          height = 325;
+        }
+      }
+  }
+  
+  return height;
+}
+
+// If SHORT, MEDIUM, TALL, sets grid height to 10 minus that height.
+function getGridHeightHelper(heightParam) {
+  let height;
+  if (typeof heightParam === 'string') {
+    let idx = heightParam.indexOf('px');
+    if (idx !== -1) {
+      height = heightParam.slice(0, idx);
+      let intHeight = parseInt(height);
+      if (intHeight !== NaN) { return intHeight - 10;}
+    }
+  }
+}
+
+// Gets grid height from component parameters.
+// If auto, calculates auto height. If SHORT, MEDIUM, TALL, sets grid height to 10 minus that height.
+export function getGridHeight(dataLen, heightParam) {
+  if (heightParam === "auto" || heightParam == undefined) {
+    // heightParam will always be auto. Can remove this
+    return getAutoGridHeightHelper(dataLen, heightParam);
+  } else {
+    return getGridHeightHelper(heightParam);
+  }
+}
 
 // Returns an object of grid configuration options
 // param gridHeight - int calculated from user input
