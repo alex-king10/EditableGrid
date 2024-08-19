@@ -157,7 +157,6 @@ class GridComponent {
                         if (colIdx != -1) {
                             cellMeta = this.hotInstance.getCellMeta(row, colIdx);
                             this.onChange(cellMeta, newValue);
-                            console.log("Save GC");
                             Appian.Component.saveValue("changeData", Object.values(this.changeObj));
                         } else {
                             console.error("Prop not found in column index map");
