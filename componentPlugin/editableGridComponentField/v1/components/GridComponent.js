@@ -42,27 +42,24 @@ class GridComponent {
           let isValid = false;
 
           switch (operator) {
-            case 'equals':
+            case "equals":
               isValid = query === value;
               break;
-            case 'greaterThan':
+            case "greaterThan":
               isValid = query > value;
               break;
-            case 'lessThan':
+            case "lessThan":
               isValid = query < value;
               break;
-            // Add more operators as needed
             default:
-              console.error('Unknown operator:', operator);
+              console.error("Unknown operator:", operator);
           }
 
           callback(isValid);
         };
 
-        // Register the custom validator
         Handsontable.validators.registerValidator(name, customValidator);
 
-        // Set the validator for the column
         colConfig.validator = name;
       }
     });
@@ -96,10 +93,10 @@ class GridComponent {
   }
 
   // TODO
-  validateColumns (columnsToValidate) {
+  validateColumns(columnsToValidate) {
     this.hotInstance.validateColumns(columnsToValidate, (valid) => {
       console.log(valid);
-    })
+    });
   }
 
   // not sure if this function logic should go here?
