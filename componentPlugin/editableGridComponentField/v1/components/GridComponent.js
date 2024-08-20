@@ -28,6 +28,7 @@ class GridComponent {
             licenseKey: "non-commercial-and-evaluation"
           });
 
+        this.setColumnValidators();
         
         this.hotInstance.updateSettings({
             data: this.data,
