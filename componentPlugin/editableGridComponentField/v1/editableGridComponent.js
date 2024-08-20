@@ -41,7 +41,7 @@ function prepareGridParams(newValues) {
     }
     
     // calculate column configurations 
-    let { columnConfigs, relatedRecords } = getColMetaData(queryInfo, configParam);
+    let { columnConfigs, relatedRecords, columnsToValidate } = getColMetaData(queryInfo, configParam);
 
     data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
     
@@ -60,7 +60,7 @@ function prepareGridParams(newValues) {
     let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
     
     // values needed for grid instantiation
-    return { data, columnConfigs, gridOptions, editablePKFieldList };
+    return { data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate };
 }
 
 let grid;
@@ -68,13 +68,17 @@ let grid;
 function main() {
 
 
-  let data, columnConfigs, gridOptions, editablePKFieldList;
+  let data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate;
 
   try {
     
     Appian.Component.onNewValue(newValues => {
 
       let changeObj = newValues.changeData;
+
+      // If a has a custom validator or is a dropdown type
+      // validate it on grid load
+
 
       // grid exists already - reload of screen
       if (grid != undefined) {
@@ -83,9 +87,11 @@ function main() {
         if (changeObj != null && changeObj.length == 0) {
           grid.changeObj = {};
         }
+
+
       } else {
         // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList } = prepareGridParams(newValues, grid));
+        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate } = prepareGridParams(newValues, grid));
         // init and render grid
         grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
         
@@ -96,8 +102,9 @@ function main() {
           console.error(`Error fetching user security info: ${error}`);
         });
 
-
+        //Enforces validations before rendering
         grid.initGrid();
+        grid.validateColumns(columnsToValidate);
       }
       
   
@@ -113,6 +120,7 @@ function main() {
   } catch (error) {
     console.error(error);
   }
+  
 }
 
 main();

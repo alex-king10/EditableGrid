@@ -25,12 +25,14 @@ class GridComponent {
         }
 
         this.hotInstance = new Handsontable(container, {
-            licenseKey: "non-commercial-and-evaluation",
+            licenseKey: "non-commercial-and-evaluation"
           });
+
+        this.setColumnValidators();
         
         this.hotInstance.updateSettings({
             data: this.data,
-            columns: this.columnConfigs,
+            columns: this.columnConfigs
         });
 
         this.setGridOptions(this.gridOptions);
@@ -52,6 +54,52 @@ class GridComponent {
             columns: this.columnConfigs,
         });
     }
+
+    setColumnValidators() {
+        this.columnConfigs.forEach((colConfig, index) => {
+            if (colConfig.validator) {
+                const { name, operator, value } = colConfig.validator;
+
+                const customValidator = (query, callback) => {
+                let isValid = false;
+
+                switch (operator) {
+                    case "equals":
+                        isValid = query === value;
+                        break;
+                    case "greaterThan":
+                        isValid = query > value;
+                        break;
+                    case "lessThan":
+                        isValid = query < value;
+                        break;
+                    case "regex":
+                        try {
+                            const regex = new RegExp(value); // Create a new RegExp object using the query string
+                            isValid = regex.test(query); // Test the value against the regex
+                        } catch (error) {
+                            console.error("Invalid regex pattern:", query, error);
+                            isValid = false; // Set isValid to false if the regex is invalid
+                        }
+                    default:
+                    console.error("Unknown operator:", operator);
+                }
+
+                callback(isValid);
+                };
+
+                Handsontable.validators.registerValidator(name, customValidator);
+
+                colConfig.validator = name;
+        }
+    });
+    }
+
+    validateColumns(columnsToValidate) {
+        this.hotInstance.validateColumns(columnsToValidate, (valid) => {
+          console.log(valid);
+        });
+      }
 
 
     // not sure if this function logic should go here?
