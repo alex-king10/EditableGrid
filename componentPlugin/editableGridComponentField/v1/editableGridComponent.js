@@ -76,6 +76,17 @@ function main() {
 
       let changeObj = newValues.changeData;
 
+      // If a has a custom validator or is a dropdown type
+      // validate it on grid load.
+      // How do I get the columnConfigs when working with a new grid?
+      let columnsToValidate = [];
+      columnConfigs.forEach((colConfig, index) => {
+        if (colConfig.validator || colConfig.type === "autocomplete") {
+          columnsToValidate.push(index);
+        }
+      });
+
+
       // grid exists already - reload of screen
       if (grid != undefined) {
         grid.updateData();
@@ -83,6 +94,9 @@ function main() {
         if (changeObj != null && changeObj.length == 0) {
           grid.changeObj = {};
         }
+
+        //Enforces Validations before rendering
+        grid.validateColumns(columnsToValidate);
       } else {
         // process parameters from component
         ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList } = prepareGridParams(newValues, grid));
@@ -96,7 +110,8 @@ function main() {
           console.error(`Error fetching user security info: ${error}`);
         });
 
-
+        //Enforces validations before rendering
+        grid.validateColumns(columnsToValidate);
         grid.initGrid();
       }
       

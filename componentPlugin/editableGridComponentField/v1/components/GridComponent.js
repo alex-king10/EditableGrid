@@ -27,6 +27,37 @@ class GridComponent {
         this.hotInstance = new Handsontable(container, {
             licenseKey: "non-commercial-and-evaluation",
           });
+
+        //Iterate through each column to create any validation rules
+        this.columnConfigs.forEach((colConfig, index) => {
+            if (colConfig.validator) {
+                const { name, operator, value } = colConfig.validator;
+
+                const customValidator = (query, callback) => {
+                let isValid = false;
+
+                switch (operator) {
+                    case "equals":
+                    isValid = query === value;
+                    break;
+                    case "greaterThan":
+                    isValid = query > value;
+                    break;
+                    case "lessThan":
+                    isValid = query < value;
+                    break;
+                    default:
+                    console.error("Unknown operator:", operator);
+                }
+
+                callback(isValid);
+                };
+
+                Handsontable.validators.registerValidator(name, customValidator);
+
+                colConfig.validator = name;
+        }
+    });
         
         this.hotInstance.updateSettings({
             data: this.data,
@@ -52,6 +83,12 @@ class GridComponent {
             columns: this.columnConfigs,
         });
     }
+
+    validateColumns(columnsToValidate) {
+        this.hotInstance.validateColumns(columnsToValidate, (valid) => {
+          console.log(valid);
+        });
+      }
 
 
     // not sure if this function logic should go here?
