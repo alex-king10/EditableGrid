@@ -78,12 +78,8 @@ function main() {
 
       // If a has a custom validator or is a dropdown type
       // validate it on grid load.
-      // TODO How do I get the columnConfigs when working with an existing grid?
-      // Adding the below line from the new Grid script prevents the able from refreshing automatically
-      ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList } = prepareGridParams(newValues, grid));
-
       let columnsToValidate = [];
-      columnConfigs.forEach((colConfig, index) => {
+      newValues.columnConfigs.forEach((colConfig, index) => {
         if (colConfig.validator || colConfig.type === "autocomplete") {
           columnsToValidate.push(index);
         }
