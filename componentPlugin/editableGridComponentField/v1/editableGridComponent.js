@@ -41,7 +41,7 @@ function prepareGridParams(newValues) {
     }
     
     // calculate column configurations 
-    let { columnConfigs, relatedRecords } = getColMetaData(queryInfo, configParam);
+    let { columnConfigs, relatedRecords, columnsToValidate } = getColMetaData(queryInfo, configParam);
 
     data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
     
@@ -60,7 +60,7 @@ function prepareGridParams(newValues) {
     let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
     
     // values needed for grid instantiation
-    return { data, columnConfigs, gridOptions, editablePKFieldList };
+    return { data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate };
 }
 
 let grid;
@@ -68,7 +68,7 @@ let grid;
 function main() {
 
 
-  let data, columnConfigs, gridOptions, editablePKFieldList;
+  let data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate;
 
   try {
     
@@ -77,13 +77,7 @@ function main() {
       let changeObj = newValues.changeData;
 
       // If a has a custom validator or is a dropdown type
-      // validate it on grid load.
-      let columnsToValidate = [];
-      newValues.columnConfigs.forEach((colConfig, index) => {
-        if (colConfig.validator || colConfig.type === "autocomplete") {
-          columnsToValidate.push(index);
-        }
-      });
+      // validate it on grid load
 
 
       // grid exists already - reload of screen
@@ -94,11 +88,10 @@ function main() {
           grid.changeObj = {};
         }
 
-        //Enforces Validations before rendering
-        grid.validateColumns(columnsToValidate);
+
       } else {
         // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList } = prepareGridParams(newValues, grid));
+        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate } = prepareGridParams(newValues, grid));
         // init and render grid
         grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
         
@@ -127,6 +120,7 @@ function main() {
   } catch (error) {
     console.error(error);
   }
+  
 }
 
 main();

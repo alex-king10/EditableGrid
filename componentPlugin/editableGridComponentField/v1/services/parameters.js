@@ -71,6 +71,7 @@ export function getColMetaData(queryInfo, columnConfigParam) {
     // set column configuration data
     let columnConfigs = [];
     let relatedRecords = {};
+    let columnsToValidate = [];
   
     if (queryInfo != null) {
       for (let i = 0; i < queryInfo.length; i++) {
@@ -87,6 +88,11 @@ export function getColMetaData(queryInfo, columnConfigParam) {
               // if no title specified, use field name
               if (currColConfig.title == undefined) {
                 currColConfig['title'] = currDataField;
+              }
+
+
+              if (currColConfig.validator || currColConfig.type === "autocomplete") {
+                columnsToValidate.push(i);
               }
   
               if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
@@ -122,7 +128,7 @@ export function getColMetaData(queryInfo, columnConfigParam) {
       columnConfigs = columnConfigParam;
     }
   
-    return { columnConfigs, relatedRecords };
+    return { columnConfigs, relatedRecords, columnsToValidate };
   
   }
 
