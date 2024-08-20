@@ -49,7 +49,6 @@ export async function getUserSecurityInfo(groupObject) {
 export const CONTEXT_MENU = [
   "row_above",
   "row_below",
-  "remove_row",
   "---------",
   "undo",
   "redo",
