@@ -46,9 +46,10 @@ export async function getUserSecurityInfo(groupObject) {
 }
 
 // GRID CONFIG CONSTANTS
-export const CONTEXT_MENU = [
+export const CONTEXT_MENU_EDITOR = [
   "row_above",
   "row_below",
+  "remove_row",
   "---------",
   "undo",
   "redo",
@@ -56,6 +57,15 @@ export const CONTEXT_MENU = [
   "copy",
   "---------",
   "borders",
+  "---------",
+  "hidden_columns_hide",
+  "hidden_columns_show",
+];
+
+export const CONTEXT_MENU_VIEWER = [
+  "borders",
+  "---------",
+  "copy",
   "---------",
   "hidden_columns_hide",
   "hidden_columns_show",
