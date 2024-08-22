@@ -75,10 +75,7 @@ function main() {
     Appian.Component.onNewValue(newValues => {
 
       let changeObj = newValues.changeData;
-
-      // If a has a custom validator or is a dropdown type
-      // validate it on grid load
-
+      let deleteObj = newValues.deleteData;
 
       // grid exists already - reload of screen
       if (grid != undefined) {
@@ -87,14 +84,12 @@ function main() {
         if (changeObj != null && changeObj.length == 0) {
           grid.changeObj = {};
         }
-
-
+        // on save in appian, delete list is emptied
+        if (deleteObj != null && deleteObj.length == 0) {
+          grid.deleteList = [];
+        }
+      // initial grid load
       } else {
-        // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate } = prepareGridParams(newValues, grid));
-        // init and render grid
-        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
-        
         // servlet request to get user security permission levels
         getUserPermission(newValues.securityGroups).then(result => {
           grid.setUserPermissionLevel(result);
@@ -102,19 +97,18 @@ function main() {
           console.error(`Error fetching user security info: ${error}`);
         });
 
-        //Enforces validations before rendering
+        // process parameters from component
+        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate } = prepareGridParams(newValues, grid));
+        // init and render grid
+        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
+        
         grid.initGrid();
+
+        //Enforces validations
         grid.validateColumns(columnsToValidate);
       }
       
-  
     });
-
-    // never triggered - can try adding an event listener to see if the onNewValue function is finished
-    // if (grid != undefined)  {
-    //   console.log("Save EGC");
-    //   Appian.Component.saveValue("changeData", Object.values(grid.changeObj));
-    // }
     
   
   } catch (error) {
