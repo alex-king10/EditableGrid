@@ -35,6 +35,12 @@
     </parameter>
 
     <parameter>
+      <name>deleteData</name>
+      <category>input-output</category>
+      <type>Variant</type>
+    </parameter>
+
+    <parameter>
       <name>securityGroups</name>
       <category>input-only</category>
       <type>Variant</type>

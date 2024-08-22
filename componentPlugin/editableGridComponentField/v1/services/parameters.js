@@ -1,7 +1,7 @@
 import {
   getUserSecurityInfo, 
   COLUMN_MENU,
-  CONTEXT_MENU,
+  CONTEXT_MENU_VIEWER,
   ASCENDING_ICON_URL,
   DESCENDING_ICON_URL,
 } from "../constants.js";
@@ -374,6 +374,7 @@ export function getGridHeight(dataLen, heightParam) {
 // Returns an object of grid configuration options
 // param gridHeight - int calculated from user input
 // param hiddenCols - list of primary key field indices to hide
+// param gridOptionsParam
 export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
   let options = {
     height: gridHeight,
@@ -391,7 +392,7 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
       copyPasteEnabled: false,
     },
     headerClassName: 'htLeft my-class',
-    contextMenu: CONTEXT_MENU,
+    contextMenu: CONTEXT_MENU_VIEWER,
     allowInsertColumn: false,
     filters: true,
     allowInsertRow: true,

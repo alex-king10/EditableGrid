@@ -1,3 +1,4 @@
+import { CONTEXT_MENU_EDITOR, CONTEXT_MENU_VIEWER } from "../constants.js";
 import {
     formatColumnHeader
 } from "../services/parameters.js"
@@ -12,6 +13,7 @@ class GridComponent {
         this.gridOptions = gridOptions;
         this.editablePKFieldList = editablePKFieldList;
         this.changeObj = {};
+        this.deleteList =[];
         // typically not set on instantiation of object
         this.hotInstance = hotInstance;
         this.userPermissionLevel = userPermissionLevel;
@@ -142,6 +144,13 @@ class GridComponent {
         return this.gridOptions;
     }
 
+    updateGridOptions(option, newValue) {
+        let gridOptions = this.gridOptions
+        gridOptions[option] = newValue;
+
+        this.setGridOptions(gridOptions);
+    }
+
     setChangeObj(changeObj) {
         this.changeObj = changeObj;
     }
@@ -152,6 +161,10 @@ class GridComponent {
 
     setUserPermissionLevel(userPermissionLevel) {
         this.userPermissionLevel = userPermissionLevel;
+
+        // update actions available in context menu
+        let contextMenu = this.userPermissionLevel === "editor"? CONTEXT_MENU_EDITOR: CONTEXT_MENU_VIEWER;
+        this.updateGridOptions('contextMenu', contextMenu);
     }
 
     // Handles changes made to the grid by modifying this.changeObj
@@ -189,11 +202,27 @@ class GridComponent {
 
     }
 
+    onDelete(startIdx, endIdx) {
+        let records = this.data.slice(startIdx, endIdx);
+        let deleteObj;
+        records?.forEach(record => {
+            if (this.editablePKFieldList.length != 0) {
+                this.editablePKFieldList.forEach(pkField => {
+                    if (pkField in record) { 
+                        deleteObj = {};
+                        deleteObj[pkField] = record[pkField];
+                        this.deleteList.push(deleteObj);
+                     }
+                })
+            }
+        })
+    };
+
     addListeners() {
         if (this.hotInstance != null) {
-            this.hotInstance.addHook('beforeChange', (changes, source) => {
+            this.hotInstance.addHook('beforeChange', (changes) => {
                 changes?.forEach(change => {
-                  const [row, prop, oldValue, newValue] = change;
+                  const [_, __, oldValue, ___] = change;
                   if (this.userPermissionLevel === "viewer" ||  this.userPermissionLevel === undefined) {
                     change[3] = oldValue;
                   } 
@@ -202,7 +231,7 @@ class GridComponent {
         
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
-            this.hotInstance.addHook('afterChange', (changes, [source]) => {
+            this.hotInstance.addHook('afterChange', (changes) => {
                 // call handle change function
                 changes?.forEach(change => {
                     const [row, prop, oldValue, newValue] = change;
@@ -221,6 +250,13 @@ class GridComponent {
             
                 });
             
+            });
+
+            this.hotInstance.addHook('beforeRemoveRow', (index, amount) => {
+                if (this.userPermissionLevel == "editor") {
+                    this.onDelete(index, index + amount);
+                    Appian.Component.saveValue("deleteData", this.deleteList);
+                }
             });
             
         } else {
