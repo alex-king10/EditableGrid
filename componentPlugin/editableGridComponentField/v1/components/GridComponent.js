@@ -83,6 +83,7 @@ class GridComponent {
                             console.error("Invalid regex pattern:", query, error);
                             isValid = false; // Set isValid to false if the regex is invalid
                         }
+                        break;
                     default:
                     console.error("Unknown operator:", operator);
                 }
