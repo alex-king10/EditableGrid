@@ -9,4 +9,5 @@ import com.appiancorp.suiteapi.expression.annotations.Category;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.METHOD, ElementType.TYPE })
 public @interface ColConfigCategory {
+
 }
