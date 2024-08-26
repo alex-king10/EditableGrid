@@ -41,18 +41,11 @@ public class GetUserSecurityPermission extends AppianServlet {
 
             String viewerGroupStr = req.getParameter("viewer");
             String editorGroupStr = req.getParameter("editor");
+            String usernameStr = req.getRemoteUser();
 
-            TypedValue username = pds.evaluateExpression("loggedInUser()");
-            String usernameStr = username.getValue().toString();
-            usernameStr = req.getRemoteUser();
-            result.put("Username", usernameStr);
-
-            int viewerGroupID;
-            int editorGroupID;
             if (usernameStr != null) {
                 if (editorGroupStr != null) {
-                    editorGroupID = Integer.parseInt(editorGroupStr);
-                    String isEditorExpression = String.format("a!isUserMemberOfGroup(\"%s\", %s)", usernameStr, editorGroupID);
+                    String isEditorExpression = String.format("a!isUserMemberOfGroup(\"%s\", {%s})", usernameStr, editorGroupStr);
                     TypedValue isEditor = pds.evaluateExpression(isEditorExpression);
 
                     if ( isEditor.getValue().toString().equals("1") ) {
@@ -63,8 +56,8 @@ public class GetUserSecurityPermission extends AppianServlet {
                 }
 
                 if (viewerGroupStr != null) {
-                    viewerGroupID = Integer.parseInt(viewerGroupStr);
-                    String isViewerExpression = String.format("a!isUserMemberOfGroup(\"%s\", %s)", usernameStr, viewerGroupID);
+//                    viewerGroupID = Integer.parseInt(viewerGroupStr);
+                    String isViewerExpression = String.format("a!isUserMemberOfGroup(\"%s\", {%s})", usernameStr, viewerGroupStr);
                     TypedValue isViewer = pds.evaluateExpression(isViewerExpression);
                     if ( isViewer.getValue().toString().equals("1") ) {
                         result.put("viewer", true);
