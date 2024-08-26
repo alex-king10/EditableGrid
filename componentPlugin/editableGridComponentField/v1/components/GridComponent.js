@@ -83,6 +83,7 @@ class GridComponent {
                             console.error("Invalid regex pattern:", query, error);
                             isValid = false; // Set isValid to false if the regex is invalid
                         }
+                        break;
                     default:
                     console.error("Unknown operator:", operator);
                 }
@@ -202,20 +203,18 @@ class GridComponent {
 
     }
 
-    onDelete(startIdx, endIdx) {
-        let records = this.data.slice(startIdx, endIdx);
+    onDelete(physicalRows) {
         let deleteObj;
-        records?.forEach(record => {
-            if (this.editablePKFieldList.length != 0) {
-                this.editablePKFieldList.forEach(pkField => {
-                    if (pkField in record) { 
-                        deleteObj = {};
-                        deleteObj[pkField] = record[pkField];
-                        this.deleteList.push(deleteObj);
-                     }
-                })
-            }
+        physicalRows.forEach(rowIdx => {
+            this.editablePKFieldList.forEach(pkField => {
+                deleteObj = {};
+                if (pkField in this.data[rowIdx]) {
+                    deleteObj[pkField] = this.data[rowIdx][pkField];
+                    this.deleteList.push(deleteObj);
+                }
+            })
         })
+
     };
 
     addListeners() {
@@ -252,9 +251,9 @@ class GridComponent {
             
             });
 
-            this.hotInstance.addHook('beforeRemoveRow', (index, amount) => {
+            this.hotInstance.addHook('beforeRemoveRow', (index, amount, physicalRows) => {
                 if (this.userPermissionLevel == "editor") {
-                    this.onDelete(index, index + amount);
+                    this.onDelete(physicalRows);
                     Appian.Component.saveValue("deleteData", this.deleteList);
                 }
             });

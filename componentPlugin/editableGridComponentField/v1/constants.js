@@ -60,15 +60,19 @@ export const CONTEXT_MENU_EDITOR = [
   "---------",
   "hidden_columns_hide",
   "hidden_columns_show",
+  "freeze_column",
+  "unfreeze_column"
 ];
 
 export const CONTEXT_MENU_VIEWER = [
-  "borders",
-  "---------",
   "copy",
+  "---------",
+  "borders",
   "---------",
   "hidden_columns_hide",
   "hidden_columns_show",
+  "freeze_column",
+  "unfreeze_column"
 ];
 
 export const COLUMN_MENU = [

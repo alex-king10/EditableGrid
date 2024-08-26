@@ -244,8 +244,14 @@ export async function getUserPermission(securityParam) {
   let userPermissionLevel;
   let groups = {};
   if (securityParam != null) {
-    if ('editor' in securityParam) { groups['editor'] = securityParam.editor.id; }
-    if ('viewer' in securityParam) { groups['viewer'] = securityParam.viewer.id; }
+    if ('editor' in securityParam) {
+      if (Array.isArray(securityParam['editor'])) {groups['editor'] = securityParam.editor.map(x => x.id); }
+      else { groups['editor'] = [securityParam.editor.id]; }
+    }
+    if ('viewer' in securityParam) { 
+      if (Array.isArray(securityParam['viewer'])) { groups['viewer'] = securityParam.viewer.map(x => x.id);  }
+      else { groups['viewer'] = [securityParam.viewer.id]; }
+    }
   }
 
   let permissionObj = await getUserSecurityInfo(groups);
@@ -398,6 +404,7 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
     allowInsertRow: true,
     manualColumnMove: true,
     manualColumnResize: true,
+    manualColumnFreeze: true,
     manualRowMove: false,
     minSpareRows: 1,
     rowHeights: 40,
