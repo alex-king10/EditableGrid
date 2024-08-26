@@ -404,6 +404,7 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
     allowInsertRow: true,
     manualColumnMove: true,
     manualColumnResize: true,
+    manualColumnFreeze: true,
     manualRowMove: false,
     minSpareRows: 1,
     rowHeights: 40,
