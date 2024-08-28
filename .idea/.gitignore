@@ -1,3 +1,8 @@
 # Default ignored files
 /shelf/
 /workspace.xml
+servletPlug/build/
+servletPlugin/bin/
+servletPlugin/.gradle/
+executionHistory.bin
+executionHistory.lock
