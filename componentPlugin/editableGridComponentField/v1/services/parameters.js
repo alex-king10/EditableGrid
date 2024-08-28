@@ -62,6 +62,22 @@ export function getQueryInfoFromColConfig(colConfig) {
   return queryInfo;
 }
 
+export function getParsedColumnConfigs(colConfigStrArr) {
+  let colConfig = [];
+
+  if (colConfigStrArr != null) {
+    let colConfigJSON;
+    colConfigStrArr.forEach(colConfigStr => {
+      colConfigJSON = JSON.parse(colConfigStr);
+      if ('validator' in colConfigJSON) {
+        colConfigJSON['validator'] = JSON.parse(colConfigJSON['validator']);
+      }
+      colConfig.push(colConfigJSON);
+    });
+  }
+  return colConfig;
+}
+
 
 // function setColMetaData
 // param queryInfo - flat array of keys in first row of data

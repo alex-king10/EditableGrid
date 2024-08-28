@@ -18,11 +18,12 @@ public class ColConfig {
 
   @Function
   public String validator(@Parameter String name, @Parameter String operator, @Parameter String value) {
-    HashMap result = new HashMap();
+    HashMap<String, Object> result = new HashMap();
     List<String> validOperators = new ArrayList<>();
     validOperators.add("lessThan");
     validOperators.add("greaterThan");
     validOperators.add("equals");
+    validOperators.add("regex");
 
     if (validOperators.contains(operator)) {
       result.put("name", name);
@@ -35,33 +36,116 @@ public class ColConfig {
   }
 
   @Function
-//  public String textColConfig(@Parameter String field, @Parameter String title, @Parameter Boolean readOnly, @Parameter String relationshipName, @Parameter String validator) {
-public String textColConfig(@Parameter(required = true) String field, @Parameter(required = false) String title, @Parameter(required = false) String relationshipName, @Parameter(required = false) String validator, @Parameter(required = false) Boolean readOnly) {
+  public String textColConfig(@Parameter String field, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
 
-    if (field != null) { result.put("data", field); } else {
+    if (field != "") {
+      result.put("data", field);
+      result.put("type", "text");
+    } else {
       result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
     }
-    if (title != null) { result.put("title", title); }
+    if (title != "") { result.put("title", title); }
     if (readOnly != null) { result.put("readOnly", readOnly); }
-    if (relationshipName != null) { result.put("relationshipName", relationshipName); }
-    if (validator != null) { result.put("validator", validator); }
+    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (validator != "") { result.put("validator", validator); }
 
     return new JSONObject(result).toString();
   }
 
   @Function
-  public String numericColConfig(@Parameter String testObj) {
-//    System.out.println(testObj);
+  public String numericColConfig(@Parameter String field, @Parameter String format, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
-//    JSONObject testObjJSON = new JSONObject(testObj);
-//    Iterator<String> keys = testObjJSON.keys();
-//    while (keys.hasNext()) {
-//      String key = keys.next();
-//      result.put(key, key);
-//    }
+    if (field != "") {
+      result.put("data", field);
+      result.put("type", "numeric");
+    } else {
+      result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
+    }
+    if (format != "") {
+      HashMap<String, String> patternObj = new HashMap<>();
+      patternObj.put("pattern", format);
+      result.put("numericFormat", patternObj);
+    }
+    if (title != "") { result.put("title", title); }
+    if (readOnly != null) { result.put("readOnly", readOnly); }
+    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (validator != "") { result.put("validator", validator); }
 
-    result.put("testObj", testObj);
+    return new JSONObject(result).toString();
+
+  }
+
+  @Function
+  public String checkboxColConfig(@Parameter String field,  @Parameter String label,  @Parameter String labelPosition, @Parameter String checkedTemplate, @Parameter String uncheckedTemplate, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
+    HashMap result = new HashMap();
+
+    if (field != "") {
+      result.put("data", field);
+      result.put("type", "checkbox");
+    } else {
+      result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
+    }
+    if (label != "") {
+      HashMap<String, String> labelMap = new HashMap<>();
+      if (labelPosition != "" && ( labelPosition.equals("BEFORE") || labelPosition.equals("AFTER") )) { labelMap.put("position", labelPosition.toLowerCase()); } else { labelMap.put("position", "after"); }
+      labelMap.put("value", label);
+      result.put("label", labelMap);
+    }
+    if (checkedTemplate != "") {result.put("checkedTemplate", checkedTemplate); }
+    if (uncheckedTemplate != "") { result.put("uncheckedTemplate", uncheckedTemplate); }
+    if (title != "") { result.put("title", title); }
+    if (readOnly != null) { result.put("readOnly", readOnly); }
+    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (validator != "") { result.put("validator", validator); }
+
+    return new JSONObject(result).toString();
+  }
+
+  @Function
+  public String dateColConfig(@Parameter String field, @Parameter String dateFormat, @Parameter Boolean correctFormat, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
+    HashMap result = new HashMap();
+
+    if (field != "") {
+      result.put("data", field);
+      result.put("type", "date");
+    } else {
+      result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
+    }
+
+    if (dateFormat != "") {
+      result.put("dateFormat", dateFormat);
+    } else {
+//      default date format
+      result.put("dateFormat", "MM-DD-YYYY");
+    }
+    if (correctFormat != null) { result.put("correctFormat", correctFormat); }
+    if (title != "") { result.put("title", title); }
+    if (readOnly != null) { result.put("readOnly", readOnly); }
+    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (validator != "") { result.put("validator", validator); }
+
+    return new JSONObject(result).toString();
+  }
+
+  @Function
+  public String dropdownColConfig(@Parameter String field, @Parameter String[] source, @Parameter Boolean strict, @Parameter Boolean filter, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
+    HashMap result = new HashMap();
+
+    if (field != "") {
+      result.put("data", field);
+      result.put("type", "autocomplete");
+    } else {
+      result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
+    }
+    if (source[0] != "") { result.put("source", source); }
+    if (strict != null) { result.put("strict", strict); }
+    if (filter != null) { result.put("filter", filter); }
+    if (title != "") { result.put("title", title); }
+    if (readOnly != null) { result.put("readOnly", readOnly); }
+    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (validator != "") { result.put("validator", validator); }
+
     return new JSONObject(result).toString();
   }
 
