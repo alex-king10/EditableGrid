@@ -12,7 +12,8 @@ import {
   getQueryInfoFromData,
   getQueryInfoFromColConfig,
   getHiddenColumns,
-  getGridHeight
+  getGridHeight,
+  getParsedColumnConfigs
 } from "./services/parameters.js"
 
 import GridComponent from "./components/GridComponent.js";
@@ -33,6 +34,8 @@ function prepareGridParams(newValues) {
     let queryInfo = null;
 
     let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
+
+    configParam = getParsedColumnConfigs(configParam);
 
     if (dataParam != null && dataParam.length != 0) {
       queryInfo = getQueryInfoFromData(dataParam[0]);
