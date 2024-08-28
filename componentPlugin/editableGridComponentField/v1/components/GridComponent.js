@@ -60,7 +60,11 @@ class GridComponent {
     setColumnValidators() {
         this.columnConfigs.forEach((colConfig, index) => {
             if (colConfig.validator) {
-                const { name, operator, value } = colConfig.validator;
+                let { name, operator, value } = colConfig.validator;
+
+                if (colConfig.type == "numeric") {
+                    value = Number(value);
+                }
 
                 const customValidator = (query, callback) => {
                 let isValid = false;
