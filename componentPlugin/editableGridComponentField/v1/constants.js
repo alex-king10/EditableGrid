@@ -85,3 +85,5 @@ export const COLUMN_MENU = [
 
 export const ASCENDING_ICON_URL = "./styles/icons/long-arrow-up.svg";
 export const DESCENDING_ICON_URL = "./styles/icons/long-arrow-down.svg";
+
+export const MAX_NUM_CHANGES = 250;

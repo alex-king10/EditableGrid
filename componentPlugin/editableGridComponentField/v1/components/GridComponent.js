@@ -1,4 +1,4 @@
-import { CONTEXT_MENU_EDITOR, CONTEXT_MENU_VIEWER } from "../constants.js";
+import { CONTEXT_MENU_EDITOR, CONTEXT_MENU_VIEWER, MAX_NUM_CHANGES } from "../constants.js";
 import {
     formatColumnHeader
 } from "../services/parameters.js"
@@ -14,7 +14,6 @@ class GridComponent {
         this.editablePKFieldList = editablePKFieldList;
         this.changeObj = {};
         this.deleteList =[];
-        // typically not set on instantiation of object
         this.hotInstance = hotInstance;
         this.userPermissionLevel = userPermissionLevel;
     }
@@ -227,43 +226,50 @@ class GridComponent {
     addListeners() {
         if (this.hotInstance != null) {
             this.hotInstance.addHook('beforeChange', (changes) => {
-                changes?.forEach(change => {
-                  const [_, __, oldValue, ___] = change;
-                  if (this.userPermissionLevel === "viewer" ||  this.userPermissionLevel === undefined) {
-                    change[3] = oldValue;
-                  } 
-                })
+                for (let i = 0; i < changes.length; i++) {
+                    const [_, __, oldValue, ___] = changes[i];
+                    if (i >= MAX_NUM_CHANGES || this.userPermissionLevel === "viewer" ||  this.userPermissionLevel === undefined) {
+                        changes[i][3] = oldValue;
+                    } 
+                }
               });
         
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
             this.hotInstance.addHook('afterChange', (changes) => {
-                // call handle change function
-                changes?.forEach(change => {
-                    const [row, prop, oldValue, newValue] = change;
-                    if (newValue != oldValue && this.userPermissionLevel == "editor")
-                    {
-                        let colIdx = this.hotInstance.propToCol(prop);
-                        let cellMeta;
-                        if (colIdx != -1) {
-                            cellMeta = this.hotInstance.getCellMeta(row, colIdx);
-                            this.onChange(cellMeta, newValue);
-                            Appian.Component.saveValue("changeData", Object.values(this.changeObj));
-                        } else {
-                            console.error("Prop not found in column index map");
+                if (this.userPermissionLevel === "editor") {
+                    for (let i = 0; i < changes.length; i++) {
+                        const [row, prop, oldValue, newValue] = changes[i];
+                        if (i < MAX_NUM_CHANGES && newValue != oldValue) {
+                            let colIdx = this.hotInstance.propToCol(prop);
+                            let cellMeta;
+                            if (colIdx != -1) {
+                                cellMeta = this.hotInstance.getCellMeta(row, colIdx);
+                                this.onChange(cellMeta, newValue);
+                                Appian.Component.saveValue("changeData", Object.values(this.changeObj));
+                            } else {
+                                console.error("Prop not found in column index map");
+                            }
+                        } else if (i >= MAX_NUM_CHANGES) {
+                            break;
                         }
-                    } 
-            
-                });
+                    }
+                }
+                
             
             });
 
-            this.hotInstance.addHook('beforeRemoveRow', (index, amount, physicalRows) => {
+            this.hotInstance.addHook('beforeRemoveRow', (_, amount, physicalRows) => {
                 if (this.userPermissionLevel == "editor") {
+                    if (amount > MAX_NUM_CHANGES) {
+                        physicalRows = physicalRows.slice(0, MAX_NUM_CHANGES);
+                    }
                     this.onDelete(physicalRows);
                     Appian.Component.saveValue("deleteData", this.deleteList);
                 }
             });
+
+
             
         } else {
             console.error("Hot Instance null");
