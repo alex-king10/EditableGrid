@@ -17,20 +17,32 @@ public class ColConfig {
   private static final Logger logger = LogManager.getLogger(GetUserSecurityPermission.class);
 
   @Function
-  public String validator(@Parameter String name, @Parameter String operator, @Parameter String value) {
+  public String validator(@Parameter String name, @Parameter String operator, @Parameter(required = false) String value) {
     HashMap<String, Object> result = new HashMap();
     List<String> validOperators = new ArrayList<>();
     validOperators.add("lessThan");
     validOperators.add("greaterThan");
     validOperators.add("equals");
+    validOperators.add("notEquals");
     validOperators.add("regex");
+    validOperators.add("isTrue");
+    validOperators.add("isFalse");
+
 
     if (validOperators.contains(operator)) {
       result.put("name", name);
-      result.put("operator", operator);
-      result.put("value", value);
+      if (operator.equals("isTrue")) {
+        result.put("operator", "equals");
+        result.put("value", true);
+      } else if (operator.equals("isFalse")) {
+        result.put("operator", "equals");
+        result.put("value", false);
+      }  else {
+        result.put("operator", operator);
+        result.put("value", value);
+      }
     } else {
-      result.put("validationMessage", String.format("Validator %s must use a valid operator. Valid operators include lessThan, greaterThan, and equals.", name));
+      result.put("validationMessage", String.format("Validator %s must use a valid operator. Valid operators include lessThan, greaterThan, equals, notEquals, regex, isTrue, and isFalse.", name));
     }
     return new JSONObject(result).toString();
   }

@@ -69,6 +69,9 @@ class GridComponent {
                     case "equals":
                         isValid = query === value;
                         break;
+                    case "notEquals":
+                        isValid = query !== value;
+                        break;
                     case "greaterThan":
                         isValid = query > value;
                         break;
