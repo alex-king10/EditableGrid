@@ -49,7 +49,7 @@
 
 /* Column header styling */
 
-.my-class {
+.myColHeader {
   display: flex;
   flex-direction: row-reverse;
   text-align: left;
@@ -73,7 +73,7 @@ thead th {
 }
 
 /* span with text in header */
-.my-class .colHeader {
+.myColHeader .colHeader {
   /* display: inline !important; */
   overflow: hidden;
   text-overflow: ellipsis;
@@ -84,17 +84,11 @@ thead th {
 .newSortIcon {
   margin: 0px !important;
   margin-top: 2px;
-  height: 12px;
-  
-}
-
-.newSortIcon img {
-  /* height: 10px; */
-  background-size: contain;
+  height: 16px;
 }
 
 /* button in header */
-.handsontable .my-class .changeType {
+.handsontable .myColHeader .changeType {
   /* display: block; */
   margin: 0px;
   margin-right: 4px;

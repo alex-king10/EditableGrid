@@ -1,9 +1,9 @@
-import { 
+import {
   CONTAINER_ID
 } from "./constants.js";
 
 import {
-  getPKList,  
+  getPKList,
   getColMetaData,
   getGridData,
   getGridOptions,
@@ -42,12 +42,12 @@ function prepareGridParams(newValues) {
     } else {
       queryInfo = getQueryInfoFromColConfig(configParam);
     }
-    
-    // calculate column configurations 
+
+    // calculate column configurations
     let { columnConfigs, relatedRecords, columnsToValidate } = getColMetaData(queryInfo, configParam);
 
     data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
-    
+
     // find indices of primary keys. Pass them as hiddenColumn list to grid definition.
     let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList);
 
@@ -61,7 +61,7 @@ function prepareGridParams(newValues) {
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);
 
     let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
-    
+
     // values needed for grid instantiation
     return { data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate };
 }
@@ -74,7 +74,7 @@ function main() {
   let data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate;
 
   try {
-    
+
     Appian.Component.onNewValue(newValues => {
 
       let changeObj = newValues.changeData;
@@ -104,20 +104,20 @@ function main() {
         ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate } = prepareGridParams(newValues, grid));
         // init and render grid
         grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
-        
+
         grid.initGrid();
 
         //Enforces validations
         grid.validateColumns(columnsToValidate);
       }
-      
+
     });
-    
-  
+
+
   } catch (error) {
     console.error(error);
   }
-  
+
 }
 
 main();
