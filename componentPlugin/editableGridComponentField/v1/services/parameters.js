@@ -411,7 +411,7 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam) {
       columns: hiddenCols,
       copyPasteEnabled: false,
     },
-    headerClassName: 'htLeft my-class',
+    headerClassName: 'htLeft myColHeader',
     contextMenu: CONTEXT_MENU_VIEWER,
     allowInsertColumn: false,
     filters: true,

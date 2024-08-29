@@ -64,7 +64,7 @@ public class ColConfig {
     }
     if (readOnly != null) {
       result.put("readOnly", readOnly);
-      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+      if (readOnly == true) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
     if (validator != "") { result.put("validator", validator); }
 
@@ -92,7 +92,7 @@ public class ColConfig {
     }
     if (readOnly != null) {
       result.put("readOnly", readOnly);
-      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+      if (readOnly == true) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
     if (validator != "") { result.put("validator", validator); }
 
@@ -125,7 +125,7 @@ public class ColConfig {
     }
     if (readOnly != null) {
       result.put("readOnly", readOnly);
-      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+      if (readOnly == true) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
     if (validator != "") { result.put("validator", validator); }
 
@@ -157,7 +157,7 @@ public class ColConfig {
     }
     if (readOnly != null) {
       result.put("readOnly", readOnly);
-      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+      if (readOnly == true) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
     if (validator != "") { result.put("validator", validator); }
 
@@ -184,7 +184,7 @@ public class ColConfig {
     }
     if (readOnly != null) {
       result.put("readOnly", readOnly);
-      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+      if (readOnly == true) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
     if (validator != "") { result.put("validator", validator); }
 

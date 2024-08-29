@@ -174,7 +174,7 @@ class GridComponent {
         // add lock icon to all columns - or loop over colconfigs and add this class :/ call updatesettings
         if (this.columnConfigs != null) {
             this.columnConfigs.forEach(colConfig => {
-                colConfig['headerClassName'] = 'my-class header-readOnly';
+                colConfig['headerClassName'] = 'myColHeader header-readOnly';
             });
             this.setColumnConfigs(this.columnConfigs);
         }
