@@ -84,13 +84,7 @@ thead th {
 .newSortIcon {
   margin: 0px !important;
   margin-top: 2px;
-  height: 12px;
-  
-}
-
-.newSortIcon img {
-  /* height: 10px; */
-  background-size: contain;
+  height: 16px;
 }
 
 /* button in header */
