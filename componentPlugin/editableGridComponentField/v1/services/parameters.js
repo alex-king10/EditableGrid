@@ -106,11 +106,6 @@ export function getColMetaData(queryInfo, columnConfigParam) {
                 currColConfig['title'] = currDataField;
               }
 
-              // if readonly, add class for lock styling
-              if (currColConfig.readOnly === true) {
-                currColConfig['headerClassName'] = 'my-class header-readOnly';
-              }
-
               // create list of columns to validate with custom validators
               if (currColConfig.validator || currColConfig.type === "autocomplete") {
                 columnsToValidate.push(i);
@@ -124,9 +119,6 @@ export function getColMetaData(queryInfo, columnConfigParam) {
                   relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
                 }
   
-                currColConfig['readOnly'] = true;
-                currColConfig['editor'] = false;
-                currColConfig['headerClassName'] = 'my-class header-readOnly';
               }
   
               break;
