@@ -153,10 +153,10 @@ class GridComponent {
     }
 
     updateGridOptions(option, newValue) {
-        let gridOptions = this.gridOptions
-        gridOptions[option] = newValue;
-
-        this.setGridOptions(gridOptions);
+        // update local gridOptions property
+        this.gridOptions[option] = newValue;
+        // use HoT hook to update grid
+        this.hotInstance.updateSettings({[option] : newValue});
     }
 
     setChangeObj(changeObj) {
@@ -167,12 +167,31 @@ class GridComponent {
         return this.userPermissionLevel;
     }
 
+    handleViewerPermissions() {
+        // update actions available in context menu
+        this.updateGridOptions('contextMenu', CONTEXT_MENU_VIEWER);
+        this.updateGridOptions('readOnly', true);
+        // add lock icon to all columns - or loop over colconfigs and add this class :/ call updatesettings
+        if (this.columnConfigs != null) {
+            this.columnConfigs.forEach(colConfig => {
+                colConfig['headerClassName'] = 'my-class header-readOnly';
+            });
+            this.setColumnConfigs(this.columnConfigs);
+        }
+    }
+
+    handleEditorPermissions() {
+        // update actions available in context menu
+        this.updateGridOptions('contextMenu', CONTEXT_MENU_EDITOR);
+        this.updateGridOptions('readOnly', false);
+    }
+
     setUserPermissionLevel(userPermissionLevel) {
         this.userPermissionLevel = userPermissionLevel;
 
-        // update actions available in context menu
-        let contextMenu = this.userPermissionLevel === "editor"? CONTEXT_MENU_EDITOR: CONTEXT_MENU_VIEWER;
-        this.updateGridOptions('contextMenu', contextMenu);
+        if (userPermissionLevel === "editor") { this.handleEditorPermissions(); } 
+        else { this.handleViewerPermissions(); }
+        
     }
 
     // Handles changes made to the grid by modifying this.changeObj
@@ -226,22 +245,13 @@ class GridComponent {
 
     addListeners() {
         if (this.hotInstance != null) {
-            this.hotInstance.addHook('beforeChange', (changes) => {
-                changes?.forEach(change => {
-                  const [_, __, oldValue, ___] = change;
-                  if (this.userPermissionLevel === "viewer" ||  this.userPermissionLevel === undefined) {
-                    change[3] = oldValue;
-                  } 
-                })
-              });
-        
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
             this.hotInstance.addHook('afterChange', (changes) => {
                 // call handle change function
                 changes?.forEach(change => {
                     const [row, prop, oldValue, newValue] = change;
-                    if (newValue != oldValue && this.userPermissionLevel == "editor")
+                    if (newValue !== oldValue)
                     {
                         let colIdx = this.hotInstance.propToCol(prop);
                         let cellMeta;
@@ -259,7 +269,7 @@ class GridComponent {
             
             });
 
-            this.hotInstance.addHook('beforeRemoveRow', (index, amount, physicalRows) => {
+            this.hotInstance.addHook('beforeRemoveRow', (_, __, physicalRows) => {
                 if (this.userPermissionLevel == "editor") {
                     this.onDelete(physicalRows);
                     Appian.Component.saveValue("deleteData", this.deleteList);
