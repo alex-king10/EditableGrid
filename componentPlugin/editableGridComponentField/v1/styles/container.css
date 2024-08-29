@@ -32,6 +32,11 @@
   white-space: nowrap;
 }
 
+/* change read only cells to be styled the same as editable */
+.handsontable .htDimmed {
+  color: var(--text-color) !important;
+}
+
 /*  */
 .handsontable tbody td:not(.listbox),
 .handsontable thead th,

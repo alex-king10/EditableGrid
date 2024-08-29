@@ -106,11 +106,12 @@ export function getColMetaData(queryInfo, columnConfigParam) {
                 currColConfig['title'] = currDataField;
               }
 
-
+              // create list of columns to validate with custom validators
               if (currColConfig.validator || currColConfig.type === "autocomplete") {
                 columnsToValidate.push(i);
               }
   
+              // create related records array of {field: [fieldsToDisplay]}
               if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
                 if (currColConfig.relationshipName in relatedRecords) {
                   relatedRecords[currColConfig.relationshipName].push(currColConfig.data);
@@ -118,9 +119,6 @@ export function getColMetaData(queryInfo, columnConfigParam) {
                   relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
                 }
   
-                // currColConfig['readOnly'] = true;
-                currColConfig['editor'] = false;
-                currColConfig['headerClassName'] = 'my-class header-readOnly';
               }
   
               break;

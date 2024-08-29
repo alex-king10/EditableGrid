@@ -58,8 +58,14 @@ public class ColConfig {
       result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
     }
     if (title != "") { result.put("title", title); }
-    if (readOnly != null) { result.put("readOnly", readOnly); }
-    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (relationshipName != "") {
+      result.put("relationshipName", relationshipName);
+      readOnly = true;
+    }
+    if (readOnly != null) {
+      result.put("readOnly", readOnly);
+      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+    }
     if (validator != "") { result.put("validator", validator); }
 
     return new JSONObject(result).toString();
@@ -80,8 +86,14 @@ public class ColConfig {
       result.put("numericFormat", patternObj);
     }
     if (title != "") { result.put("title", title); }
-    if (readOnly != null) { result.put("readOnly", readOnly); }
-    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (relationshipName != "") {
+      result.put("relationshipName", relationshipName);
+      readOnly = true;
+    }
+    if (readOnly != null) {
+      result.put("readOnly", readOnly);
+      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+    }
     if (validator != "") { result.put("validator", validator); }
 
     return new JSONObject(result).toString();
@@ -107,8 +119,14 @@ public class ColConfig {
     if (checkedTemplate != "") {result.put("checkedTemplate", checkedTemplate); }
     if (uncheckedTemplate != "") { result.put("uncheckedTemplate", uncheckedTemplate); }
     if (title != "") { result.put("title", title); }
-    if (readOnly != null) { result.put("readOnly", readOnly); }
-    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (relationshipName != "") {
+      result.put("relationshipName", relationshipName);
+      readOnly = true;
+    }
+    if (readOnly != null) {
+      result.put("readOnly", readOnly);
+      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+    }
     if (validator != "") { result.put("validator", validator); }
 
     return new JSONObject(result).toString();
@@ -133,8 +151,14 @@ public class ColConfig {
     }
     if (correctFormat != null) { result.put("correctFormat", correctFormat); }
     if (title != "") { result.put("title", title); }
-    if (readOnly != null) { result.put("readOnly", readOnly); }
-    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (relationshipName != "") {
+      result.put("relationshipName", relationshipName);
+      readOnly = true;
+    }
+    if (readOnly != null) {
+      result.put("readOnly", readOnly);
+      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+    }
     if (validator != "") { result.put("validator", validator); }
 
     return new JSONObject(result).toString();
@@ -154,8 +178,14 @@ public class ColConfig {
     if (strict != null) { result.put("strict", strict); }
     if (filter != null) { result.put("filter", filter); }
     if (title != "") { result.put("title", title); }
-    if (readOnly != null) { result.put("readOnly", readOnly); }
-    if (relationshipName != "") { result.put("relationshipName", relationshipName); }
+    if (relationshipName != "") {
+      result.put("relationshipName", relationshipName);
+      readOnly = true;
+    }
+    if (readOnly != null) {
+      result.put("readOnly", readOnly);
+      if (readOnly == true) {  result.put("headerClassName", "my-class header-readOnly"); }
+    }
     if (validator != "") { result.put("validator", validator); }
 
     return new JSONObject(result).toString();
