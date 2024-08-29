@@ -31,7 +31,7 @@ class GridComponent {
           });
 
         this.setColumnValidators();
-        
+
         this.hotInstance.updateSettings({
             data: this.data,
             columns: this.columnConfigs
@@ -191,7 +191,7 @@ class GridComponent {
 
         if (userPermissionLevel === "editor") { this.handleEditorPermissions(); } 
         else { this.handleViewerPermissions(); }
-        
+
     }
 
     // Handles changes made to the grid by modifying this.changeObj
@@ -222,7 +222,7 @@ class GridComponent {
                 }
 
                 this.changeObj[cellMeta.row] = dataItem;
-            
+
             }
 
         }
@@ -261,12 +261,12 @@ class GridComponent {
                         } else {
                             console.error("Prop not found in column index map");
                         }
-                    } 
-            
+                    }
+
                 });
-                
+
                 Appian.Component.saveValue("changeData", Object.values(this.changeObj));
-            
+
             });
 
             this.hotInstance.addHook('beforeRemoveRow', (_, __, physicalRows) => {
@@ -275,7 +275,7 @@ class GridComponent {
                     Appian.Component.saveValue("deleteData", this.deleteList);
                 }
             });
-            
+
         } else {
             console.error("Hot Instance null");
         }

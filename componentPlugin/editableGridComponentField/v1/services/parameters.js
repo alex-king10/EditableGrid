@@ -16,13 +16,13 @@ import {
 // errors - displays validation message to user if no value is given
 export function getPKList(primaryKeyFieldsParam) {
     let primaryKeyFieldList = [];
-  
+
     if (primaryKeyFieldsParam != null) {
       primaryKeyFieldList.push(...primaryKeyFieldsParam);
     } else {
       Appian.Component.setValidations(["Please enter the name of your record's primary key field if you would like to make changes to the record data."]);
     }
-  
+
     return primaryKeyFieldList;
   }
 
@@ -46,7 +46,7 @@ export function getQueryInfoFromData(dataItem) {
           queryInfo.push(...Object.keys(dataItem[key]));
           }
       }
-    }   
+    }
   }
   return queryInfo;
 }
@@ -81,24 +81,24 @@ export function getParsedColumnConfigs(colConfigStrArr) {
 
 // function setColMetaData
 // param queryInfo - flat array of keys in first row of data
-// param columnConfigParam - 
+// param columnConfigParam -
 // returns columnMetaData and relatedRecords as an object
 export function getColMetaData(queryInfo, columnConfigParam) {
     // set column configuration data
     let columnConfigs = [];
     let relatedRecords = {};
     let columnsToValidate = [];
-  
+
     if (queryInfo != null) {
       for (let i = 0; i < queryInfo.length; i++) {
         let currDataField = queryInfo[i];
         let currColConfig = null;
-  
+
         // find if currDataField in columnConfigParam
         if (columnConfigParam != null) {
           for (let j = 0; j < columnConfigParam.length; j++) {
             currColConfig = columnConfigParam[j];
-  
+
             // if currDataField is in config param
             if (currColConfig.data == currDataField) {
               // if no title specified, use field name
@@ -196,7 +196,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
         }
       }
 
-      // process related records 
+      // process related records
       if (Object.keys(relatedRecords).length > 0) {
         // loop over data
         for (let j = 0; j < dataMap.length; j++) {
@@ -229,7 +229,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 
               }
           });
-          
+
         }
         
       }
