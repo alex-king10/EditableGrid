@@ -308,16 +308,19 @@ export function formatColumnHeader(TH) {
   } 
 }
 
-export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList) {
+export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyField, hiddenFieldsParam) {
   // Add primary key visual indeces to global hiddenCols var
   let hiddenCols = [];
-  if ((showPrimaryKeysParam == false || showPrimaryKeysParam == undefined)  && primaryKeyFieldList.length != 0 ) {
-    let pkIndex;
-    if (queryInfo != null) {
-      primaryKeyFieldList.forEach(pkField => {
-        pkIndex = queryInfo.indexOf(pkField);
-        if (pkIndex != -1) {
-          hiddenCols.push(pkIndex);
+  if (!Array.isArray(hiddenFieldsParam)) { hiddenFieldsParam = [hiddenFieldsParam]; }
+  hiddenFieldsParam.push(primaryKeyField);
+
+  if ((showPrimaryKeysParam === false || showPrimaryKeysParam === undefined)  && hiddenFieldsParam.length !== 0 ) {
+    let indx;
+    if (queryInfo !== null) {
+      hiddenFieldsParam.forEach(hiddenField => {
+        indx = queryInfo.indexOf(hiddenField);
+        if (indx != -1) {
+          hiddenCols.push(indx);
         }
       });
     }

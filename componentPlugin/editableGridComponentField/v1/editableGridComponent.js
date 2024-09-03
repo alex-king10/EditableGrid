@@ -26,15 +26,17 @@ function prepareGridParams(newValues) {
     let dataParam = newValues.rows;
     let configParam = newValues.columnConfigs;
     let gridOptionsParam = newValues.gridOptions;
-    let showPrimaryKeysParam = newValues.showPrimaryKeys;
+    let showPrimaryKeysParam = newValues.showPrimaryKey;
     let heightParam = newValues.height;
-    let primaryKeyFieldsParam = newValues.primaryKeyFields;
+    let primaryKeyFieldParam = newValues.primaryKeyFieldName;
+    let hiddenFieldsParam = newValues.hiddenFields;
 
     let data = [];
     let validationMessage = [];
     let queryInfo = null;
 
-    let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
+    // let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
+    let primaryKeyField = primaryKeyFieldParam;
 
     configParam = getParsedColumnConfigs(configParam);
 
@@ -50,7 +52,7 @@ function prepareGridParams(newValues) {
     ( {data, validationMessage}  = getGridData(dataParam, {}, relatedRecords, columnConfigs));
 
     // find indices of primary keys. Pass them as hiddenColumn list to grid definition.
-    let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList);
+    let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyField, hiddenFieldsParam);
 
     let gridHeight;
     if (dataParam != null) {
@@ -61,10 +63,10 @@ function prepareGridParams(newValues) {
 
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);
 
-    let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
+    // let editablePKFieldList = getEditablePKList(primaryKeyField, relatedRecords);
 
     // values needed for grid instantiation
-    return { data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate, validationMessage };
+    return { data, columnConfigs, gridOptions, primaryKeyField, columnsToValidate, validationMessage };
 }
 
 let grid;
@@ -72,7 +74,7 @@ let grid;
 function main() {
 
 
-  let data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate, validationMessage;
+  let data, columnConfigs, gridOptions, primaryKeyField, columnsToValidate, validationMessage;
 
   try {
 
@@ -99,10 +101,10 @@ function main() {
       } else {
 
         // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate, validationMessage } = prepareGridParams(newValues, grid));
+        ({ data, columnConfigs, gridOptions, changeObj, primaryKeyField, columnsToValidate, validationMessage } = prepareGridParams(newValues, grid));
         
         // init and render grid
-        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList, validationMessage);
+        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, primaryKeyField, validationMessage);
 
         grid.initGrid();
 

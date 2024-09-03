@@ -17,7 +17,7 @@
     </parameter>
 
     <parameter>
-      <name>primaryKeyFields</name>
+      <name>primaryKeyFieldName</name>
       <category>input-only</category>
       <type>Variant</type>
     </parameter>
@@ -52,8 +52,14 @@
       <type>Variant</type>
     </parameter>
 
+    <parameter>
+      <name>hiddenFields</name>
+      <category>input-only</category>
+      <type>Variant</type>
+    </parameter>
+
      <parameter>
-      <name>showPrimaryKeys</name>
+      <name>showPrimaryKey</name>
       <category>input-only</category>
       <type>Boolean</type>
     </parameter>

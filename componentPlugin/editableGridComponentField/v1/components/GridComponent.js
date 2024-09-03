@@ -6,12 +6,12 @@ import {
 class GridComponent {
 
     // init grid component instance
-    constructor(containerId, data, columnConfigs, gridOptions, editablePKFieldList, validationMessages, hotInstance, userPermissionLevel) {
+    constructor(containerId, data, columnConfigs, gridOptions, pkField, validationMessages, hotInstance, userPermissionLevel) {
         this.containerId = containerId;
         this.data = data;
         this.columnConfigs = columnConfigs;
         this.gridOptions = gridOptions;
-        this.editablePKFieldList = editablePKFieldList;
+        this.pkField = pkField;
         this.changeObj = {};
         this.deleteList =[];
         this.validationMessages = validationMessages;
@@ -234,14 +234,12 @@ class GridComponent {
 
                 // add primary keys (parent and related) to changeObj at this record
                 // only 0 if pkName not given in recordTypeInfo - shows a validation message
-                if (this.editablePKFieldList.length !== 0) {
-                    this.editablePKFieldList.forEach(pkField => {
-                        if (pkField in gridRow && cellMeta.prop != pkField) {
-                            dataItem[pkField] = gridRow[pkField];
-                        } else if (!(pkField in gridRow)) {
-                            this.setValidationMessages("To save changes made to the grid's data, please enter the proper primary key field for the data to manipulate. This value can be defined as a string in the primaryKeyField parameter.")
-                        }
-                    })
+                if (this.pkField !== undefined) {
+                    if (this.pkField in gridRow && cellMeta.prop != this.pkField) {
+                        dataItem[this.pkField] = gridRow[this.pkField];
+                    } else if (!(this.pkField in gridRow)) {
+                        this.setValidationMessages("To save changes made to the grid's data, please enter the proper primary key field for the data to manipulate. This value can be defined as a string in the primaryKeyField parameter.")
+                    }
                 }
 
                 this.changeObj[cellMeta.row] = dataItem;
@@ -255,15 +253,13 @@ class GridComponent {
     onDelete(physicalRows) {
         let deleteObj;
         physicalRows.forEach(rowIdx => {
-            this.editablePKFieldList?.forEach(pkField => {
-                deleteObj = {};
-                if (pkField in this.data[rowIdx]) {
-                    deleteObj[pkField] = this.data[rowIdx][pkField];
-                    this.deleteList.push(deleteObj);
-                } else {
-                    this.setValidationMessages("To save deletions made to the grid's data, please enter the proper primary key field for the data to delete. This value can be defined as a string in the primaryKeyField parameter.")
-                }
-            })
+            deleteObj = {};
+            if (this.pkField in this.data[rowIdx]) {
+                deleteObj[this.pkField] = this.data[rowIdx][this.pkField];
+                this.deleteList.push(deleteObj);
+            } else {
+                this.setValidationMessages("To save deletions made to the grid's data, please enter the proper primary key field for the data to delete. This value can be defined as a string in the primaryKeyField parameter.")
+            }
         })
 
     };
@@ -273,7 +269,7 @@ class GridComponent {
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
             this.hotInstance.addHook('afterChange', (changes) => {
-                if (this.editablePKFieldList.length===0) {
+                if (this.pkField === undefined) {
                     Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
                 } else {
                     // call handle change function
@@ -299,7 +295,7 @@ class GridComponent {
             });
 
             this.hotInstance.addHook('beforeRemoveRow', (_, __, physicalRows) => {
-                if (this.editablePKFieldList.length !== 0) {
+                if (this.pkField !== undefined) {
                     this.onDelete(physicalRows);
                     Appian.Component.saveValue("deleteData", this.deleteList);
                 } else {
