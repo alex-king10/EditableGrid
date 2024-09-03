@@ -13,7 +13,8 @@ import {
   getQueryInfoFromColConfig,
   getHiddenColumns,
   getGridHeight,
-  getParsedColumnConfigs
+  getParsedColumnConfigs,
+  getPKField
 } from "./services/parameters.js"
 
 import GridComponent from "./components/GridComponent.js";
@@ -35,8 +36,7 @@ function prepareGridParams(newValues) {
     let validationMessage = [];
     let queryInfo = null;
 
-    // let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
-    let primaryKeyField = primaryKeyFieldParam;
+    let primaryKeyField = getPKField(primaryKeyFieldParam);
 
     configParam = getParsedColumnConfigs(configParam);
 
@@ -62,8 +62,6 @@ function prepareGridParams(newValues) {
     }
 
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);
-
-    // let editablePKFieldList = getEditablePKList(primaryKeyField, relatedRecords);
 
     // values needed for grid instantiation
     return { data, columnConfigs, gridOptions, primaryKeyField, columnsToValidate, validationMessage };

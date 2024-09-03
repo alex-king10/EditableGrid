@@ -10,22 +10,11 @@ import {
 // TO DO: move this to be a get function and a function level scope
 // let columnHeaderData2 = [];
 
-// getPKList - process list of primary key fields from UI
-// param primaryKeyFieldsParam - list of field names of primary keys present in displayed data
-// returns list of primary key field names
-// errors - displays validation message to user if no value is given
-export function getPKList(primaryKeyFieldsParam) {
-    let primaryKeyFieldList = [];
-
-    if (primaryKeyFieldsParam != null) {
-      primaryKeyFieldList.push(...primaryKeyFieldsParam);
-    } else {
-      Appian.Component.setValidations(["Please enter the name of your record's primary key field if you would like to make changes to the record data."]);
-    }
-
-    return primaryKeyFieldList;
-  }
-
+// getPKField - returns the indexed array of the PK Field
+export function getPKField(primaryKeyFieldParam) {
+  if (Array.isArray(primaryKeyFieldParam)) { return primaryKeyFieldParam[0]; }
+  return primaryKeyFieldParam;
+}
 // function queryInfo - flattens the nested objects from first index of inputted data
 // param dataItem - rowsParam[0]
 // returns flattened list of keys in data
