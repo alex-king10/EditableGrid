@@ -234,11 +234,13 @@ class GridComponent {
 
                 // add primary keys (parent and related) to changeObj at this record
                 // only 0 if pkName not given in recordTypeInfo - shows a validation message
-                if (this.editablePKFieldList.length != 0) {
+                if (this.editablePKFieldList.length !== 0) {
                     this.editablePKFieldList.forEach(pkField => {
-                    if (pkField in gridRow && cellMeta.prop != pkField) {
-                        dataItem[pkField] = gridRow[pkField];
-                    }
+                        if (pkField in gridRow && cellMeta.prop != pkField) {
+                            dataItem[pkField] = gridRow[pkField];
+                        } else if (!(pkField in gridRow)) {
+                            this.setValidationMessages("To save changes made to the grid's data, please enter the proper primary key field for the data to manipulate. This value can be defined as a string in the primaryKeyField parameter.")
+                        }
                     })
                 }
 
@@ -253,11 +255,13 @@ class GridComponent {
     onDelete(physicalRows) {
         let deleteObj;
         physicalRows.forEach(rowIdx => {
-            this.editablePKFieldList.forEach(pkField => {
+            this.editablePKFieldList?.forEach(pkField => {
                 deleteObj = {};
                 if (pkField in this.data[rowIdx]) {
                     deleteObj[pkField] = this.data[rowIdx][pkField];
                     this.deleteList.push(deleteObj);
+                } else {
+                    this.setValidationMessages("To save deletions made to the grid's data, please enter the proper primary key field for the data to delete. This value can be defined as a string in the primaryKeyField parameter.")
                 }
             })
         })
@@ -295,15 +299,11 @@ class GridComponent {
             });
 
             this.hotInstance.addHook('beforeRemoveRow', (_, __, physicalRows) => {
-                if (this.userPermissionLevel == "editor") {
-                    if (this.editablePKFieldList.length !== 0) {
-                        this.onDelete(physicalRows);
-                        Appian.Component.saveValue("deleteData", this.deleteList);
-                    } else {
-                        Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
-                    }
-
-                    
+                if (this.editablePKFieldList.length !== 0) {
+                    this.onDelete(physicalRows);
+                    Appian.Component.saveValue("deleteData", this.deleteList);
+                } else {
+                    Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
                 }
             });
 

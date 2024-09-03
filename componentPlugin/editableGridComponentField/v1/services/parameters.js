@@ -175,7 +175,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 {
 
   let dataMap = [];
-  let validationMessage = null;
+  let validationMessage = [];
 
   if (rowsParam != null && rowsParam.length != 0) {
     dataMap = rowsParam;
@@ -190,7 +190,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
       if (relatedRecords.length !== 0) {
         Object.keys(relatedRecords).forEach(relField => {
           // { ownerRel: ['name'] }
-          if (relField in currRow && currRow[relField] != null) {
+          if (relField in currRow && currRow[relField] !== null) {
             displayFields = relatedRecords[relField];
 
             // check if relationship is 1:N
@@ -203,6 +203,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
                 if (displayField in currRow[relField]) {
                   currRow[displayField] = currRow[relField][displayField];
                 } else {
+                  // if a user defines a columnConfig that isn't used in the current query, is this condition triggered? - maybe add a validation here?
                   console.log(`Display field: ${displayField} not in object at index ${j}`);
                 }
               });
@@ -217,13 +218,13 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
         });
       }
 
-      if (validationMessage === null) {
+      if (validationMessage.length === 0) {
         // check if there are remaining related record fields
         let remainingObjects = Object.values(currRow).filter(x => typeof(x) === 'object');
         if (remainingObjects.length > 0) {
           // set validation
-          validationMessage = "If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.";
-          Appian.Component.setValidations([validationMessage]);
+          validationMessage.push("If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.");
+          Appian.Component.setValidations(validationMessage);
         }
       }
       
@@ -241,7 +242,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 
   // if they're both empty, handled in grid creation - no data or column value passed
 
-  return { dataMap, validationMessage };
+  return { data: dataMap, validationMessage: validationMessage };
 }
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel

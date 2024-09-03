@@ -97,6 +97,15 @@ function main() {
 
       // initial grid load
       } else {
+
+        // process parameters from component
+        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate, validationMessage } = prepareGridParams(newValues, grid));
+        
+        // init and render grid
+        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList, validationMessage);
+
+        grid.initGrid();
+
         if (newValues.securityGroups !== null && newValues.securityGroups.length !== 0) {
           // servlet request to get user security permission levels
           getUserPermission(newValues.securityGroups).then(result => {
@@ -109,14 +118,6 @@ function main() {
           grid.setUserPermissionLevel("editor");
         }
        
-
-        // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate, validationMessage } = prepareGridParams(newValues, grid));
-        
-        // init and render grid
-        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList, validationMessage);
-
-        grid.initGrid();
 
         //Enforces validations
         grid.validateColumns(columnsToValidate);
