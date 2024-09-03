@@ -7,14 +7,13 @@ import {
 } from "../constants.js";
 
 // Functions to handle and process parameter data from component configuration
-// TO DO: move this to be a get function and a function level scope
-// let columnHeaderData2 = [];
 
 // getPKField - returns the indexed array of the PK Field
 export function getPKField(primaryKeyFieldParam) {
   if (Array.isArray(primaryKeyFieldParam)) { return primaryKeyFieldParam[0]; }
   return primaryKeyFieldParam;
 }
+
 // function queryInfo - flattens the nested objects from first index of inputted data
 // param dataItem - rowsParam[0]
 // returns flattened list of keys in data
@@ -53,18 +52,33 @@ export function getQueryInfoFromColConfig(colConfig) {
 
 export function getParsedColumnConfigs(colConfigStrArr) {
   let colConfig = [];
+  let validationMessages = [];
 
   if (colConfigStrArr != null) {
     let colConfigJSON;
     colConfigStrArr.forEach(colConfigStr => {
       colConfigJSON = JSON.parse(colConfigStr);
       if ('validator' in colConfigJSON) {
-        colConfigJSON['validator'] = JSON.parse(colConfigJSON['validator']);
+        let customValidator = JSON.parse(colConfigJSON['validator']);
+        // handle invalid validator input
+        if ('validationMessage' in customValidator) { 
+          validationMessages.push(customValidator['validationMessage']); 
+          delete colConfigJSON['validator'];
+        }
+        else { colConfigJSON['validator'] = customValidator; }
       }
+
       colConfig.push(colConfigJSON);
+
+      // handle invalid colConfig param
+      if ('validationMessage' in colConfigJSON) {
+        if (Array.isArray(colConfigJSON['validationMessage'])) { validationMessages.push(...colConfigJSON['validationMessage']); }
+        else { validationMessages.push(colConfigJSON['validationMessage']); }
+      }
+
     });
   }
-  return colConfig;
+  return {colConfigs: colConfig, colValidationMessages: validationMessages};
 }
 
 
@@ -231,7 +245,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 
   // if they're both empty, handled in grid creation - no data or column value passed
 
-  return { data: dataMap, validationMessage: validationMessage };
+  return { data: dataMap, validationMessages: validationMessage };
 }
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel

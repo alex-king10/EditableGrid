@@ -74,16 +74,33 @@ public class ColConfig {
   @Function
   public String numericColConfig(@Parameter String field, @Parameter String format, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
+    List<String> validationMessages = new ArrayList<>();
     if (field != "") {
       result.put("data", field);
       result.put("type", "numeric");
     } else {
-      result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
+      validationMessages.add("The numericColConfig function must have a non-null value for the 'field' parameter.");
+//      result.put("validationMessage", "The textColConfig function must have a non-null value for the 'field' parameter.");
     }
     if (format != "") {
-      HashMap<String, String> patternObj = new HashMap<>();
-      patternObj.put("pattern", format);
-      result.put("numericFormat", patternObj);
+      List<String> validPatterns = new ArrayList<>();
+      validPatterns.add("$0,0.00");
+      validPatterns.add("$0.00");
+      validPatterns.add("0,0");
+      validPatterns.add("0,0.00");
+      validPatterns.add("0.0%");
+      validPatterns.add("0.00%");
+      validPatterns.add("0.00");
+
+      if (validPatterns.contains(format)) {
+        HashMap<String, String> patternObj = new HashMap<>();
+        patternObj.put("pattern", format);
+        result.put("numericFormat", patternObj);
+      } else {
+        validationMessages.add("The numericColConfig function must have a valid pattern.");
+      }
+
+
     }
     if (title != "") { result.put("title", title); }
     if (relationshipName != "") {
@@ -95,6 +112,8 @@ public class ColConfig {
       if (readOnly == true) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
     if (validator != "") { result.put("validator", validator); }
+
+    if (validationMessages.size() != 0) { result.put("validationMessage", validationMessages); }
 
     return new JSONObject(result).toString();
 
