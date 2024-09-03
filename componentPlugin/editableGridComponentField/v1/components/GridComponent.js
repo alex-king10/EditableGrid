@@ -6,7 +6,7 @@ import {
 class GridComponent {
 
     // init grid component instance
-    constructor(containerId, data, columnConfigs, gridOptions, editablePKFieldList, hotInstance, userPermissionLevel) {
+    constructor(containerId, data, columnConfigs, gridOptions, editablePKFieldList, validationMessages, hotInstance, userPermissionLevel) {
         this.containerId = containerId;
         this.data = data;
         this.columnConfigs = columnConfigs;
@@ -14,9 +14,23 @@ class GridComponent {
         this.editablePKFieldList = editablePKFieldList;
         this.changeObj = {};
         this.deleteList =[];
+        this.validationMessages = validationMessages;
+
         // typically not set on instantiation of object
         this.hotInstance = hotInstance;
         this.userPermissionLevel = userPermissionLevel;
+    }
+
+    sendValidations() {
+        Appian.Component.setValidations(this.validationMessages);
+    }
+
+    setValidationMessages(messages) {
+        if (typeof(messages) === 'object') {
+            this.validationMessages.push(...messages);
+        } else {
+            this.validationMessages.push(messages);
+        }
     }
 
     // initialize grid instance
@@ -32,10 +46,16 @@ class GridComponent {
 
         this.setColumnValidators();
 
-        this.hotInstance.updateSettings({
-            data: this.data,
-            columns: this.columnConfigs
-        });
+        if (!(this.data.length === 0 && this.columnConfigs.length === 0)) {
+            this.hotInstance.updateSettings({
+                data: this.data,
+                columns: this.columnConfigs
+            });
+        } else {
+            // if grid data and colConfig are empty
+            this.validationMessages.push("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
+        }
+       
 
         this.setGridOptions(this.gridOptions);
 
@@ -58,6 +78,7 @@ class GridComponent {
     }
 
     setColumnValidators() {
+        if (this.columnConfigs.length === 0) { return; }
         this.columnConfigs.forEach((colConfig, index) => {
             if (colConfig.validator) {
                 let { name, operator, value } = colConfig.validator;
@@ -248,31 +269,41 @@ class GridComponent {
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
             this.hotInstance.addHook('afterChange', (changes) => {
-                // call handle change function
-                changes?.forEach(change => {
-                    const [row, prop, oldValue, newValue] = change;
-                    if (newValue !== oldValue)
-                    {
-                        let colIdx = this.hotInstance.propToCol(prop);
-                        let cellMeta;
-                        if (colIdx != -1) {
-                            cellMeta = this.hotInstance.getCellMeta(row, colIdx);
-                            this.onChange(cellMeta, newValue);
-                        } else {
-                            console.error("Prop not found in column index map");
+                if (this.editablePKFieldList.length===0) {
+                    Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
+                } else {
+                    // call handle change function
+                    changes?.forEach(change => {
+                        const [row, prop, oldValue, newValue] = change;
+                        if (newValue !== oldValue)
+                        {
+                            let colIdx = this.hotInstance.propToCol(prop);
+                            let cellMeta;
+                            if (colIdx != -1) {
+                                cellMeta = this.hotInstance.getCellMeta(row, colIdx);
+                                this.onChange(cellMeta, newValue);
+                            } else {
+                                console.error("Prop not found in column index map");
+                            }
                         }
-                    }
 
-                });
+                    });
 
-                Appian.Component.saveValue("changeData", Object.values(this.changeObj));
+                    Appian.Component.saveValue("changeData", Object.values(this.changeObj));
+                }
 
             });
 
             this.hotInstance.addHook('beforeRemoveRow', (_, __, physicalRows) => {
                 if (this.userPermissionLevel == "editor") {
-                    this.onDelete(physicalRows);
-                    Appian.Component.saveValue("deleteData", this.deleteList);
+                    if (this.editablePKFieldList.length !== 0) {
+                        this.onDelete(physicalRows);
+                        Appian.Component.saveValue("deleteData", this.deleteList);
+                    } else {
+                        Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
+                    }
+
+                    
                 }
             });
 

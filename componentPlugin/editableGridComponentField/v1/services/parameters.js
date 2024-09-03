@@ -170,72 +170,64 @@ function get1_NRecordData(recordField, displayFields, currRow) {
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
 // depends on relatedRecords created in setColMetaData
+// returns dataMap and validationMessage
 export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 {
 
-  let currRowIdx;
-  let currChangeItem;
   let dataMap = [];
+  let validationMessage = null;
 
   if (rowsParam != null && rowsParam.length != 0) {
     dataMap = rowsParam;
-    if (Object.keys(changeObj).length == 0 && Object.keys(relatedRecords).length == 0) {
-    // no updates to make to data var
-      return dataMap;
-    } else {
-      let currRow;
-      let displayFields;
+    
+    let currRow;
+    let displayFields;
 
-      //update changed indices in dataMap var
-      if (Object.keys(changeObj).length != 0) {
-        for (let i = 0; i < Object.keys(changeObj).length; i++) {
-          currRowIdx = Object.keys(changeObj)[i];
-          currChangeItem = Object.values(changeObj)[i];
-          // update row in data var with value from changeObj
-          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
-        }
+    // process related records
+    for (let j = 0; j < dataMap.length; j++) {
+      currRow = dataMap[j];
+      // for each row, loop over related records
+      if (relatedRecords.length !== 0) {
+        Object.keys(relatedRecords).forEach(relField => {
+          // { ownerRel: ['name'] }
+          if (relField in currRow && currRow[relField] != null) {
+            displayFields = relatedRecords[relField];
+
+            // check if relationship is 1:N
+            if (Array.isArray(currRow[relField])) {
+              currRow = get1_NRecordData(relField, displayFields, currRow);
+
+            } else {
+              // index into object, add specified fields to dataMap as flat key:value pair
+              displayFields?.forEach(displayField => {
+                if (displayField in currRow[relField]) {
+                  currRow[displayField] = currRow[relField][displayField];
+                } else {
+                  console.log(`Display field: ${displayField} not in object at index ${j}`);
+                }
+              });
+            }
+
+            // remove relField:{object} from data
+            if (typeof(currRow[relField]) == 'object' || Array.isArray(currRow[relField])) {
+              delete currRow[relField];
+            }
+
+          }
+        });
       }
 
-      // process related records
-      if (Object.keys(relatedRecords).length > 0) {
-        // loop over data
-        for (let j = 0; j < dataMap.length; j++) {
-          currRow = dataMap[j];
-          // loop over related record
-          Object.keys(relatedRecords).forEach(relField => {
-              // { ownerRel: ['name'] }
-              if (relField in currRow && currRow[relField] != null) {
-              displayFields = relatedRecords[relField];
-
-              // check if relationship is 1:N
-              if (Array.isArray(currRow[relField])) {
-                currRow = get1_NRecordData(relField, displayFields, currRow);
-
-              } else {
-                // index into object, add specified fields to dataMap as flat key:value pair
-                displayFields?.forEach(displayField => {
-                  if (displayField in currRow[relField]) {
-                    currRow[displayField] = currRow[relField][displayField];
-                  } else {
-                    console.log(`Display field: ${displayField} not in object at index ${j}`);
-                  }
-                });
-              }
-
-              // remove relField:{object} from data
-              if (typeof(currRow[relField]) == 'object' || Array.isArray(currRow[relField])) {
-                delete currRow[relField];
-              }
-
-              }
-          });
-
+      if (validationMessage === null) {
+        // check if there are remaining related record fields
+        let remainingObjects = Object.values(currRow).filter(x => typeof(x) === 'object');
+        if (remainingObjects.length > 0) {
+          // set validation
+          validationMessage = "If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.";
+          Appian.Component.setValidations([validationMessage]);
         }
-        
       }
       
     }
-    
   } else if (columnConfigs.length != 0) {
     // if no data given, use colConfig as schema and set temp null values in cells
     let tempRow = {};
@@ -249,7 +241,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 
   // if they're both empty, handled in grid creation - no data or column value passed
 
-  return dataMap;
+  return { dataMap, validationMessage };
 }
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel
@@ -257,15 +249,14 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 export async function getUserPermission(securityParam) {
   let userPermissionLevel;
   let groups = {};
-  if (securityParam != null) {
-    if ('editor' in securityParam) {
-      if (Array.isArray(securityParam['editor'])) {groups['editor'] = securityParam.editor.map(x => x.id); }
-      else { groups['editor'] = [securityParam.editor.id]; }
-    }
-    if ('viewer' in securityParam) { 
-      if (Array.isArray(securityParam['viewer'])) { groups['viewer'] = securityParam.viewer.map(x => x.id);  }
-      else { groups['viewer'] = [securityParam.viewer.id]; }
-    }
+
+  if ('editor' in securityParam) {
+    if (Array.isArray(securityParam['editor'])) {groups['editor'] = securityParam.editor.map(x => x.id); }
+    else { groups['editor'] = [securityParam.editor.id]; }
+  }
+  if ('viewer' in securityParam) { 
+    if (Array.isArray(securityParam['viewer'])) { groups['viewer'] = securityParam.viewer.map(x => x.id);  }
+    else { groups['viewer'] = [securityParam.viewer.id]; }
   }
 
   let permissionObj = await getUserSecurityInfo(groups);
