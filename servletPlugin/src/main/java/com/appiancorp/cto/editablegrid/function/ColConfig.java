@@ -211,7 +211,7 @@ public class ColConfig {
     } else {
       validationMessages.add("A dropdownColConfig has a null or invalid 'field' value. Each colConfig function must have a non-null value for the 'field' parameter.");
     }
-    if (source[0] != "") { result.put("source", source); }
+    if (source.length > 0) { result.put("source", source); }
     if (strict != null) {
       if (strict.equals(true) || strict.equals(false)) { result.put("strict", strict); }
       else { validationMessages.add("Please provide a valid strict value. Valid values include null, true, or false."); }
