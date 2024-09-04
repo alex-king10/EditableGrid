@@ -6,6 +6,11 @@ import {
   DESCENDING_ICON_URL,
 } from "../constants.js";
 
+import {
+  handleValidationMessages_Validator,
+  handleValidationMessages_ColConfig
+} from "../utils/utils.js";
+
 // Functions to handle and process parameter data from component configuration
 
 // getPKField - returns the indexed array of the PK Field
@@ -50,6 +55,8 @@ export function getQueryInfoFromColConfig(colConfig) {
   return queryInfo;
 }
 
+
+
 export function getParsedColumnConfigs(colConfigStrArr) {
   let colConfig = [];
   let validationMessages = [];
@@ -57,24 +64,28 @@ export function getParsedColumnConfigs(colConfigStrArr) {
   if (colConfigStrArr != null) {
     let colConfigJSON;
     colConfigStrArr.forEach(colConfigStr => {
+      // cast colConfig from str to JSON
       colConfigJSON = JSON.parse(colConfigStr);
+
+      // handle nested JSON validator
       if ('validator' in colConfigJSON) {
         let customValidator = JSON.parse(colConfigJSON['validator']);
         // handle invalid validator input
         if ('validationMessage' in customValidator) { 
-          validationMessages.push(customValidator['validationMessage']); 
+          let formattedValMessages = handleValidationMessages_Validator(colConfigJSON, customValidator);
+          validationMessages.push(...formattedValMessages); 
           delete colConfigJSON['validator'];
         }
         else { colConfigJSON['validator'] = customValidator; }
       }
 
-      colConfig.push(colConfigJSON);
-
       // handle invalid colConfig param
       if ('validationMessage' in colConfigJSON) {
-        if (Array.isArray(colConfigJSON['validationMessage'])) { validationMessages.push(...colConfigJSON['validationMessage']); }
-        else { validationMessages.push(colConfigJSON['validationMessage']); }
+        let formattedValMessages = handleValidationMessages_ColConfig(colConfigJSON);
+        validationMessages.push(...formattedValMessages);
       }
+
+      colConfig.push(colConfigJSON);
 
     });
   }
@@ -216,17 +227,16 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
             if (typeof(currRow[relField]) == 'object' || Array.isArray(currRow[relField])) {
               delete currRow[relField];
             }
-
           }
         });
       }
 
       if (validationMessage.length === 0) {
         // check if there are remaining related record fields
-        let remainingObjects = Object.values(currRow).filter(x => typeof(x) === 'object');
+        let remainingObjects = Object.values(currRow).filter(x => typeof(x) === 'object' && !(Array.isArray(x)));
         if (remainingObjects.length > 0) {
           // set validation
-          validationMessage.push("If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.");
+          validationMessage.push("Error displaying data: If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.");
           Appian.Component.setValidations(validationMessage);
         }
       }
