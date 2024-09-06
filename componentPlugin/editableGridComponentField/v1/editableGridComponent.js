@@ -3,17 +3,16 @@ import {
 } from "./constants.js";
 
 import {
-  getPKList,
   getColMetaData,
   getGridData,
   getGridOptions,
   getUserPermission,
-  getEditablePKList,
   getQueryInfoFromData,
   getQueryInfoFromColConfig,
   getHiddenColumns,
   getGridHeight,
-  getParsedColumnConfigs
+  getParsedColumnConfigs,
+  getPKField
 } from "./services/parameters.js"
 
 import GridComponent from "./components/GridComponent.js";
@@ -26,30 +25,33 @@ function prepareGridParams(newValues) {
     let dataParam = newValues.rows;
     let configParam = newValues.columnConfigs;
     let gridOptionsParam = newValues.gridOptions;
-    let showPrimaryKeysParam = newValues.showPrimaryKeys;
+    let showPrimaryKeysParam = newValues.showPrimaryKey;
     let heightParam = newValues.height;
-    let primaryKeyFieldsParam = newValues.primaryKeyFields;
+    let primaryKeyFieldParam = newValues.primaryKeyFieldName;
+    let hiddenFieldsParam = newValues.hiddenFields;
 
     let data = [];
+    let dataValidationMessages = [];
     let queryInfo = null;
 
-    let primaryKeyFieldList = getPKList(primaryKeyFieldsParam);
+    let primaryKeyField = getPKField(primaryKeyFieldParam);
 
-    configParam = getParsedColumnConfigs(configParam);
+    let {colConfigs, colValidationMessages} = getParsedColumnConfigs(configParam);
 
     if (dataParam != null && dataParam.length != 0) {
       queryInfo = getQueryInfoFromData(dataParam[0]);
     } else {
-      queryInfo = getQueryInfoFromColConfig(configParam);
+      queryInfo = getQueryInfoFromColConfig(colConfigs);
     }
 
     // calculate column configurations
-    let { columnConfigs, relatedRecords, columnsToValidate } = getColMetaData(queryInfo, configParam);
+    let { columnConfigs, relatedRecords, columnsToValidate } = getColMetaData(queryInfo, colConfigs);
 
-    data = getGridData(dataParam, {}, relatedRecords, columnConfigs);
+    ( {data, validationMessages: dataValidationMessages}  = getGridData(dataParam, {}, relatedRecords, columnConfigs));
 
     // find indices of primary keys. Pass them as hiddenColumn list to grid definition.
-    let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList);
+    queryInfo = columnConfigs.length !== 0? columnConfigs.map(x => x.data): queryInfo;
+    let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyField, hiddenFieldsParam);
 
     let gridHeight;
     if (dataParam != null) {
@@ -60,10 +62,10 @@ function prepareGridParams(newValues) {
 
     let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam);
 
-    let editablePKFieldList = getEditablePKList(primaryKeyFieldList, relatedRecords);
+    let validationMessages = [...dataValidationMessages, ...colValidationMessages];
 
     // values needed for grid instantiation
-    return { data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate };
+    return { data, columnConfigs, gridOptions, primaryKeyField, columnsToValidate, validationMessages };
 }
 
 let grid;
@@ -71,7 +73,7 @@ let grid;
 function main() {
 
 
-  let data, columnConfigs, gridOptions, editablePKFieldList, columnsToValidate;
+  let data, columnConfigs, gridOptions, primaryKeyField, columnsToValidate, validationMessages;
 
   try {
 
@@ -91,24 +93,37 @@ function main() {
         if (deleteObj != null && deleteObj.length == 0) {
           grid.deleteList = [];
         }
+
+        grid.sendValidations();
+
       // initial grid load
       } else {
-        // servlet request to get user security permission levels
-        getUserPermission(newValues.securityGroups).then(result => {
-          grid.setUserPermissionLevel(result);
-        }).catch(error => {
-          console.error(`Error fetching user security info: ${error}`);
-        });
 
         // process parameters from component
-        ({ data, columnConfigs, gridOptions, changeObj, editablePKFieldList, columnsToValidate } = prepareGridParams(newValues, grid));
+        ({ data, columnConfigs, gridOptions, changeObj, primaryKeyField, columnsToValidate, validationMessages } = prepareGridParams(newValues, grid));
+        
         // init and render grid
-        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, editablePKFieldList);
+        grid = new GridComponent(CONTAINER_ID, newValues, data, columnConfigs, gridOptions, primaryKeyField, validationMessages);
 
         grid.initGrid();
 
+        if (newValues.securityGroups !== null && newValues.securityGroups.length !== 0) {
+          // servlet request to get user security permission levels
+          getUserPermission(newValues.securityGroups).then(result => {
+            grid.setUserPermissionLevel(result);
+          }).catch(error => {
+            console.error(`Error fetching user security info: ${error}`);
+          });
+        } else {
+          // if no groups set, all users have editor permissions
+          grid.setUserPermissionLevel("editor");
+        }
+       
         //Enforces validations
         grid.validateColumns(columnsToValidate);
+
+        grid.sendValidations();
+
       }
 
     });

@@ -11,6 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 
 import com.appiancorp.common.logging.ConfigureLog4j;
+import com.appiancorp.services.ServiceContext;
+import com.appiancorp.services.WebServiceContextFactory;
 import com.appiancorp.services.exceptions.ServiceException;
 import com.appiancorp.suiteapi.process.ProcessDesignService;
 import com.appiancorp.suiteapi.process.ProcessModel;
@@ -38,10 +40,10 @@ public class GetUserSecurityPermission extends AppianServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         JSONObject result = new JSONObject();
         try {
-
             String viewerGroupStr = req.getParameter("viewer");
             String editorGroupStr = req.getParameter("editor");
-            String usernameStr = req.getRemoteUser();
+            ServiceContext context = WebServiceContextFactory.getServiceContext(req);
+            String usernameStr = context.getName();
 
             if (usernameStr != null) {
                 if (editorGroupStr != null) {

@@ -6,25 +6,18 @@ import {
   DESCENDING_ICON_URL,
 } from "../constants.js";
 
+import {
+  handleValidationMessages_Validator,
+  handleValidationMessages_ColConfig
+} from "../utils/utils.js";
+
 // Functions to handle and process parameter data from component configuration
-// TO DO: move this to be a get function and a function level scope
-// let columnHeaderData2 = [];
 
-// getPKList - process list of primary key fields from UI
-// param primaryKeyFieldsParam - list of field names of primary keys present in displayed data
-// returns list of primary key field names
-// errors - displays validation message to user if no value is given
-export function getPKList(primaryKeyFieldsParam) {
-    let primaryKeyFieldList = [];
-
-    if (primaryKeyFieldsParam != null) {
-      primaryKeyFieldList.push(...primaryKeyFieldsParam);
-    } else {
-      Appian.Component.setValidations(["Please enter the name of your record's primary key field if you would like to make changes to the record data."]);
-    }
-
-    return primaryKeyFieldList;
-  }
+// getPKField - returns the indexed array of the PK Field
+export function getPKField(primaryKeyFieldParam) {
+  if (Array.isArray(primaryKeyFieldParam)) { return primaryKeyFieldParam[0]; }
+  return primaryKeyFieldParam;
+}
 
 // function queryInfo - flattens the nested objects from first index of inputted data
 // param dataItem - rowsParam[0]
@@ -62,20 +55,41 @@ export function getQueryInfoFromColConfig(colConfig) {
   return queryInfo;
 }
 
+
+
 export function getParsedColumnConfigs(colConfigStrArr) {
   let colConfig = [];
+  let validationMessages = [];
 
   if (colConfigStrArr != null) {
     let colConfigJSON;
     colConfigStrArr.forEach(colConfigStr => {
+      // cast colConfig from str to JSON
       colConfigJSON = JSON.parse(colConfigStr);
+
+      // handle nested JSON validator
       if ('validator' in colConfigJSON) {
-        colConfigJSON['validator'] = JSON.parse(colConfigJSON['validator']);
+        let customValidator = JSON.parse(colConfigJSON['validator']);
+        // handle invalid validator input
+        if ('validationMessage' in customValidator) { 
+          let formattedValMessages = handleValidationMessages_Validator(colConfigJSON, customValidator);
+          validationMessages.push(...formattedValMessages); 
+          delete colConfigJSON['validator'];
+        }
+        else { colConfigJSON['validator'] = customValidator; }
       }
+
+      // handle invalid colConfig param
+      if ('validationMessage' in colConfigJSON) {
+        let formattedValMessages = handleValidationMessages_ColConfig(colConfigJSON);
+        validationMessages.push(...formattedValMessages);
+      }
+
       colConfig.push(colConfigJSON);
+
     });
   }
-  return colConfig;
+  return {colConfigs: colConfig, colValidationMessages: validationMessages};
 }
 
 
@@ -89,56 +103,34 @@ export function getColMetaData(queryInfo, columnConfigParam) {
     let relatedRecords = {};
     let columnsToValidate = [];
 
-    if (queryInfo != null) {
-      for (let i = 0; i < queryInfo.length; i++) {
-        let currDataField = queryInfo[i];
-        let currColConfig = null;
-
-        // find if currDataField in columnConfigParam
-        if (columnConfigParam != null) {
-          for (let j = 0; j < columnConfigParam.length; j++) {
-            currColConfig = columnConfigParam[j];
-
-            // if currDataField is in config param
-            if (currColConfig.data == currDataField) {
-              // if no title specified, use field name
-              if (currColConfig.title == undefined) {
-                currColConfig['title'] = currDataField;
-              }
-
-              // create list of columns to validate with custom validators
-              if (currColConfig.validator || currColConfig.type === "autocomplete") {
-                columnsToValidate.push(i);
-              }
+    if (queryInfo !== null) {
+      if (columnConfigParam !== null) {
+        columnConfigParam.forEach((currColConfig, index) => {
+          if ('data' in currColConfig && queryInfo.includes(currColConfig['data'])) {
+            // if no title specified, use field name
+            if (currColConfig.title === undefined) {
+              currColConfig['title'] = currColConfig['data'];
+            }
+            columnConfigs.push(currColConfig);
   
-              // create related records array of {field: [fieldsToDisplay]}
-              if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
-                if (currColConfig.relationshipName in relatedRecords) {
-                  relatedRecords[currColConfig.relationshipName].push(currColConfig.data);
-                } else {
-                  relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
-                }
+            // create list of columns to validate with custom validators
+            if (currColConfig.validator) {
+              columnsToValidate.push(index);
+            }
   
+            // create related records array of {field: [fieldsToDisplay]}
+            if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
+              if (currColConfig.relationshipName in relatedRecords) {
+                relatedRecords[currColConfig.relationshipName].push(currColConfig.data);
+              } else {
+                relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
               }
-  
-              break;
-            } else {
-              currColConfig = null;
             }
   
           }
-        }
-  
-        // if currColumnObject still null --> not in config param
-        if (currColConfig == null) {
-          currColConfig = { title: currDataField, data: currDataField };
-        }
-  
-        columnConfigs.push(currColConfig);
-  
+        })
       }
-  
-    } else if (columnConfigParam != null && columnConfigParam.length != 0) {
+    } else if (columnConfigParam !== null && columnConfigParam.length !== 0) {
       columnConfigs = columnConfigParam;
     }
   
@@ -170,73 +162,80 @@ function get1_NRecordData(recordField, displayFields, currRow) {
 
 // INSTANTIATE GRID W/ DATA AND COLUMN
 // depends on relatedRecords created in setColMetaData
+// returns dataMap and validationMessage
 export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 {
 
-  let currRowIdx;
-  let currChangeItem;
   let dataMap = [];
+  let validationMessage = [];
 
   if (rowsParam != null && rowsParam.length != 0) {
     dataMap = rowsParam;
-    if (Object.keys(changeObj).length == 0 && Object.keys(relatedRecords).length == 0) {
-    // no updates to make to data var
-      return dataMap;
-    } else {
-      let currRow;
-      let displayFields;
+    
+    let currRow;
+    let displayFields;
+    let relatedRecordCheck = false;
+    let queryColDiff;
 
-      //update changed indices in dataMap var
-      if (Object.keys(changeObj).length != 0) {
-        for (let i = 0; i < Object.keys(changeObj).length; i++) {
-          currRowIdx = Object.keys(changeObj)[i];
-          currChangeItem = Object.values(changeObj)[i];
-          // update row in data var with value from changeObj
-          dataMap[currRowIdx] = Object.assign(dataMap[currRowIdx], currChangeItem);
-        }
+    // process related records
+    for (let j = 0; j < dataMap.length; j++) {
+      currRow = dataMap[j];
+      // for each row, loop over related records
+      if (relatedRecords.length !== 0) {
+        Object.keys(relatedRecords).forEach(relField => {
+          // { ownerRel: ['name'] }
+          if (relField in currRow && currRow[relField] !== null) {
+            displayFields = relatedRecords[relField];
+
+            // check if relationship is 1:N
+            if (Array.isArray(currRow[relField])) {
+              currRow = get1_NRecordData(relField, displayFields, currRow);
+
+            } else {
+              // index into object, add specified fields to dataMap as flat key:value pair
+              displayFields?.forEach(displayField => {
+                if (displayField in currRow[relField]) {
+                  currRow[displayField] = currRow[relField][displayField];
+                }
+              });
+            }
+
+            // remove relField:{object} from data
+            if (typeof(currRow[relField]) === 'object' || Array.isArray(currRow[relField])) {
+              delete currRow[relField];
+            }
+          }
+        });
       }
 
-      // process related records
-      if (Object.keys(relatedRecords).length > 0) {
-        // loop over data
-        for (let j = 0; j < dataMap.length; j++) {
-          currRow = dataMap[j];
-          // loop over related record
-          Object.keys(relatedRecords).forEach(relField => {
-              // { ownerRel: ['name'] }
-              if (relField in currRow && currRow[relField] != null) {
-              displayFields = relatedRecords[relField];
-
-              // check if relationship is 1:N
-              if (Array.isArray(currRow[relField])) {
-                currRow = get1_NRecordData(relField, displayFields, currRow);
-
-              } else {
-                // index into object, add specified fields to dataMap as flat key:value pair
-                displayFields?.forEach(displayField => {
-                  if (displayField in currRow[relField]) {
-                    currRow[displayField] = currRow[relField][displayField];
-                  } else {
-                    console.log(`Display field: ${displayField} not in object at index ${j}`);
-                  }
-                });
-              }
-
-              // remove relField:{object} from data
-              if (typeof(currRow[relField]) == 'object' || Array.isArray(currRow[relField])) {
-                delete currRow[relField];
-              }
-
-              }
-          });
-
-        }
-        
+      // remove data items not defined in columnConfig
+      if (columnConfigs.length !== 0) {
+        let validCols = columnConfigs.map(x => x.data);
+        currRow = Object.keys(currRow).reduce((acc, key) => {
+          if (validCols.includes(key)) {
+            acc[key] = currRow[key];
+          }
+          return acc;
+        }, {});
       }
       
+      // check if there are undefined related records
+      if (!relatedRecordCheck) {
+        queryColDiff = columnConfigs.length - Object.keys(currRow).length;
+        if (queryColDiff === 0) {
+          relatedRecordCheck = true;
+        }
+      }
+
+      dataMap[j] = currRow;
+      
     }
-    
-  } else if (columnConfigs.length != 0) {
+
+    if (!relatedRecordCheck) {
+      validationMessage.push("Error displaying data: If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.");
+      Appian.Component.setValidations(validationMessage);
+    }
+  } else if (columnConfigs.length !== 0) {
     // if no data given, use colConfig as schema and set temp null values in cells
     let tempRow = {};
     columnConfigs?.forEach(colConfig => {
@@ -248,8 +247,7 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
   }
 
   // if they're both empty, handled in grid creation - no data or column value passed
-
-  return dataMap;
+  return { data: dataMap, validationMessages: validationMessage };
 }
 
 // Returns and sets userPermission levels to globalVar userPermissionLevel
@@ -257,15 +255,14 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
 export async function getUserPermission(securityParam) {
   let userPermissionLevel;
   let groups = {};
-  if (securityParam != null) {
-    if ('editor' in securityParam) {
-      if (Array.isArray(securityParam['editor'])) {groups['editor'] = securityParam.editor.map(x => x.id); }
-      else { groups['editor'] = [securityParam.editor.id]; }
-    }
-    if ('viewer' in securityParam) { 
-      if (Array.isArray(securityParam['viewer'])) { groups['viewer'] = securityParam.viewer.map(x => x.id);  }
-      else { groups['viewer'] = [securityParam.viewer.id]; }
-    }
+
+  if ('editor' in securityParam) {
+    if (Array.isArray(securityParam['editor'])) {groups['editor'] = securityParam.editor.map(x => x.id); }
+    else { groups['editor'] = [securityParam.editor.id]; }
+  }
+  if ('viewer' in securityParam) { 
+    if (Array.isArray(securityParam['viewer'])) { groups['viewer'] = securityParam.viewer.map(x => x.id);  }
+    else { groups['viewer'] = [securityParam.viewer.id]; }
   }
 
   let permissionObj = await getUserSecurityInfo(groups);
@@ -316,19 +313,23 @@ export function formatColumnHeader(TH) {
   } 
 }
 
-export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFieldList) {
+export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyField, hiddenFieldsParam) {
   // Add primary key visual indeces to global hiddenCols var
   let hiddenCols = [];
-  if ((showPrimaryKeysParam == false || showPrimaryKeysParam == undefined)  && primaryKeyFieldList.length != 0 ) {
-    let pkIndex;
-    if (queryInfo != null) {
-      primaryKeyFieldList.forEach(pkField => {
-        pkIndex = queryInfo.indexOf(pkField);
-        if (pkIndex != -1) {
-          hiddenCols.push(pkIndex);
-        }
+  if (!Array.isArray(hiddenFieldsParam)) { hiddenFieldsParam = [hiddenFieldsParam]; }
+  if (showPrimaryKeysParam === false || showPrimaryKeysParam === undefined) { hiddenFieldsParam.push(primaryKeyField); }
+
+  if (hiddenFieldsParam.length !== 0) {
+    let indx;
+    if (queryInfo !== null) {
+      hiddenFieldsParam.forEach(hiddenField => {
+        indx = queryInfo.indexOf(hiddenField);
+          if (indx != -1) {
+            hiddenCols.push(indx);
+          }
       });
     }
+    
   }
 
   return hiddenCols;
