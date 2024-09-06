@@ -6,15 +6,16 @@ import {
 class GridComponent {
 
     // init grid component instance
-    constructor(containerId, data, columnConfigs, gridOptions, pkField, validationMessages, hotInstance, userPermissionLevel) {
+    constructor(containerId, initParams, data, columnConfigs, gridOptions, pkField, validationMessages, hotInstance, userPermissionLevel) {
         this.containerId = containerId;
+        this.initParams = initParams;
         this.data = data;
         this.columnConfigs = columnConfigs;
         this.gridOptions = gridOptions;
         this.pkField = pkField;
         this.changeObj = {};
         this.deleteList =[];
-        this.validationMessages = validationMessages;
+        this.validationMessages = new Set(validationMessages);
 
         // typically not set on instantiation of object
         this.hotInstance = hotInstance;
@@ -22,14 +23,22 @@ class GridComponent {
     }
 
     sendValidations() {
-        Appian.Component.setValidations(this.validationMessages);
+        Appian.Component.setValidations(Array.from(this.validationMessages));
     }
 
     setValidationMessages(messages) {
         if (typeof(messages) === 'object') {
-            this.validationMessages.push(...messages);
+            this.validationMessages.add(...messages);
         } else {
-            this.validationMessages.push(messages);
+            this.validationMessages.add(messages);
+        }
+    }
+
+    deleteValidationMessages(message) {
+        if (message !== null) {
+            this.validationMessages = new Set([]);
+        } else {
+            this.validationMessages.delete(message);
         }
     }
 
@@ -48,10 +57,10 @@ class GridComponent {
 
         if (this.data.length === 0 && this.columnConfigs.length === 0) {
             // if grid data and colConfig are empty
-            this.validationMessages.push("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
+            this.setValidationMessages("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
         } else if (this.columnConfigs.length === 0) {
             // if grid data and colConfig are empty
-            this.validationMessages.push("The parameter 'columnConfigs' is empty or null. Please define a value for columnConfigs by using a colConfig function.");
+            this.setValidationMessages("The parameter 'columnConfigs' is empty or null. Please define a value for columnConfigs by using a colConfig function.");
         } else {
             this.hotInstance.updateSettings({
                 data: this.data,
@@ -81,7 +90,6 @@ class GridComponent {
     }
 
     setColumnValidators() {
-        if (this.columnConfigs.length === 0) { return; }
         this.columnConfigs.forEach((colConfig, index) => {
             if (colConfig.validator) {
                 let { name, operator, value } = colConfig.validator;
@@ -263,13 +271,13 @@ class GridComponent {
         physicalRows.forEach(rowIdx => {
             deleteObj = {};
             if (this.pkField in this.data[rowIdx]) {
+                if (this.data[rowIdx][this.pkField] === null) { this.setValidationMessages("Cannot remove a row with a null primary key field value."); }
                 deleteObj[this.pkField] = this.data[rowIdx][this.pkField];
                 this.deleteList.push(deleteObj);
             } else {
                 this.setValidationMessages("To save deletions made to the grid's data, please enter the proper primary key field for the data to delete. This value can be defined as a string in the primaryKeyField parameter.")
             }
         })
-
     };
 
     addListeners() {
@@ -277,38 +285,45 @@ class GridComponent {
             // Handles saving changes made to the grid by calling onChange and updating changeObj
             // Sends changeObj to Appian local var in changeData param
             this.hotInstance.addHook('afterChange', (changes) => {
-                if (this.pkField === undefined) {
-                    Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
+                if (this.pkField === null) {
+                    this.setValidationMessages("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
+                } else if (this.initParams.changeData === null) {
+                    this.setValidationMessages("To save changes made to data in the grid, set a value for the changeData parameters.");
                 } else {
                     // call handle change function
                     changes?.forEach(change => {
                         const [row, prop, oldValue, newValue] = change;
-                        if (newValue !== oldValue)
+                        if (this.initParams.rows === null && oldValue !== null) {
+                            this.setValidationMessages("Cannot edit newly created records.");
+                        } else if (newValue !== oldValue)
                         {
                             let colIdx = this.hotInstance.propToCol(prop);
                             let cellMeta;
-                            if (colIdx != -1) {
+                            if (colIdx !== -1) {
                                 cellMeta = this.hotInstance.getCellMeta(row, colIdx);
                                 this.onChange(cellMeta, newValue);
-                            } else {
-                                console.error("Prop not found in column index map");
                             }
                         }
 
                     });
-
                     Appian.Component.saveValue("changeData", Object.values(this.changeObj));
                 }
+
+                this.sendValidations();
 
             });
 
             this.hotInstance.addHook('beforeRemoveRow', (_, __, physicalRows) => {
-                if (this.pkField !== undefined) {
+                if (this.pkField === null) {
+                    this.setValidationMessages("To save deletions made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
+                } else if (this.initParams.deleteData === null) {
+                    this.setValidationMessages("To save deletions made to data in the grid, set a value for the deleteData parameters.");
+                } else {
                     this.onDelete(physicalRows);
                     Appian.Component.saveValue("deleteData", this.deleteList);
-                } else {
-                    Appian.Component.setValidations("To save changes made to data in the grid, define a primary key for the primary record type in the primaryKeyFields parameter.");
                 }
+                this.sendValidations();
+
             });
 
         } else {

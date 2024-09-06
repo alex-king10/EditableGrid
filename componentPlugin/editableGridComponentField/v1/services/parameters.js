@@ -105,7 +105,7 @@ export function getColMetaData(queryInfo, columnConfigParam) {
 
     if (queryInfo !== null) {
       if (columnConfigParam !== null) {
-        columnConfigParam.forEach(currColConfig => {
+        columnConfigParam.forEach((currColConfig, index) => {
           if ('data' in currColConfig && queryInfo.includes(currColConfig['data'])) {
             // if no title specified, use field name
             if (currColConfig.title === undefined) {
@@ -115,8 +115,7 @@ export function getColMetaData(queryInfo, columnConfigParam) {
   
             // create list of columns to validate with custom validators
             if (currColConfig.validator) {
-              // if (currColConfig.validator || currColConfig.type === "autocomplete") {
-              columnsToValidate.push(queryInfo.indexOf(currColConfig['data']));
+              columnsToValidate.push(index);
             }
   
             // create related records array of {field: [fieldsToDisplay]}
@@ -318,9 +317,9 @@ export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFiel
   // Add primary key visual indeces to global hiddenCols var
   let hiddenCols = [];
   if (!Array.isArray(hiddenFieldsParam)) { hiddenFieldsParam = [hiddenFieldsParam]; }
+  if (showPrimaryKeysParam === false || showPrimaryKeysParam === undefined) { hiddenFieldsParam.push(primaryKeyField); }
 
   if (hiddenFieldsParam.length !== 0) {
-    if (showPrimaryKeysParam === false || showPrimaryKeysParam === undefined) { hiddenFieldsParam.push(primaryKeyField); }
     let indx;
     if (queryInfo !== null) {
       hiddenFieldsParam.forEach(hiddenField => {

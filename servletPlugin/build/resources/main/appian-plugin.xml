@@ -13,6 +13,6 @@
         <url-pattern>/getusersecurity</url-pattern>
     </servlet>
 <!-- FUNCTIONS -->
-    <function-category key="ColConfigCategory" name="Column Configuration Types" />
-    <function key="TextColConfig" class="com.appiancorp.cto.editablegrid.function.TextColConfig" />
+<!--    <function-category key="ColConfigCategory" name="Column Configuration Types" />-->
+    <function key="ColConfig" class="com.appiancorp.cto.editablegrid.function.ColConfig" />
 </appian-plugin>

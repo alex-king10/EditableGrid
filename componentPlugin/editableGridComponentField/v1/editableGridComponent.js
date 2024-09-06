@@ -50,7 +50,7 @@ function prepareGridParams(newValues) {
     ( {data, validationMessages: dataValidationMessages}  = getGridData(dataParam, {}, relatedRecords, columnConfigs));
 
     // find indices of primary keys. Pass them as hiddenColumn list to grid definition.
-    queryInfo = data.length !== 0? Object.keys(data[0]): queryInfo;
+    queryInfo = columnConfigs.length !== 0? columnConfigs.map(x => x.data): queryInfo;
     let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyField, hiddenFieldsParam);
 
     let gridHeight;
@@ -103,7 +103,7 @@ function main() {
         ({ data, columnConfigs, gridOptions, changeObj, primaryKeyField, columnsToValidate, validationMessages } = prepareGridParams(newValues, grid));
         
         // init and render grid
-        grid = new GridComponent(CONTAINER_ID, data, columnConfigs, gridOptions, primaryKeyField, validationMessages);
+        grid = new GridComponent(CONTAINER_ID, newValues, data, columnConfigs, gridOptions, primaryKeyField, validationMessages);
 
         grid.initGrid();
 
@@ -119,7 +119,6 @@ function main() {
           grid.setUserPermissionLevel("editor");
         }
        
-
         //Enforces validations
         grid.validateColumns(columnsToValidate);
 
