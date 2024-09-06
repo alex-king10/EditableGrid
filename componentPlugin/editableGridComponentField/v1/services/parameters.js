@@ -103,56 +103,35 @@ export function getColMetaData(queryInfo, columnConfigParam) {
     let relatedRecords = {};
     let columnsToValidate = [];
 
-    if (queryInfo != null) {
-      for (let i = 0; i < queryInfo.length; i++) {
-        let currDataField = queryInfo[i];
-        let currColConfig = null;
-
-        // find if currDataField in columnConfigParam
-        if (columnConfigParam != null) {
-          for (let j = 0; j < columnConfigParam.length; j++) {
-            currColConfig = columnConfigParam[j];
-
-            // if currDataField is in config param
-            if (currColConfig.data == currDataField) {
-              // if no title specified, use field name
-              if (currColConfig.title == undefined) {
-                currColConfig['title'] = currDataField;
-              }
-
-              // create list of columns to validate with custom validators
-              if (currColConfig.validator || currColConfig.type === "autocomplete") {
-                columnsToValidate.push(i);
-              }
+    if (queryInfo !== null) {
+      if (columnConfigParam !== null) {
+        columnConfigParam.forEach(currColConfig => {
+          if ('data' in currColConfig && queryInfo.includes(currColConfig['data'])) {
+            // if no title specified, use field name
+            if (currColConfig.title === undefined) {
+              currColConfig['title'] = currColConfig['data'];
+            }
+            columnConfigs.push(currColConfig);
   
-              // create related records array of {field: [fieldsToDisplay]}
-              if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
-                if (currColConfig.relationshipName in relatedRecords) {
-                  relatedRecords[currColConfig.relationshipName].push(currColConfig.data);
-                } else {
-                  relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
-                }
+            // create list of columns to validate with custom validators
+            if (currColConfig.validator) {
+              // if (currColConfig.validator || currColConfig.type === "autocomplete") {
+              columnsToValidate.push(queryInfo.indexOf(currColConfig['data']));
+            }
   
+            // create related records array of {field: [fieldsToDisplay]}
+            if ('relationshipName' in currColConfig && currColConfig.relationshipName != null) {
+              if (currColConfig.relationshipName in relatedRecords) {
+                relatedRecords[currColConfig.relationshipName].push(currColConfig.data);
+              } else {
+                relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
               }
-  
-              break;
-            } else {
-              currColConfig = null;
             }
   
           }
-        }
-  
-        // if currColumnObject still null --> not in config param
-        if (currColConfig == null) {
-          currColConfig = { title: currDataField, data: currDataField };
-        }
-  
-        columnConfigs.push(currColConfig);
-  
+        })
       }
-  
-    } else if (columnConfigParam != null && columnConfigParam.length != 0) {
+    } else if (columnConfigParam !== null && columnConfigParam.length !== 0) {
       columnConfigs = columnConfigParam;
     }
   
@@ -196,6 +175,8 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
     
     let currRow;
     let displayFields;
+    let relatedRecordCheck = false;
+    let queryColDiff;
 
     // process related records
     for (let j = 0; j < dataMap.length; j++) {
@@ -216,33 +197,46 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
               displayFields?.forEach(displayField => {
                 if (displayField in currRow[relField]) {
                   currRow[displayField] = currRow[relField][displayField];
-                } else {
-                  // if a user defines a columnConfig that isn't used in the current query, is this condition triggered? - maybe add a validation here?
-                  console.log(`Display field: ${displayField} not in object at index ${j}`);
                 }
               });
             }
 
             // remove relField:{object} from data
-            if (typeof(currRow[relField]) == 'object' || Array.isArray(currRow[relField])) {
+            if (typeof(currRow[relField]) === 'object' || Array.isArray(currRow[relField])) {
               delete currRow[relField];
             }
           }
         });
       }
 
-      if (validationMessage.length === 0) {
-        // check if there are remaining related record fields
-        let remainingObjects = Object.values(currRow).filter(x => typeof(x) === 'object' && !(Array.isArray(x)));
-        if (remainingObjects.length > 0) {
-          // set validation
-          validationMessage.push("Error displaying data: If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.");
-          Appian.Component.setValidations(validationMessage);
-        }
+      // remove data items not defined in columnConfig
+      if (columnConfigs.length !== 0) {
+        let validCols = columnConfigs.map(x => x.data);
+        currRow = Object.keys(currRow).reduce((acc, key) => {
+          if (validCols.includes(key)) {
+            acc[key] = currRow[key];
+          }
+          return acc;
+        }, {});
       }
       
+      // check if there are undefined related records
+      if (!relatedRecordCheck) {
+        queryColDiff = columnConfigs.length - Object.keys(currRow).length;
+        if (queryColDiff === 0) {
+          relatedRecordCheck = true;
+        }
+      }
+
+      dataMap[j] = currRow;
+      
     }
-  } else if (columnConfigs.length != 0) {
+
+    if (!relatedRecordCheck) {
+      validationMessage.push("Error displaying data: If showing related record data, please define the relationship between the primary record type and related record type in the columnConfig parameter.");
+      Appian.Component.setValidations(validationMessage);
+    }
+  } else if (columnConfigs.length !== 0) {
     // if no data given, use colConfig as schema and set temp null values in cells
     let tempRow = {};
     columnConfigs?.forEach(colConfig => {
@@ -254,7 +248,6 @@ export function getGridData(rowsParam, changeObj, relatedRecords, columnConfigs)
   }
 
   // if they're both empty, handled in grid creation - no data or column value passed
-
   return { data: dataMap, validationMessages: validationMessage };
 }
 
