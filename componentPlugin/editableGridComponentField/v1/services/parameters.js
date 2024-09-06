@@ -318,18 +318,19 @@ export function getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyFiel
   // Add primary key visual indeces to global hiddenCols var
   let hiddenCols = [];
   if (!Array.isArray(hiddenFieldsParam)) { hiddenFieldsParam = [hiddenFieldsParam]; }
-  hiddenFieldsParam.push(primaryKeyField);
 
-  if ((showPrimaryKeysParam === false || showPrimaryKeysParam === undefined)  && hiddenFieldsParam.length !== 0 ) {
+  if (hiddenFieldsParam.length !== 0) {
+    if (showPrimaryKeysParam === false || showPrimaryKeysParam === undefined) { hiddenFieldsParam.push(primaryKeyField); }
     let indx;
     if (queryInfo !== null) {
       hiddenFieldsParam.forEach(hiddenField => {
         indx = queryInfo.indexOf(hiddenField);
-        if (indx != -1) {
-          hiddenCols.push(indx);
-        }
+          if (indx != -1) {
+            hiddenCols.push(indx);
+          }
       });
     }
+    
   }
 
   return hiddenCols;

@@ -46,14 +46,17 @@ class GridComponent {
 
         this.setColumnValidators();
 
-        if (!(this.data.length === 0 && this.columnConfigs.length === 0)) {
+        if (this.data.length === 0 && this.columnConfigs.length === 0) {
+            // if grid data and colConfig are empty
+            this.validationMessages.push("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
+        } else if (this.columnConfigs.length === 0) {
+            // if grid data and colConfig are empty
+            this.validationMessages.push("The parameter 'columnConfigs' is empty or null. Please define a value for columnConfigs by using a colConfig function.");
+        } else {
             this.hotInstance.updateSettings({
                 data: this.data,
                 columns: this.columnConfigs
             });
-        } else {
-            // if grid data and colConfig are empty
-            this.validationMessages.push("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
         }
        
 
@@ -234,12 +237,17 @@ class GridComponent {
 
                 // add primary keys (parent and related) to changeObj at this record
                 // only 0 if pkName not given in recordTypeInfo - shows a validation message
-                if (this.pkField !== undefined) {
+                if (this.pkField !== null) {
                     if (this.pkField in gridRow && cellMeta.prop != this.pkField) {
                         dataItem[this.pkField] = gridRow[this.pkField];
-                    } else if (!(this.pkField in gridRow)) {
-                        this.setValidationMessages("To save changes made to the grid's data, please enter the proper primary key field for the data to manipulate. This value can be defined as a string in the primaryKeyField parameter.")
+                    } else if (!(this.pkField in gridRow || this.pkField === "N/A")) {
+                        // if primary key is not in grid's data (can't update, only creates with empty pk value)
+                        this.setValidationMessages("To save changes made to the grid's data, please ensure that the primary key field is defined as a colConfig in the columnConfig parameter.")
                     }
+                } else {
+                    // if PK not provided as a parameter
+                    this.setValidationMessages("To save changes made to the grid's data, please provide the proper primary key field name in the primaryKeyField parameter.")
+
                 }
 
                 this.changeObj[cellMeta.row] = dataItem;

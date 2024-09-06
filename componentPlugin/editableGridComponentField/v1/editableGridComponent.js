@@ -50,6 +50,7 @@ function prepareGridParams(newValues) {
     ( {data, validationMessages: dataValidationMessages}  = getGridData(dataParam, {}, relatedRecords, columnConfigs));
 
     // find indices of primary keys. Pass them as hiddenColumn list to grid definition.
+    queryInfo = data.length !== 0? Object.keys(data[0]): queryInfo;
     let hiddenCols = getHiddenColumns(showPrimaryKeysParam, queryInfo, primaryKeyField, hiddenFieldsParam);
 
     let gridHeight;
