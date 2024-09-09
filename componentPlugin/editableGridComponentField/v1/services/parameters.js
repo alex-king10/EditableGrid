@@ -395,8 +395,8 @@ export function getGridHeight(dataLen, heightParam) {
 // Returns an object of grid configuration options
 // param gridHeight - int calculated from user input
 // param hiddenCols - list of primary key field indices to hide
-// param gridOptionsParam
-export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam, rowHeadersParam) {
+// param rowHeadersParam - show row headers
+export function getGridOptions(gridHeight, hiddenCols, rowHeadersParam) {
   if (rowHeadersParam === null) { rowHeadersParam = true; }
 
   let options = {
@@ -422,16 +422,12 @@ export function getGridOptions(gridHeight, hiddenCols, gridOptionsParam, rowHead
     manualColumnMove: true,
     manualColumnResize: true,
     manualColumnFreeze: true,
-    manualRowMove: false,
+    manualRowMove: true,
     minSpareRows: 1,
     rowHeights: 40,
     className: "htMiddle",
     rowHeaders: rowHeadersParam,
   };
-
-  if (gridOptionsParam != null) {
-    options = Object.assign(options, gridOptionsParam);
-  }
 
   return options;
 

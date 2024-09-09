@@ -24,7 +24,6 @@ function prepareGridParams(newValues) {
     // component parameters
     let dataParam = newValues.rows;
     let configParam = newValues.columnConfigs;
-    let gridOptionsParam = newValues.gridOptions;
     let rowHeadersParam = newValues.rowHeaders;
     let showPrimaryKeysParam = newValues.showPrimaryKey;
     let heightParam = newValues.height;
@@ -61,7 +60,7 @@ function prepareGridParams(newValues) {
       gridHeight = getGridHeight(0, heightParam);
     }
 
-    let gridOptions = getGridOptions(gridHeight, hiddenCols, gridOptionsParam, rowHeadersParam);
+    let gridOptions = getGridOptions(gridHeight, hiddenCols, rowHeadersParam);
 
     let validationMessages = [...dataValidationMessages, ...colValidationMessages];
 
