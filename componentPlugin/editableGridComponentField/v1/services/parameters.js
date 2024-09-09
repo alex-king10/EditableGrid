@@ -102,10 +102,11 @@ export function getColMetaData(queryInfo, columnConfigParam) {
     let columnConfigs = [];
     let relatedRecords = {};
     let columnsToValidate = [];
+    let colIdx = 0;
 
     if (queryInfo !== null) {
       if (columnConfigParam !== null) {
-        columnConfigParam.forEach((currColConfig, index) => {
+        columnConfigParam.forEach((currColConfig) => {
           if ('data' in currColConfig && queryInfo.includes(currColConfig['data'])) {
             // if no title specified, use field name
             if (currColConfig.title === undefined) {
@@ -115,7 +116,7 @@ export function getColMetaData(queryInfo, columnConfigParam) {
   
             // create list of columns to validate with custom validators
             if (currColConfig.validator) {
-              columnsToValidate.push(index);
+              columnsToValidate.push(colIdx);
             }
   
             // create related records array of {field: [fieldsToDisplay]}
@@ -126,6 +127,8 @@ export function getColMetaData(queryInfo, columnConfigParam) {
                 relatedRecords[currColConfig.relationshipName] = [currColConfig.data];
               }
             }
+
+            colIdx += 1;
   
           }
         })
