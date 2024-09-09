@@ -47,9 +47,9 @@
     </parameter>
 
     <parameter>
-      <name>gridOptions</name>
+      <name>rowHeaders</name>
       <category>input-only</category>
-      <type>Variant</type>
+      <type>Boolean</type>
     </parameter>
 
     <parameter>
