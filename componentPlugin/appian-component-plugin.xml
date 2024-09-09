@@ -51,6 +51,12 @@
       <category>input-only</category>
       <type>Variant</type>
     </parameter>
+    
+    <parameter>
+      <name>rowHeaders</name>
+      <category>input-only</category>
+      <type>Boolean</type>
+    </parameter>
 
     <parameter>
       <name>hiddenFields</name>
