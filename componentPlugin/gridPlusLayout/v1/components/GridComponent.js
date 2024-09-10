@@ -202,11 +202,12 @@ class GridComponent {
     handleViewerPermissions() {
         // update actions available in context menu
         this.updateGridOptions('contextMenu', CONTEXT_MENU_VIEWER);
-        this.updateGridOptions('readOnly', true);
-        // add lock icon to all columns - or loop over colconfigs and add this class :/ call updatesettings
+
+        // add readOnly attribute and lock icon to all columns
         if (this.columnConfigs != null) {
             this.columnConfigs.forEach(colConfig => {
                 colConfig['headerClassName'] = 'myColHeader header-readOnly';
+                colConfig['readOnly'] = true;
             });
             this.setColumnConfigs(this.columnConfigs);
         }
