@@ -1,23 +1,17 @@
-package com.appiancorp.cto.editablegrid.servlet;
-// import com.appiancorp.suiteapi.security.external.SecureCredentialsStore;
+package com.appiancorp.cto.gridplus.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.json.JSONObject;
 
-import com.appiancorp.common.logging.ConfigureLog4j;
 import com.appiancorp.services.ServiceContext;
 import com.appiancorp.services.WebServiceContextFactory;
 import com.appiancorp.services.exceptions.ServiceException;
 import com.appiancorp.suiteapi.process.ProcessDesignService;
-import com.appiancorp.suiteapi.process.ProcessModel;
-import com.appiancorp.suiteapi.process.ProcessVariable;
-import com.appiancorp.suiteapi.process.security.ProcessModelPermissions;
 import com.appiancorp.suiteapi.servlet.AppianServlet;
 import com.appiancorp.suiteapi.type.TypedValue;
 
@@ -28,16 +22,13 @@ public class GetUserSecurityPermission extends AppianServlet {
      ProcessDesignService pds;
     private static final Logger logger = LogManager.getLogger(GetUserSecurityPermission.class);
 
-
-    //    dependency injection
     public GetUserSecurityPermission(ProcessDesignService pds) {
         super();
         this.pds = pds;
     }
 
-
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JSONObject result = new JSONObject();
         try {
             String viewerGroupStr = req.getParameter("viewer");
@@ -50,22 +41,13 @@ public class GetUserSecurityPermission extends AppianServlet {
                     String isEditorExpression = String.format("a!isUserMemberOfGroup(\"%s\", {%s})", usernameStr, editorGroupStr);
                     TypedValue isEditor = pds.evaluateExpression(isEditorExpression);
 
-                    if ( isEditor.getValue().toString().equals("1") ) {
-                        result.put("editor", true);
-                    } else {
-                        result.put("editor", false);
-                    }
+                    result.put("editor", isEditor.getValue().toString().equals("1"));
                 }
 
                 if (viewerGroupStr != null) {
-//                    viewerGroupID = Integer.parseInt(viewerGroupStr);
                     String isViewerExpression = String.format("a!isUserMemberOfGroup(\"%s\", {%s})", usernameStr, viewerGroupStr);
                     TypedValue isViewer = pds.evaluateExpression(isViewerExpression);
-                    if ( isViewer.getValue().toString().equals("1") ) {
-                        result.put("viewer", true);
-                    } else {
-                        result.put("viewer", false);
-                    }
+                    result.put("viewer", isViewer.getValue().toString().equals("1"));
                 }
 
             }
