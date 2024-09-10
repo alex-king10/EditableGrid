@@ -223,7 +223,6 @@ class GridComponent {
 
         if (userPermissionLevel === "editor") { this.handleEditorPermissions(); } 
         else { this.handleViewerPermissions(); }
-
     }
 
     // Handles changes made to the grid by modifying this.changeObj

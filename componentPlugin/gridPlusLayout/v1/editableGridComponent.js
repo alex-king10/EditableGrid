@@ -111,16 +111,15 @@ function main() {
           // servlet request to get user security permission levels
           getUserPermission(newValues.securityGroups).then(result => {
             grid.setUserPermissionLevel(result);
+            grid.validateColumns(columnsToValidate);
           }).catch(error => {
             console.error(`Error fetching user security info: ${error}`);
           });
         } else {
           // if no groups set, all users have editor permissions
           grid.setUserPermissionLevel("editor");
+          grid.validateColumns(columnsToValidate);
         }
-       
-        //Enforces validations
-        grid.validateColumns(columnsToValidate);
 
         grid.sendValidations();
 
