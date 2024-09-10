@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<appian-component-plugin name="Editable Grid Component Field" key="com.appian.cto.editableGridComponentField">
+<appian-component-plugin name="Grid+ Component Plug-In" key="com.appian.cto.gridPlusLayout">
   <plugin-info>
-    <description>Editable grid component field</description>
+    <description>An editable grid component plug-in to create, update, and delete record data in a flexible and performant component.</description>
     <vendor name="Appian" url="www.appian.com"/>
     <version>1.0.0</version>
-    <support supported="true" email="support@example.com" url="https://community.appian.com"/>
+    <support supported="true" email="techpartners@appian.com" url="https://community.appian.com"/>
   </plugin-info>
 
-  <component rule-name="editableGridComponentField" version="1.0.0">
+  <component rule-name="gridPlusLayout" version="1.0.0">
     <sdk-version>2.0.0</sdk-version>
 
     <parameter>
