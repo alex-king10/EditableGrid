@@ -1,10 +1,10 @@
-package com.appiancorp.cto.editablegrid.function;
+package com.appiancorp.cto.gridplus.function;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.appiancorp.cto.editablegrid.servlet.GetUserSecurityPermission;
+import com.appiancorp.cto.gridplus.servlet.GetUserSecurityPermission;
 import com.appiancorp.suiteapi.expression.annotations.Function;
 import com.appiancorp.suiteapi.expression.annotations.Parameter;
 
