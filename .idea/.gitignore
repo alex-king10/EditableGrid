@@ -6,3 +6,4 @@ servletPlugin/bin/
 servletPlugin/.gradle/
 executionHistory.bin
 executionHistory.lock
+/bin/
