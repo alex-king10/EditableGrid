@@ -94,40 +94,66 @@ class GridComponent {
             if (colConfig.validator) {
                 let { name, operator, value } = colConfig.validator;
 
-                if (colConfig.type == "numeric") {
+                if (colConfig.type == "numeric" && value !== null) {
                     value = Number(value);
                 }
 
                 const customValidator = (query, callback) => {
-                let isValid = false;
+                    let isValid = false;
 
-                switch (operator) {
-                    case "equals":
-                        isValid = query === value;
-                        break;
-                    case "notEquals":
-                        isValid = query !== value;
-                        break;
-                    case "greaterThan":
-                        isValid = query > value;
-                        break;
-                    case "lessThan":
-                        isValid = query < value;
-                        break;
-                    case "regex":
-                        try {
-                            const regex = new RegExp(value); // Create a new RegExp object using the query string
-                            isValid = regex.test(query); // Test the value against the regex
-                        } catch (error) {
-                            console.error("Invalid regex pattern:", query, error);
-                            isValid = false; // Set isValid to false if the regex is invalid
+                    if (Array.isArray(query)) {
+                        switch(operator) {
+                            case "contains":
+                                isValid = query.includes(value);
+                                break;
+                            case "notContains":
+                                isValid = !query.includes(value);
+                                break;
+                            case "isNullOrEmpty":
+                                isValid = query.length === 0;
+                                break;
+                            case "isNotNullOrEmpty":
+                                isValid = query.length !== 0;
+                                break;
+                            default:
+                                isValid = false;
+                                console.error("Unknown operator: ", operator);
                         }
-                        break;
-                    default:
-                    console.error("Unknown operator:", operator);
-                }
+                    } else {
+                        switch (operator) {
+                            case "equals":
+                                isValid = query === value;
+                                break;
+                            case "notEquals":
+                                isValid = query !== value;
+                                break;
+                            case "greaterThan":
+                                isValid = query > value;
+                                break;
+                            case "lessThan":
+                                isValid = query < value;
+                                break;
+                            case "regex":
+                                try {
+                                    const regex = new RegExp(value); // Create a new RegExp object using the query string
+                                    isValid = regex.test(query); // Test the value against the regex
+                                } catch (error) {
+                                    console.error("Invalid regex pattern:", query, error);
+                                    isValid = false; // Set isValid to false if the regex is invalid
+                                }
+                                break;
+                            case "isNullOrEmpty":
+                                isValid = (query === null || query === "");
+                                break;
+                            case "isNotNullOrEmpty":
+                                isValid = (query !== null && query !== "");
+                                break;
+                            default:
+                                console.error("Unknown operator:", operator);
+                        }
+                    }
 
-                callback(isValid);
+                    callback(isValid);
                 };
 
                 Handsontable.validators.registerValidator(name, customValidator);

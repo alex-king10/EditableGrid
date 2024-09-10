@@ -1,0 +1,17 @@
+<appian-plugin name="Grid+ Helper" key="gridPlusHelper">
+    <plugin-info>
+        <description>Grid+ column configurations, custom data validators, and user security.</description>
+        <vendor name="Appian Corporation" url="https://www.appian.com/"/>
+        <version>1.0.0</version>
+        <application-version min="23.2.0"/>
+    </plugin-info>
+<!-- SERVLET -->
+    <servlet name="Get User Security Info" key="getUserSecurity" class="com.appiancorp.cto.gridplus.servlet.GetUserSecurityPermission">
+        <description>
+            Servlet to check the current user's security level.
+        </description>
+        <url-pattern>/getusersecurity</url-pattern>
+    </servlet>
+<!-- FUNCTIONS -->
+    <function key="ColConfig" class="com.appiancorp.cto.gridplus.function.ColConfig" />
+</appian-plugin>

@@ -26,7 +26,10 @@ public class ColConfig {
     validOperators.add("regex");
     validOperators.add("isTrue");
     validOperators.add("isFalse");
-
+    validOperators.add("isNullOrEmpty");
+    validOperators.add("isNotNullOrEmpty");
+    validOperators.add("contains");
+    validOperators.add("notContains");
 
     if (validOperators.contains(operator)) {
       result.put("name", name);
@@ -36,12 +39,14 @@ public class ColConfig {
       } else if (operator.equals("isFalse")) {
         result.put("operator", "equals");
         result.put("value", false);
-      }  else {
+      } else {
         result.put("operator", operator);
         result.put("value", value);
       }
     } else {
-      result.put("validationMessage", String.format("Validator %s must use a valid operator. Valid operators include lessThan, greaterThan, equals, notEquals, regex, isTrue, and isFalse.", name));
+      String operators = validOperators.toString();
+      operators = operators.substring(1, operators.length() - 1);
+      result.put("validationMessage", String.format("Validator %s must use a valid operator. Valid operators are %s.", name, operators));
     }
     return new JSONObject(result).toString();
   }
