@@ -117,10 +117,18 @@ class GridComponent {
                                 break;
                             default:
                                 isValid = false;
+                                this.setValidationMessages(`Fields of 1 to Many type related records cannot accept operator type: ${operator} as they are of type List. Acceptable operators include contains, notContains, isNullOrEmpty, and isNotNullOrEmpty.`);
                                 console.error("Unknown operator: ", operator);
                         }
                     } else {
                         switch (operator) {
+                            case "contains":
+                                if (query !== null) { isValid = query.includes(value); }
+                                break;
+                            case "notContains":
+                                if (query !== null) { isValid = !query.includes(value); }
+                                isValid = true;
+                                break;
                             case "equals":
                                 isValid = query === value;
                                 break;
@@ -148,19 +156,24 @@ class GridComponent {
                             case "isNotNullOrEmpty":
                                 isValid = (query !== null && query !== "");
                                 break;
+                            case "isTrue":
+                                isValid = query === true;
+                                break;
+                            case "isFalse":
+                                isValid = query === false;
+                                break;
                             default:
+                                isValid = false;
                                 console.error("Unknown operator:", operator);
                         }
                     }
-
                     callback(isValid);
                 };
 
                 Handsontable.validators.registerValidator(name, customValidator);
-
                 colConfig.validator = name;
-        }
-    });
+            }
+        });
     }
 
     validateColumns(columnsToValidate) {

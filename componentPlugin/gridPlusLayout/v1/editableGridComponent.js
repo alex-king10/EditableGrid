@@ -118,7 +118,7 @@ function main() {
         } else {
           // if no groups set, all users have editor permissions
           grid.setUserPermissionLevel("editor");
-          grid.validateColumns(columnsToValidate);
+          grid.validateColumns(columnsToValidate);  
         }
 
         grid.sendValidations();
