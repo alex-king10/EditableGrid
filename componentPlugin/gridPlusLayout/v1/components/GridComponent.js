@@ -55,10 +55,7 @@ class GridComponent {
 
         this.setColumnValidators();
 
-        if (this.data.length === 0 && this.columnConfigs.length === 0) {
-            // if grid data and colConfig are empty
-            this.setValidationMessages("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
-        } else if (this.columnConfigs.length === 0) {
+        if (this.columnConfigs.length === 0) {
             // if grid data and colConfig are empty
             this.setValidationMessages("The parameter 'columnConfigs' is empty or null. Please define a value for columnConfigs by using a colConfig function.");
         } else {

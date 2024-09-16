@@ -13,8 +13,6 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 @ColConfigCategory
 public class ColConfig {
-  private static final Logger logger = LogManager.getLogger(GetUserSecurityPermission.class);
-
   @Function
   public String validator(@Parameter String name, @Parameter String operator, @Parameter(required = false) String value) {
     HashMap<String, Object> result = new HashMap<>();
@@ -93,6 +91,7 @@ public class ColConfig {
       validPatterns.add("0,0");
       validPatterns.add("0,0.00");
       validPatterns.add("0.0%");
+      validPatterns.add("%");
       validPatterns.add("0.00%");
       validPatterns.add("0.00");
 
@@ -140,6 +139,9 @@ public class ColConfig {
     validOperators.add("isFalse");
     validOperators.add("isNullOrEmpty");
     validOperators.add("isNotNullOrEmpty");
+    validOperators.add("equals");
+    validOperators.add("notEquals");
+
 
     if (field != "") {
       result.put("data", field);
