@@ -4,12 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.appiancorp.cto.gridplus.servlet.GetUserSecurityPermission;
 import com.appiancorp.suiteapi.expression.annotations.Function;
 import com.appiancorp.suiteapi.expression.annotations.Parameter;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 @ColConfigCategory
 public class ColConfig {
