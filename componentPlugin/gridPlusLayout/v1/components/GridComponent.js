@@ -175,7 +175,7 @@ class GridComponent {
 
     validateColumns(columnsToValidate) {
         this.hotInstance.validateColumns(columnsToValidate, (valid) => {
-          console.log(valid);
+        //   console.log(valid);
         });
       }
 
