@@ -1,6 +1,6 @@
-<appian-plugin name="Grid+ Helper" key="gridPlusHelper">
+<appian-plugin name="GridPlus Helper" key="gridPlusHelper">
     <plugin-info>
-        <description>Grid+ column configurations, custom data validators, and user security.</description>
+        <description>Grid+ Component column configurations, custom data validators, and user security.</description>
         <vendor name="Appian Corporation" url="https://www.appian.com/"/>
         <version>1.0.0</version>
         <application-version min="23.2.0"/>
