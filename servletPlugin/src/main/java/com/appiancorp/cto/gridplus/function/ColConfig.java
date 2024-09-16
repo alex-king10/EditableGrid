@@ -4,57 +4,41 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.appiancorp.cto.gridplus.servlet.GetUserSecurityPermission;
 import com.appiancorp.suiteapi.expression.annotations.Function;
 import com.appiancorp.suiteapi.expression.annotations.Parameter;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 @ColConfigCategory
 public class ColConfig {
-  private static final Logger logger = LogManager.getLogger(GetUserSecurityPermission.class);
-
   @Function
   public String validator(@Parameter String name, @Parameter String operator, @Parameter(required = false) String value) {
     HashMap<String, Object> result = new HashMap<>();
-    List<String> validOperators = new ArrayList<>();
-    validOperators.add("lessThan");
-    validOperators.add("greaterThan");
-    validOperators.add("equals");
-    validOperators.add("notEquals");
-    validOperators.add("regex");
-    validOperators.add("isTrue");
-    validOperators.add("isFalse");
 
+    result.put("name", name);
+    result.put("operator", operator);
+    result.put("value", value);
 
-    if (validOperators.contains(operator)) {
-      result.put("name", name);
-      if (operator.equals("isTrue")) {
-        result.put("operator", "equals");
-        result.put("value", true);
-      } else if (operator.equals("isFalse")) {
-        result.put("operator", "equals");
-        result.put("value", false);
-      }  else {
-        result.put("operator", operator);
-        result.put("value", value);
-      }
-    } else {
-      result.put("validationMessage", String.format("Validator %s must use a valid operator. Valid operators include lessThan, greaterThan, equals, notEquals, regex, isTrue, and isFalse.", name));
-    }
     return new JSONObject(result).toString();
   }
 
   @Function
   public String textColConfig(@Parameter String field, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
+    List<String> validationMessages = new ArrayList<>();
+    List<String> validOperators = new ArrayList<>();
+    validOperators.add("equals");
+    validOperators.add("notEquals");
+    validOperators.add("regex");
+    validOperators.add("isNullOrEmpty");
+    validOperators.add("isNotNullOrEmpty");
+    validOperators.add("contains");
+    validOperators.add("notContains");
 
     if (field != "") {
       result.put("data", field);
       result.put("type", "text");
     } else {
-      result.put("validationMessage", "A textColConfig has a null or invalid 'field' value. Each colConfig function must have a non-null value for the 'field' parameter.");
+      validationMessages.add("A textColConfig has a null or invalid 'field' value. Each colConfig function must have a non-null value for the 'field' parameter.");
     }
     if (title != "") { result.put("title", title); }
     if (relationshipName != "") {
@@ -65,8 +49,17 @@ public class ColConfig {
       result.put("readOnly", readOnly);
       if (readOnly.equals(true)) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
-    if (validator != "") { result.put("validator", validator); }
+    if (validator != "") {
+      JSONObject validatorJSON = new JSONObject(validator);
+      Object operator = validatorJSON.get("operator");
+      if (validOperators.contains(operator)) {
+        result.put("validator", validator);
+      } else {
+        validationMessages.add(String.format("The textColConfig object has an invalid operator of %s", operator));
+      }
+    }
 
+    if (validationMessages.size() != 0) { result.put("validationMessage", validationMessages); }
     return new JSONObject(result).toString();
   }
 
@@ -74,6 +67,14 @@ public class ColConfig {
   public String numericColConfig(@Parameter String field, @Parameter String format, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
     List<String> validationMessages = new ArrayList<>();
+    List<String> validOperators = new ArrayList<>();
+    validOperators.add("lessThan");
+    validOperators.add("greaterThan");
+    validOperators.add("equals");
+    validOperators.add("notEquals");
+    validOperators.add("isNullOrEmpty");
+    validOperators.add("isNotNullOrEmpty");
+
     if (field != "") {
       result.put("data", field);
       result.put("type", "numeric");
@@ -87,6 +88,7 @@ public class ColConfig {
       validPatterns.add("0,0");
       validPatterns.add("0,0.00");
       validPatterns.add("0.0%");
+      validPatterns.add("%");
       validPatterns.add("0.00%");
       validPatterns.add("0.00");
 
@@ -109,7 +111,15 @@ public class ColConfig {
       result.put("readOnly", readOnly);
       if (readOnly.equals(true)) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
-    if (validator != "") { result.put("validator", validator); }
+    if (validator != "") {
+      JSONObject validatorJSON = new JSONObject(validator);
+      Object operator = validatorJSON.get("operator");
+      if (validOperators.contains(operator)) {
+        result.put("validator", validator);
+      } else {
+        validationMessages.add(String.format("The numericColConfig object has an invalid operator of %s", operator));
+      }
+    }
 
     if (validationMessages.size() != 0) { result.put("validationMessage", validationMessages); }
 
@@ -121,6 +131,14 @@ public class ColConfig {
   public String checkboxColConfig(@Parameter String field,  @Parameter String label,  @Parameter String labelPosition, @Parameter String checkedTemplate, @Parameter String uncheckedTemplate, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
     List<String> validationMessages = new ArrayList<>();
+    List<String> validOperators = new ArrayList<>();
+    validOperators.add("isTrue");
+    validOperators.add("isFalse");
+    validOperators.add("isNullOrEmpty");
+    validOperators.add("isNotNullOrEmpty");
+    validOperators.add("equals");
+    validOperators.add("notEquals");
+
 
     if (field != "") {
       result.put("data", field);
@@ -155,7 +173,15 @@ public class ColConfig {
         validationMessages.add("Please provide a valid readOnly value. Valid values include null, true, or false.");
       }
     }
-    if (validator != "") { result.put("validator", validator); }
+    if (validator != "") {
+      JSONObject validatorJSON = new JSONObject(validator);
+      Object operator = validatorJSON.get("operator");
+      if (validOperators.contains(operator)) {
+        result.put("validator", validator);
+      } else {
+        validationMessages.add(String.format("The checkboxColConfig object has an invalid operator of %s", operator));
+      }
+    }
 
     if (validationMessages.size() != 0) { result.put("validationMessage", validationMessages); }
 
@@ -166,6 +192,14 @@ public class ColConfig {
   public String dateColConfig(@Parameter String field, @Parameter String dateFormat, @Parameter Boolean correctFormat, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
     List<String> validationMessages = new ArrayList<>();
+    List<String> validOperators = new ArrayList<>();
+    validOperators.add("lessThan");
+    validOperators.add("greaterThan");
+    validOperators.add("equals");
+    validOperators.add("notEquals");
+    validOperators.add("regex");
+    validOperators.add("isNullOrEmpty");
+    validOperators.add("isNotNullOrEmpty");
 
     if (field != "") {
       result.put("data", field);
@@ -193,7 +227,16 @@ public class ColConfig {
       result.put("readOnly", readOnly);
       if (readOnly.equals(true)) {  result.put("headerClassName", "myColHeader header-readOnly"); }
     }
-    if (validator != "") { result.put("validator", validator); }
+
+    if (validator != "") {
+      JSONObject validatorJSON = new JSONObject(validator);
+      Object operator = validatorJSON.get("operator");
+      if (validOperators.contains(operator)) {
+        result.put("validator", validator);
+      } else {
+        validationMessages.add(String.format("The textColConfig object has an invalid operator of %s", operator));
+      }
+    }
 
     if (validationMessages.size() != 0) { result.put("validationMessage", validationMessages); }
 
@@ -204,6 +247,18 @@ public class ColConfig {
   public String dropdownColConfig(@Parameter String field, @Parameter String[] source, @Parameter Boolean strict, @Parameter Boolean filter, @Parameter String title, @Parameter String relationshipName, @Parameter String validator, @Parameter Boolean readOnly) {
     HashMap result = new HashMap();
     List<String> validationMessages = new ArrayList<>();
+    List<String> validOperators = new ArrayList<>();
+    validOperators.add("lessThan");
+    validOperators.add("greaterThan");
+    validOperators.add("equals");
+    validOperators.add("notEquals");
+    validOperators.add("regex");
+    validOperators.add("isTrue");
+    validOperators.add("isFalse");
+    validOperators.add("isNullOrEmpty");
+    validOperators.add("isNotNullOrEmpty");
+    validOperators.add("contains");
+    validOperators.add("notContains");
 
     if (field != "") {
       result.put("data", field);
@@ -233,7 +288,15 @@ public class ColConfig {
         validationMessages.add("Please provide a valid readOnly value. Valid values include null, true, or false.");
       }
     }
-    if (validator != "") { result.put("validator", validator); }
+    if (validator != "") {
+      JSONObject validatorJSON = new JSONObject(validator);
+      Object operator = validatorJSON.get("operator");
+      if (validOperators.contains(operator)) {
+        result.put("validator", validator);
+      } else {
+        validationMessages.add(String.format("The dropdownColConfig object has an invalid operator of %s", operator));
+      }
+    }
 
     if (validationMessages.size() != 0) { result.put("validationMessage", validationMessages); }
 

@@ -55,10 +55,7 @@ class GridComponent {
 
         this.setColumnValidators();
 
-        if (this.data.length === 0 && this.columnConfigs.length === 0) {
-            // if grid data and colConfig are empty
-            this.setValidationMessages("The parameters 'rows' and 'columnConfigs' are both empty or null. Please set a value for 'rows' or 'columnConfigs.'");
-        } else if (this.columnConfigs.length === 0) {
+        if (this.columnConfigs.length === 0) {
             // if grid data and colConfig are empty
             this.setValidationMessages("The parameter 'columnConfigs' is empty or null. Please define a value for columnConfigs by using a colConfig function.");
         } else {
@@ -94,47 +91,86 @@ class GridComponent {
             if (colConfig.validator) {
                 let { name, operator, value } = colConfig.validator;
 
-                if (colConfig.type == "numeric") {
+                if (colConfig.type == "numeric" && value !== null) {
                     value = Number(value);
                 }
 
                 const customValidator = (query, callback) => {
-                let isValid = false;
+                    let isValid = false;
 
-                switch (operator) {
-                    case "equals":
-                        isValid = query === value;
-                        break;
-                    case "notEquals":
-                        isValid = query !== value;
-                        break;
-                    case "greaterThan":
-                        isValid = query > value;
-                        break;
-                    case "lessThan":
-                        isValid = query < value;
-                        break;
-                    case "regex":
-                        try {
-                            const regex = new RegExp(value); // Create a new RegExp object using the query string
-                            isValid = regex.test(query); // Test the value against the regex
-                        } catch (error) {
-                            console.error("Invalid regex pattern:", query, error);
-                            isValid = false; // Set isValid to false if the regex is invalid
+                    if (Array.isArray(query)) {
+                        switch(operator) {
+                            case "contains":
+                                isValid = query.includes(value);
+                                break;
+                            case "notContains":
+                                isValid = !query.includes(value);
+                                break;
+                            case "isNullOrEmpty":
+                                isValid = query.length === 0;
+                                break;
+                            case "isNotNullOrEmpty":
+                                isValid = query.length !== 0;
+                                break;
+                            default:
+                                isValid = false;
+                                this.setValidationMessages(`Fields of 1 to Many type related records cannot accept operator type: ${operator} as they are of type List. Acceptable operators include contains, notContains, isNullOrEmpty, and isNotNullOrEmpty.`);
+                                console.error("Unknown operator: ", operator);
                         }
-                        break;
-                    default:
-                    console.error("Unknown operator:", operator);
-                }
-
-                callback(isValid);
+                    } else {
+                        switch (operator) {
+                            case "contains":
+                                if (query !== null) { isValid = query.includes(value); }
+                                break;
+                            case "notContains":
+                                if (query !== null) { isValid = !query.includes(value); }
+                                isValid = true;
+                                break;
+                            case "equals":
+                                isValid = query === value;
+                                break;
+                            case "notEquals":
+                                isValid = query !== value;
+                                break;
+                            case "greaterThan":
+                                isValid = query > value;
+                                break;
+                            case "lessThan":
+                                isValid = query < value;
+                                break;
+                            case "regex":
+                                try {
+                                    const regex = new RegExp(value); // Create a new RegExp object using the query string
+                                    isValid = regex.test(query); // Test the value against the regex
+                                } catch (error) {
+                                    console.error("Invalid regex pattern:", query, error);
+                                    isValid = false; // Set isValid to false if the regex is invalid
+                                }
+                                break;
+                            case "isNullOrEmpty":
+                                isValid = (query === null || query === "");
+                                break;
+                            case "isNotNullOrEmpty":
+                                isValid = (query !== null && query !== "");
+                                break;
+                            case "isTrue":
+                                isValid = query === true;
+                                break;
+                            case "isFalse":
+                                isValid = query === false;
+                                break;
+                            default:
+                                isValid = false;
+                                console.error("Unknown operator:", operator);
+                        }
+                    }
+                    callback(isValid);
                 };
 
                 Handsontable.validators.registerValidator(name, customValidator);
-
                 colConfig.validator = name;
-        }
-    });
+            }
+        });
     }
 
     validateColumns(columnsToValidate) {
@@ -202,11 +238,12 @@ class GridComponent {
     handleViewerPermissions() {
         // update actions available in context menu
         this.updateGridOptions('contextMenu', CONTEXT_MENU_VIEWER);
-        this.updateGridOptions('readOnly', true);
-        // add lock icon to all columns - or loop over colconfigs and add this class :/ call updatesettings
+
+        // add readOnly attribute and lock icon to all columns
         if (this.columnConfigs != null) {
             this.columnConfigs.forEach(colConfig => {
                 colConfig['headerClassName'] = 'myColHeader header-readOnly';
+                colConfig['readOnly'] = true;
             });
             this.setColumnConfigs(this.columnConfigs);
         }
@@ -223,7 +260,6 @@ class GridComponent {
 
         if (userPermissionLevel === "editor") { this.handleEditorPermissions(); } 
         else { this.handleViewerPermissions(); }
-
     }
 
     // Handles changes made to the grid by modifying this.changeObj

@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<appian-component-plugin name="Grid+ Component Plug-In" key="com.appian.cto.gridPlusLayout">
+<appian-component-plugin name="GridPlus Component Plug-In" key="com.appian.cto.gridPlusLayout">
   <plugin-info>
     <description>Editable grid component plug-in to create, update, and delete record data in a flexible and performant component.</description>
     <vendor name="Appian" url="www.appian.com"/>
     <version>1.0.0</version>
+    <icon-file>gridPlusLogo.svg</icon-file>
     <support supported="true" email="techpartners@appian.com" url="https://community.appian.com"/>
   </plugin-info>
 
